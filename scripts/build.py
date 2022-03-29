@@ -38,7 +38,7 @@ parser.add_argument('-c', '--cmake_options', default='')
 parser.add_argument('-m', '--make_options', default='-j 6')
 parser.add_argument('-u', '--unittest', action='store_true')
 parser.add_argument('-p', '--print_commands', action='store_true')
-parser.add_argument('-b', '--build_dir', default='build')
+parser.add_argument('-b', '--build_dir', default='../buildCRP2')
 parser.add_argument('-r', '--run_dir', default='run')
 args = parser.parse_args()
 
