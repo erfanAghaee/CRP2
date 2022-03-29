@@ -66,6 +66,9 @@ for target in cp_targets:
 # flute LUT
 run('cp src/flute/*.dat {}'.format(args.run_dir))
 
+# cp make.sh for compiling the CRP2.0
+run('cp scripts/make.sh {}'.format(args.build_dir))
+
 # unit test
 if args.unittest:
     root_dir = os.path.curdir
