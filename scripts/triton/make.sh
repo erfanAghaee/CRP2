@@ -1,2 +1,2 @@
 make -j 8
-cp triton ../run/triton.bin
+cp TritonRoute ../run/triton.bin
