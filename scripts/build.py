@@ -58,6 +58,8 @@ run('cp -u -R {} {}'.format(run_files, args.run_dir))
 
 # make
 for target in build_targets:
+    print('cmake --build {} --target {} -- {}'.format(args.build_dir,
+                                                    target, args.make_options))
     run('cmake --build {} --target {} -- {}'.format(args.build_dir,
                                                     target, args.make_options))
 cp_targets = all_targets if build_targets == [''] else build_targets
@@ -73,12 +75,16 @@ run('cp scripts/make.sh {}'.format(args.build_dir))
 
 # compile dr
 # cp make.sh for compiling the buildTriton
-run('cp -rf scripts/triton/ {}'.format(args.build_dir_dr))
+# run('cp -rf scripts/triton/ {}'.format(args.build_dir_dr))
+# os.chdir("./triton")
+# print(os.getcwd())
+# run('cmake --build {} --target {} -- {}'.format("../"+args.build_dir_dr,
+#                                                 "triton", args.make_options))
 
 
 # unit test
-if args.unittest:
-    root_dir = os.path.curdir
-    os.chdir(args.run_dir)
-    run('./{}'.format('unittest_salt'))
-    os.chdir(root_dir)
+# if args.unittest:
+#     root_dir = os.path.curdir
+#     os.chdir(args.run_dir)
+#     run('./{}'.format('unittest_salt'))
+#     os.chdir(root_dir)
