@@ -39,6 +39,7 @@ parser.add_argument('-m', '--make_options', default='-j 6')
 parser.add_argument('-u', '--unittest', action='store_true')
 parser.add_argument('-p', '--print_commands', action='store_true')
 parser.add_argument('-b', '--build_dir', default='../buildCRP2')
+parser.add_argument('-bdr', '--build_dir_dr', default='../buildTriton')
 parser.add_argument('-r', '--run_dir', default='run')
 args = parser.parse_args()
 
@@ -68,6 +69,12 @@ run('cp src/flute/*.dat {}'.format(args.run_dir))
 
 # cp make.sh for compiling the CRP2.0
 run('cp scripts/make.sh {}'.format(args.build_dir))
+
+
+# compile dr
+# cp make.sh for compiling the buildTriton
+run('cp -rf scripts/triton/ {}'.format(args.build_dir_dr))
+
 
 # unit test
 if args.unittest:
