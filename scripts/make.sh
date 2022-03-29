@@ -1,2 +1,2 @@
 make -j 8
-mv iccad19gr ../CRP2/run/crp.bin
+cp iccad19gr ../run/crp.bin

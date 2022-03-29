@@ -12,7 +12,7 @@ $ git clone https://github.com/erfanAghaee/CRP2.git
 **Step 2:** Go to the project root and build by
 ```bash
 $ cd CRP2
-$ scripts/build.py -o release
+$ ./build.sh #scripts/build.py -o release
 $ cd ../buildCRP2/
 $ ./make.sh 
 $ cd ../buildTriton/
