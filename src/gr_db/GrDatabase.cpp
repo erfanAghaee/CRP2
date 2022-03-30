@@ -103,7 +103,33 @@ void GrDatabase::writeGuidesCSV(std::string filename) {
     fout.close();
 }
 
+void GrDatabase::logGCellGrid(){
+    
+    
+    std::string file_name = db::setting.directory +  db::setting.benchmarkName+ ".gcell.csv";
+    
+    std::ofstream file(file_name);
+    std::stringstream stream;
+    stream << "l,x,y,w,h,dir" << std::endl;
 
+    for (int layerIdx = 0; (layerIdx + 1) < database.getLayerNum(); ++layerIdx) {
+       Dimension dir = database.getLayerDir(layerIdx);
+        for (int x = 0; x < getNumGrPoint(X); x++) {
+            for (int y = 0; y < getNumGrPoint(Y); y++) {
+                auto grPoint = GrPoint({layerIdx,x,y});
+                stream << std::to_string(layerIdx)
+                   << "," <<  getCoorIntvl(grPoint,X).low
+                   << "," <<  getCoorIntvl(grPoint,Y).low
+                   << "," <<  getCoorIntvl(grPoint,X).high
+                   << "," <<  getCoorIntvl(grPoint,Y).high
+                   << "," <<  dir
+                   << std::endl;
+            }
+        }
+    }
+    file << stream.str();
+    file.close();
+}//end logCellLocations
 
 void GrDatabase::reportGR(std::string filename) {
     log() << "Writing GR report to file..." << std::endl;

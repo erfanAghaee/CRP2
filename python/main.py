@@ -15,6 +15,7 @@ sys.path.insert(0, import_path)
 
 
 from backend.cell import *
+from backend.gcell import *
 
 
 def menu(args):
@@ -25,10 +26,17 @@ def menu(args):
     db["die"] = pd.read_csv(args.dir + "misc/" + args.bench + ".die.csv",\
         dtype={"die_xl":'float64',"die_yl":'float64',"die_xh":'float64',"die_yh":"float64"} )
     db["args"] = args
+    db["gcell"] = pd.read_csv(args.dir + "misc/" + args.bench + ".gcell.csv", \
+        dtype={"l":"float64","x":'float64',"y":'float64',"w":'float64',"h":"float64"})
 
     
     cell_obj = Cell(db)
     cell_obj.run()
+
+    gcell_obj = GCell(db)
+    gcell_obj.run()
+
+
 
 if __name__ == "__main__":
     print("Python program starts...")

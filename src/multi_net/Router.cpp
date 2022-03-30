@@ -182,8 +182,10 @@ void Router::run() {
     database.refinePlacement_report_tracker << "logic_name,num_moved,iter_refinePlacement"  << std::endl;
     
     filterNets();
+    
     database.logCellLocations(0);
     database.logDie();
+    grDatabase.logGCellGrid();
 
 
     return;

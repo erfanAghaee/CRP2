@@ -15,6 +15,10 @@ public:
     void reportGR(std::string filename);
     void reportCells(std::string filename);
     void reportRL(std::string filename);
+
+    
+    void logGCellGrid();
+
     // std::set<int> critical_cells;
 private:
 };

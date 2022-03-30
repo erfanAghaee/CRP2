@@ -12,7 +12,7 @@ sys.path.insert(0, import_path)
 from backend.pltcairo import *
 from backend.param import *
 
-class Cell:
+class GCell:
     def __init__(self,db):
         self.db = db
 
@@ -20,7 +20,7 @@ class Cell:
     def run(self):
         # db =  self.db
         # print(cells_df)
-        self.pltAllCells()
+        self.pltAllGCells()
         window = [320.3,574.2,333.2,579.0]
         window = [x*2000 for x in window]
         self.pltWindow(window)
@@ -30,7 +30,7 @@ class Cell:
         db = self.db
         plt_obj = PltCairo()
         die_df = db["die"]
-        cell_df = db["cell"]
+        cell_df = db["gcell"]
         args = db["args"]
         
         surface = plt_obj.init(window)
@@ -40,21 +40,23 @@ class Cell:
         
         cell_filter = cell_filter.loc[ (cell_df.y >= window[YL] )& (cell_df.y <= window[YH])]
         
-        txts = cell_filter.cell_name.values
+        # txts = cell_filter.cell_name.values
 
         plt_obj.run(cell_filter.x.values,cell_filter.y.values,\
                     cell_filter.w.values,cell_filter.h.values)
 
-        plt_obj.drawText(txts)
+        # plt_obj.drawText(txts)
         
-        surface.write_to_png(args.dir+ "imgs/" +"cells.window.png")  # Output to PNG
+        surface.write_to_png(args.dir+ "imgs/" +"gcell.window.png")  # Output to PNG
 
 
-    def pltAllCells(self):
+
+
+    def pltAllGCells(self):
         db = self.db
         plt_obj = PltCairo()
         die_df = db["die"]
-        cell_df = db["cell"]
+        gcell_df = db["gcell"]
         args = db["args"]
         window = [0,0,0,0]
         if die_df is not np.nan:
@@ -68,10 +70,10 @@ class Cell:
             print("invalid window box to plot in cell class!")
             sys.exit()
         surface = plt_obj.init(window)
-        plt_obj.run(cell_df.x.values,cell_df.y.values,\
-                    cell_df.w.values,cell_df.h.values)
+        plt_obj.run(gcell_df.x.values,gcell_df.y.values,\
+                    gcell_df.w.values,gcell_df.h.values)
         
-        surface.write_to_png(args.dir+ "imgs/" +"cells.all.png")  # Output to PNG
+        surface.write_to_png(args.dir+ "imgs/" +"gcells.png")  # Output to PNG
         
 
 

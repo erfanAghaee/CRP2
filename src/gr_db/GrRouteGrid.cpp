@@ -1994,6 +1994,8 @@ double GrRouteGrid::getEdgeCongestion(const GrEdge& edge) const{
 }//end getEdgeCongestion
 
 
+
+
 double GrRouteGrid::getGrPointCongestion(const GrPoint& via) const {
     int selfUsage = 1;
     double via_usage = getViaUsage(via) + selfUsage;
@@ -2188,5 +2190,7 @@ void GrRouteGrid2D::logWireUsage2D(std::string log_name,const GrRouteGrid& route
 
     
 }//end logWireUsage2D
+
+
 
 }  // namespace gr

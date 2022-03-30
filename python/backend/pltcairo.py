@@ -113,8 +113,8 @@ class PltCairo:
 
         self.padding = 0
 
-        self.bin_size_x = 10
-        self.bin_size_y = 10
+        self.bin_size_x = 1
+        self.bin_size_y = 1
 
         # init surface 
         surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.width, self.height)
@@ -123,6 +123,19 @@ class PltCairo:
         self.drawLayout()
 
         return surface
+
+    
+    def drawText(self,texts):
+        self.ctx.set_font_size(24)
+        self.ctx.select_font_face("monospace", cairo.FONT_SLANT_NORMAL,
+                                cairo.FONT_WEIGHT_NORMAL)
+
+        for i in np.arange(len(self.node_xl)):
+            x = self.node_xl[i]
+            y = self.node_yh[i]
+            self.ctx.move_to(x,y)
+            self.ctx.set_source_rgba(1, 0, 0, alpha=1)
+            self.ctx.show_text(texts[i])
 
     # x,y coordinations and width and height of boxes
     def run(self,xs,ys,ws,hs):
