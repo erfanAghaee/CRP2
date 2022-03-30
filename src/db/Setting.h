@@ -10,6 +10,7 @@ BETTER_ENUM(VerboseLevelT, int, LOW = 0, MIDDLE = 1, HIGH = 2);
 class Setting {
 public:
     // basic
+    std::string directory="./";
     std::string outputFile;
     std::string outputFileDef;
     bool refinePlacement;

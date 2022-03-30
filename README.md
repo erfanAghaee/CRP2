@@ -16,6 +16,7 @@ $ ./build.sh #scripts/build.py -o release
 $ cd ../buildCRP2/
 $ ./make.sh 
 $ cd ../buildTriton/
+$ cmake ../CRP2/triton/
 $ ./make.sh 
 $ cd run/
 $ ./run_exps

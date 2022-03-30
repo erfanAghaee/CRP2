@@ -197,6 +197,11 @@ void runISPD18Flow(const boost::program_options::variables_map& vm) {
     if (vm.count("moveToRemoveViol")) {
         db::setting.moveToRemoveViol = vm.at("moveToRemoveViol").as<bool>();
     }
+    if (vm.count("directory")) {
+        db::setting.directory = vm.at("directory").as<std::string>();
+    }
+
+    
 
 
 
@@ -351,7 +356,8 @@ int main(int argc, char* argv[]) {
                 ("critical_cells_set", value<std::string>())
                 ("findAllPermutations", value<bool>())     
                 ("RLOutput", value<bool>())  
-                ("moveToRemoveViol", value<bool>())             
+                ("moveToRemoveViol", value<bool>())         
+                ("directory", value<std::string>())    
                 ;
         // clang-format on
         variables_map vm;

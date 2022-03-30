@@ -686,7 +686,8 @@ void Database::getGridPinAccessBoxes(const Net& net, vector<vector<db::GridBoxOn
 
 void Database::logCellLocations(int iter){
     bool debug = false;
-    std::string file_name = db::setting.outputFile+ ".cell_"+std::to_string(iter) + ".csv";
+    // 
+    std::string file_name = db::setting.directory +  db::setting.benchmarkName+ ".cell."+std::to_string(iter) + ".csv";
     if(debug)log() << "logCellLocations file name: " << file_name << std::endl;
     std::ofstream file(file_name);
     std::stringstream stream;
@@ -704,6 +705,25 @@ void Database::logCellLocations(int iter){
     file << stream.str();
     file.close();
 }//end logCellLocations
+
+
+void Database::logDie(){
+    std::string file_name = db::setting.directory +  db::setting.benchmarkName+ ".die.csv";
+    std::ofstream file(file_name);
+    std::stringstream stream;
+    stream << "bench_name,die_xl,die_yl,die_xh,die_yh" << std::endl;
+    auto dieBound = rsynService.physicalDesign.getPhysicalDie().getBounds();
+    
+    stream << db::setting.benchmarkName
+            << "," << dieBound.getLower().x
+            << "," << dieBound.getLower().y
+            << "," << dieBound.getUpper().x
+            << "," << dieBound.getUpper().y
+            << std::endl;
+    
+    file << stream.str();
+    file.close();
+}
 
 void Database::writeDEF(const std::string& filename){
     DEFControlParser defParser;

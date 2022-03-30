@@ -183,6 +183,10 @@ void Router::run() {
     
     filterNets();
     database.logCellLocations(0);
+    database.logDie();
+
+
+    return;
     if(!db::setting.refinePlacement){
         log() << "only global routing..." << std::endl;
         applyOnlyRoute(netsToRoute);        

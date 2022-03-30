@@ -2154,7 +2154,7 @@ void Placer::calcNetsHPWL(){
 
 void Placer::logCellLocations(){
     bool debug = false;
-    std::string file_name = db::setting.outputFile+ ".cell_"+std::to_string(iter) + ".csv";
+    std::string file_name = db::setting.benchmarkName+ ".cell_"+std::to_string(iter) + ".csv";
     if(debug)log() << "logCellLocations file name: " << file_name << std::endl;
     std::ofstream file(file_name);
     std::stringstream stream;

@@ -75,6 +75,7 @@ public:
 
 
     void logCellLocations(int iter);
+    void logDie();
 
     // function for filtering the functions in the felow. 
     void initPolicy();

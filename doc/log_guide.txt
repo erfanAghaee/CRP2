@@ -1,0 +1,8 @@
+
+\cells
+    - [benchmark_name].cell.(iter).csv
+        keep the information of each cell's location
+        this can be used to plot location of cells
+        also can be used to plot specific cells.
+
+    -
