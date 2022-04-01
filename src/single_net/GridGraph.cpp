@@ -129,10 +129,10 @@ double CoarseGridGraphBuilder::getCost(int u, int v) { return 0; }
 void GuideGridGraphBuilder::run(const vector<vector<gr::PointOnLayer>> &mergedPinAccessBoxes) {
     bool debug = false;
 
-    if(grNet.getName() == "net10214"){
-        debug = true;
-        log() << "maze graphbuild net: " << grNet.getName() << std::endl;
-    }
+    // if(grNet.getName() == "net10214"){
+    //     debug = true;
+    //     log() << "maze graphbuild net: " << grNet.getName() << std::endl;
+    // }
 
 
     if(debug){

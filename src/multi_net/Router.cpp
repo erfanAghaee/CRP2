@@ -187,47 +187,41 @@ void Router::run() {
     database.logDie();
     grDatabase.logGCellGrid();
 
-
-    return;
     if(!db::setting.refinePlacement){
         log() << "only global routing..." << std::endl;
         applyOnlyRoute(netsToRoute);        
         log() << "end only global routing..." << std::endl;
-        if(db::setting.moveToRemoveViol){
-            investigateRoute(0,netsToRoute);
-            log() << "iter: " << iter++ << std::endl;
-            std::vector<int> netsToRouteTmp;
-            for(auto tmp : netsToRoute){
-                if(database.nets[tmp].getName() == "net10214")
-                    netsToRouteTmp.push_back(tmp);
-            }
-            
 
-            // update routing
-            db::routeStat.clear();
-            guideGenStat.reset();
-            
-            sortNets(netsToRoute);  // Note: only effective when doing mazeroute sequentially
-
-            updateCost();
-            grDatabase.statHistCost();
-
-            if(db::setting.debug)
-                logCoef();
-            // grDatabase.logRoutedViaMap("routedViaMap_after_gr.csv");
-
-            if (iter > 0 ) {
-                ripup(netsToRouteTmp);
-                congMap.init(cellWidth, cellHeight);
-                congMap.logCSV("cong_test.csv");
-            }
-            // end update routing 
+        // reroute nets that still have violation
+        for (auto& net : grDatabase.nets)
+            if (grDatabase.hasVio(net)) netsToRoute.push_back(net.dbNet.idx);
 
 
-
-            routeApprx(netsToRouteTmp);
-            investigateRoute(0,netsToRouteTmp);
+        for(int idx :netsToRoute ){
+            std::vector<int> netsToRouteTmp2;
+            netsToRouteTmp2.push_back(idx);
+            routeAStarSeq(netsToRouteTmp2);
         }
+        grDatabase.logNets(iter);
+        grDatabase.logVio(iter);
+
+        db::routeStat.clear();
+        guideGenStat.reset();
+
+        netsToRoute.clear();
+        for (auto& net : grDatabase.nets){
+            if (grDatabase.hasVio(net)) {
+                netsToRoute.push_back(net.dbNet.idx);
+                log() << "violation " << net.getName() << std::endl;
+            }
+        }
+            
+        
+            
+       
+
+
+
             
     }else{
         for(int j = 0; j < db::setting.numGlobalRouting; j++){
@@ -420,6 +414,10 @@ void Router::run() {
             log() << "end postProcessing..." << std::endl;
         }
     }
+
+    grDatabase.logNets(iter);
+    grDatabase.logVio(iter);
+
     profile_time_str << "postProcessing" << "," << std::to_string(profile_time.getTimer()) << std::endl;
 
     
@@ -472,7 +470,7 @@ void Router::investigateRoute(int iter_i,std::vector<int>& netsToRoute){
     std::vector<int> nets_violated; 
     std::vector<gr::GrEdge> edges_viol; 
     std::vector<gr::GrPoint> vias_viol; 
-    
+    netsToRoute.clear();
     for (auto& net : grDatabase.nets){
          if (grDatabase.getVioReport(net,edges_viol,vias_viol,viol_dict)) {
         // if (grDatabase.getNumVio(net,false)) {
@@ -928,6 +926,8 @@ void Router::routeApprx(const vector<int>& netsToRoute) {
         fluteAllAndRoute(netsToRoute);
         // log() << "after flute netsToRoute size: " << netsToRoute.size() << std::endl;
         // log() << "netsToRoute after flute: " << netsToRoute.size() << std::endl;
+        grDatabase.logNets(iter);
+        grDatabase.logVio(iter);
     } else {
         
         vector<SingleNetRouter> routers;
@@ -952,6 +952,8 @@ void Router::routeApprx(const vector<int>& netsToRoute) {
                 allNetStatus[netIdx] = router.status;
             }
         }
+        grDatabase.logNets(iter);
+        grDatabase.logVio(iter);
         // log() << "netsToRoute after maze: " << netsToRoute.size() << std::endl;
     }
 }
@@ -1385,3 +1387,45 @@ void Router::visualiseCircuit(){
     // grDatabase.printGrid();
     // gridMapReport();
 }//end visualiseCircuit
+
+
+void Router::routeAStarSeq(vector<int>& netsToRoute){
+    // iter++;
+    if(!grDatabase.hasVio(grDatabase.nets[netsToRoute[0]])) return;
+
+    sortNets(netsToRoute);  // Note: only effective when doing mazeroute sequentially
+
+    updateCost();
+    grDatabase.statHistCost();
+
+    if(db::setting.debug)
+        logCoef();
+    // grDatabase.logRoutedViaMap("routedViaMap_after_gr.csv");
+
+    
+    ripup(netsToRoute);
+    congMap.init(cellWidth, cellHeight);     
+    
+
+    vector<SingleNetRouter> routers;
+    routers.reserve(netsToRoute.size());
+    for (auto id : netsToRoute) routers.emplace_back(grDatabase.nets[id]);
+
+
+    for(auto router : routers){
+        router.planMazeRoute(congMap);
+        router.mazeRoute();
+        router.finish();
+        int netIdx = router.grNet.dbNet.idx;
+        congMap.update(netIdx);
+        allNetStatus[netIdx] = router.status;
+    }
+
+     
+                
+            
+
+
+
+
+}//end routeAStarSeq

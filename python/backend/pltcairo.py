@@ -138,16 +138,16 @@ class PltCairo:
             self.ctx.show_text(texts[i])
 
     # x,y coordinations and width and height of boxes
-    def run(self,xs,ys,ws,hs):
+    def run(self,xs,ys,ws,hs,color=(0,0,0),alpha=0.1):
         self.x= np.array(xs)
         self.y= np.array(ys)
 
         self.node_size_x=np.array(ws)
         self.node_size_y=np.array(hs)
        
-        self.draw()
+        self.draw(color,alpha)
 
-    def draw(self):
+    def draw(self,color,alpha):
             # self.ctx.set_font_size(16)
         # self.ctx.select_font_face("monospace", cairo.FONT_SLANT_NORMAL,
         #                         cairo.FONT_WEIGHT_NORMAL)
@@ -169,7 +169,7 @@ class PltCairo:
         # self.ctx.set_line_width(self.line_width *5)
         # self.ctx.set_source_rgba(0, 0, 0.8, alpha=0.5)  # Solid color
         # self.ctx.set_source_rgba(color[0], color[0], color[1], alpha=0.5)  # Solid color
-        # self.ctx.set_source_rgba(color[0], color[0], color[1])  # Solid color
+        self.ctx.set_source_rgba(color[X], color[Y], color[Z],alpha=alpha)  # Solid color
         for i in range(len(self.x)):
             self.ctx.rectangle(self.node_xl[i], self.node_yl[i], \
                             self.node_xh[i] - self.node_xl[i],

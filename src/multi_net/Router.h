@@ -26,6 +26,7 @@ private:
 
     void routeApprx(const vector<int>& netsToRoute);
     void routeApprxCell(const vector<int>& netsToRoute);
+    void routeAStarSeq( vector<int>& netsToRoute);
     void fluteAllAndRoute(const vector<int>& netsToRoute);
     void fluteAllAndRouteCell(const vector<int>& netsToRoute);
 

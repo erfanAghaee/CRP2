@@ -66,10 +66,10 @@ void SingleNetRouter::planMazeRoute(const CongestionMap& congMap) {
 
     bool debug = false;
 
-    if(grNet.getName() == "net10214"){
-        debug = true;
-        log() << "maze: " << grNet.getName() << std::endl;
-    }
+    // if(grNet.getName() == "net10214"){
+    //     debug = true;
+    //     log() << "maze: " << grNet.getName() << std::endl;
+    // }
 
     MazeRoute mazeRouter(tmpNet);
     mazeRouter.constructGridGraph(congMap);

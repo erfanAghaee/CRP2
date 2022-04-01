@@ -103,6 +103,102 @@ void GrDatabase::writeGuidesCSV(std::string filename) {
     fout.close();
 }
 
+
+void GrDatabase::logNets(int iter) {
+    log() << "Writing guides to file..." << std::endl;
+
+    std::stringstream ss;
+    ss << "net_name,l,xl,yl,xh,yh,type" << std::endl;
+
+    auto printGrGuides = [&](std::string net_name, const vector<GrBoxOnLayer>& guides, std::string type) {
+        for (const auto& guide : guides) {
+            ss << net_name << ",";
+            ss << guide.layerIdx << ",";
+            ss << getCoor(guide[X].low, X) << ",";
+            ss << getCoor(guide[Y].low, Y) << ",";
+            ss << getCoor(guide[X].high + 1, X) << ",";
+            ss << getCoor(guide[Y].high + 1, Y) << ",";
+            ss << type << std::endl;
+        }
+    };
+
+    for (const auto& net : grDatabase.nets) {
+        printGrGuides(net.getName(),net.wireRouteGuides,"wire");
+        printGrGuides(net.getName(),net.viaRouteGuides,"via");
+        printGrGuides(net.getName(),net.patchRouteGuides,"patch");
+    }
+    std::string file_name_csv =  db::setting.directory +  db::setting.benchmarkName+ ".net."+std::to_string(iter) + ".csv";
+    std::ofstream fout(file_name_csv);
+    fout << ss.str();
+    fout.close();
+}
+
+
+void GrDatabase::logVio(int iter) {
+    std::stringstream ss;
+    ss << "l,xl,yl,xh,yh,gridline,cp,wireusage,fixedusage,type" << std::endl;
+
+    // wire violations
+    for (int layerIdx = 0; layerIdx < database.getLayerNum(); ++layerIdx) {
+        Dimension dir = database.getLayerDir(layerIdx);
+
+        for (int gridline = 0; gridline < getNumGrPoint(dir); gridline++) {
+            for (int cp = 0; cp < getNumGrEdge(layerIdx); cp++) {
+                double wireUsage = getWireUsage(layerIdx, gridline, cp);
+                double fixedUsage = getFixedUsage(layerIdx, gridline, cp);
+                double numWire = getWireUsage(layerIdx, gridline, cp) + getFixedUsage(layerIdx, gridline, cp);
+                GrEdge tempEdgeNew = GrEdge(layerIdx,gridline,cp);
+
+                double overflow = max(0.0, numWire - getNumTracks(layerIdx, gridline));
+
+                if(overflow>0){
+                    ss    <<  layerIdx
+                          << "," << getCoorIntvl(tempEdgeNew.u,X).low  
+                          << "," << getCoorIntvl(tempEdgeNew.u,Y).low  
+                          << "," << getCoorIntvl(tempEdgeNew.v,X).high 
+                          << "," << getCoorIntvl(tempEdgeNew.v,Y).high 
+                          << "," << gridline
+                          << "," << cp
+                          << "," << wireUsage
+                          << "," << fixedUsage
+                          << ",wire" << std::endl;
+                }
+            }
+        }
+    }
+
+    // via violation
+     vector<double> shortNum(database.getLayerNum() - 1, 0.0);
+    for (int layerIdx = 0; layerIdx < database.getLayerNum() - 1; ++layerIdx) {
+        for (int x = 0; x < getNumGrPoint(X); x++) {
+            for (int y = 0; y < getNumGrPoint(Y); y++) {
+                GrPoint grPoint= GrPoint({layerIdx, x, y});
+                double overflow = getNumVio(GrPoint({layerIdx, x, y}), 0);
+
+                if(overflow>0){
+                    ss    <<  layerIdx
+                          << "," << getCoorIntvl(grPoint,X).low  
+                          << "," << getCoorIntvl(grPoint,Y).low  
+                          << "," << getCoorIntvl(grPoint,X).high 
+                          << "," << getCoorIntvl(grPoint,Y).high 
+                          << "," << x
+                          << "," << y
+                          << "," << -1
+                          << "," << -1
+                          << ",via" << std::endl;
+                }
+                
+            }
+        }
+    }
+
+
+    std::string file_name_csv =  db::setting.directory +  db::setting.benchmarkName+ ".vio."+std::to_string(iter) + ".csv";
+    std::ofstream fout(file_name_csv);
+    fout << ss.str();
+    fout.close();
+}
+
 void GrDatabase::logGCellGrid(){
     
     

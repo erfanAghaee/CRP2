@@ -25,6 +25,29 @@ class GCell:
         window = [x*2000 for x in window]
         self.pltWindow(window)
 
+    def getWindow(self,window,plt_obj,color,alpha):
+        db = self.db
+        die_df = db["die"]
+        cell_df = db["gcell"]
+        args = db["args"]
+        
+        # surface = plt_obj.init(window)
+
+        
+        cell_filter = cell_df.loc[ (cell_df.x >= window[XL] )& (cell_df.x <= window[XH])]
+        
+        cell_filter = cell_filter.loc[ (cell_df.y >= window[YL] )& (cell_df.y <= window[YH])]
+        
+        # txts = cell_filter.cell_name.values
+
+        plt_obj.run(cell_filter.x.values,cell_filter.y.values,\
+                    cell_filter.w.values,cell_filter.h.values,color,alpha)
+
+        # plt_obj.drawText(txts)
+        
+        # return surface
+
+
 
     def pltWindow(self,window):
         db = self.db

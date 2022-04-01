@@ -830,10 +830,10 @@ double GrRouteGrid::printAllVio() const {
 
                 if(overflow>0){
                     GrEdge tempEdge(layerIdx,gridline,cp);         
-                    auto lx = getCoor(tempEdge.lowerGrPoint().x, X)/2000.0;
-                    auto ly = getCoor(tempEdge.lowerGrPoint().y, Y)/2000.0;
-                    auto hx = getCoor(tempEdge.upperGrPoint().x+1, X)/2000.0;
-                    auto hy = getCoor(tempEdge.upperGrPoint().y+1, Y)/2000.0;
+                    auto lx = getCoorIntvl(tempEdge.u,X).low/2000.0;//getCoor(tempEdge.lowerGrPoint().x, X)/2000.0;
+                    auto ly = getCoorIntvl(tempEdge.u,Y).low/2000.0;//getCoor(tempEdge.lowerGrPoint().y, Y)/2000.0;
+                    auto hx = getCoorIntvl(tempEdge.v,X).high/2000.0;//getCoor(tempEdge.upperGrPoint().x+1, X)/2000.0;
+                    auto hy = getCoorIntvl(tempEdge.v,Y).high/2000.0;//getCoor(tempEdge.upperGrPoint().y+1, Y)/2000.0;
 
                     log() << "vio layer: " << layerIdx
                           << ", dir: " << dir
@@ -1417,6 +1417,12 @@ bool GrRouteGrid::hasVio(const GrPoint& via, bool hasCommit) const { return getN
 double GrRouteGrid::getNumVio(const GrNet& net, bool hasCommit) const {
     double numVio = 0;
 
+    bool debug = false;
+
+    // if(net.getName() == "net10214"){
+    //     debug = true;
+    // }
+
     // log() << "getNumVio net: " << net.getName()
     //       << ", wl: " << net.getWirelength() <<  std::endl;
 
@@ -1432,9 +1438,39 @@ double GrRouteGrid::getNumVio(const GrNet& net, bool hasCommit) const {
             numVio = numVio + numVioTmp;
 
             // log() << "numVioTmpWireGuide: "  << numVioTmp << std::endl;
+            if(debug && numVioTmp>0){
+                log() << "important " << std::endl;
+                log() << net.getName() << ","
+                    << guide.layerIdx << ","
+                    << getCoor(guide[X].low, X) << ","
+                    << getCoor(guide[Y].low, Y) << ","
+                    << getCoor(guide[X].high + 1, X) << ","
+                    << getCoor(guide[Y].high + 1, Y) << ", edge: "
+                    << getCoorIntvl(tempEdge.u,X).low << ","
+                    << getCoorIntvl(tempEdge.u,Y).low << ","
+                    << getCoorIntvl(tempEdge.v,X).high << ","
+                    << getCoorIntvl(tempEdge.v,Y).high << ",vio:"
+                    << numVioTmp << std::endl;
+                
+                for(int cp = guide[1 - dir].low; cp < guide[1 - dir].high; cp++){
+                    log() << "l: " << guide.layerIdx
+                          << ", gridline: " << gridline 
+                          << ", cp: " << cp << std::endl;
+                    GrEdge tempEdgeNew = GrEdge(guide.layerIdx,gridline,cp);
+                    log() << "edge: "
+                          << getCoorIntvl(tempEdgeNew.u,X).low << ","
+                          << getCoorIntvl(tempEdgeNew.u,Y).low << ","
+                          << getCoorIntvl(tempEdgeNew.v,X).high << ","
+                          << getCoorIntvl(tempEdgeNew.v,Y).high << std::endl;
+
+                }
+            }
 
 
         }
+
+        
+        
     }
 
     const auto& viaGuides = net.viaRouteGuides;
@@ -1455,6 +1491,12 @@ double GrRouteGrid::getNumVio(const GrNet& net, bool hasCommit) const {
                         
                         numVio = numVio + numVioTmp;
                         // log() << "numVioTmpViaGuide: "  << numVioTmp << std::endl;
+                        if(debug && numVioTmp>0){
+                            log() << "vio:"
+                                << getCoorIntvl(GrPoint(min(viaGuides[g1].layerIdx, viaGuides[g2].layerIdx), x, y), X) << ","
+                                << getCoorIntvl(GrPoint(min(viaGuides[g1].layerIdx, viaGuides[g2].layerIdx), x, y), Y) << ","
+                                << numVioTmp << std::endl;
+                        }
                     }
                         
             }
@@ -1495,12 +1537,19 @@ bool GrRouteGrid::getVioReport(const GrNet& net
                 if(overflow>0)
                     numVio = numVio + 1;
                     if(overflow>0){
-                    log() << "vio layer: " << layerIdx
+                    log() << "violation net: " << net.getName() 
+                          << ", vio layer: " << layerIdx
                           << ", dir: " << dir
                           << ", gridline: " << gridline
                           << ", cp: " << cp
                           << ", numWire: " << numWire
                           << ", getNumTracks(layerIdx, gridline): " << getNumTracks(layerIdx, gridline) << std::endl;
+                    GrEdge tempEdgeNew = GrEdge(box.layerIdx,gridline,cp);
+                    log() << "edge: "
+                          << getCoorIntvl(tempEdgeNew.u,X).low << ","
+                          << getCoorIntvl(tempEdgeNew.u,Y).low << ","
+                          << getCoorIntvl(tempEdgeNew.v,X).high << ","
+                          << getCoorIntvl(tempEdgeNew.v,Y).high << std::endl;
 
                     if(viol_dict.find(std::make_tuple(layerIdx,gridline,cp)) != viol_dict.end()){
                         auto& nets_set = viol_dict[std::make_tuple(layerIdx,gridline,cp)];
@@ -1811,9 +1860,9 @@ void GrRouteGrid::useHistWire(int layerIdx, int gridline, int cp, double usage) 
 }
 
 void GrRouteGrid::fadeHistCost() {
-    if (db::setting.dbVerbose >= +db::VerboseLevelT::MIDDLE) {
-        printlog("Fade hist cost by", db::setting.rrrFadeCoeff, "...");
-    }
+    // if (db::setting.dbVerbose >= +db::VerboseLevelT::MIDDLE) {
+    //     printlog("Fade hist cost by", db::setting.rrrFadeCoeff, "...");
+    // }
     for (int layerIdx = 0; layerIdx < database.getLayerNum(); ++layerIdx) {
         auto dir = database.getLayerDir(layerIdx);
         // wire
@@ -1833,8 +1882,8 @@ void GrRouteGrid::statHistCost() const {
                 for (int cp = 0; cp < getNumGrEdge(layerIdx); ++cp) ++histWireUsage[histWireUsageMap[layerIdx][g][cp]];
             // via
         }
-        printlog("Hist wire usage is", histWireUsage);
-        printlog("Hist via usage is", histViaUsage);
+        // printlog("Hist wire usage is", histWireUsage);
+        // printlog("Hist via usage is", histViaUsage);
     }
 }
 

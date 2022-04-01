@@ -85,9 +85,9 @@ void RouteGrid::clear() {
 }
 
 void RouteGrid::setUnitVioCost(double discount) {
-    if (setting.dbVerbose >= +db::VerboseLevelT::MIDDLE) {
-        printlog("Set unit vio cost with discount of", discount);
-    }
+    // if (setting.dbVerbose >= +db::VerboseLevelT::MIDDLE) {
+    //     printlog("Set unit vio cost with discount of", discount);
+    // }
     bool debug = false;
     if(debug){
         log() << "discount: " << discount << std::endl;
