@@ -20,6 +20,8 @@ public:
     void logGCellGrid();
     void logNets(int iter);
     void logVio(int iter);
+    void logCongestionEdge(int iter);
+    void logCongestion(int iter);
 
     // std::set<int> critical_cells;
 private:

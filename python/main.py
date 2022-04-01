@@ -17,6 +17,7 @@ sys.path.insert(0, import_path)
 from backend.cell import *
 from backend.net import *
 from backend.vio import *
+from backend.fixedMetals import *
 from backend.gcell import *
 from backend.pltcairo import *
 
@@ -44,6 +45,11 @@ def menu(args):
         dtype={"x":'float64',"y":'float64',"w":'float64',"h":"float64"})
     db["die"] = pd.read_csv(args.dir + "misc/" + args.bench + ".die.csv",\
         dtype={"die_xl":'float64',"die_yl":'float64',"die_xh":'float64',"die_yh":"float64"} )
+
+    db["fixedMetals"] = pd.read_csv(args.dir + "misc/" + args.bench + ".fixedMetals.csv",\
+        dtype={"xl":'float64',"yl":'float64',"xh":'float64',"yh":"float64"} )
+
+
     db["args"] = args
     db["gcell"] = pd.read_csv(args.dir + "misc/" + args.bench + ".gcell.csv", \
         dtype={"l":"float64","x":'float64',"y":'float64',"w":'float64',"h":"float64"})
@@ -52,6 +58,9 @@ def menu(args):
         dtype={"x":'float64',"y":'float64',"w":'float64',"h":"float64"})
 
     die_df = db["die"]
+
+
+    fixedMetals_obj = FixedMetals(db)
 
     for i in np.arange(5):
 
@@ -83,23 +92,24 @@ def menu(args):
         # window = [x*2000 for x in window]
         # window = [642000,1164000,1371000,178000]
         # window = [417,582,445,589]
-        window = [417,482,660,589]
-        window = [x*2000 for x in window]
+        # window = [417,562,660,589]
+        # window = [x*2000 for x in window]
 
 
-        # window = [
-        #           die_df["die_xl"].values[0]
-        #         , die_df["die_yl"].values[0]
-        #         , die_df["die_xh"].values[0]
-        #         , die_df["die_yh"].values[0]
-        #     ]
+        window = [
+                  die_df["die_xl"].values[0]
+                , die_df["die_yl"].values[0]
+                , die_df["die_xh"].values[0]
+                , die_df["die_yh"].values[0]
+            ]
 
         plt_obj = PltCairo()
         surface = plt_obj.init(window)
         cell_obj.getWindow(window,plt_obj,(0,0,1),1,text=False)
-        gcell_obj.getWindow(window,plt_obj,(1,0,0),0.001)
+        # gcell_obj.getWindow(window,plt_obj,(1,0,0),0.001)
         net_obj.getWindow("net60637",window,plt_obj,(0,1,0),0.8)
         vio_obj.getWindow(window,plt_obj,(1,0,0),1)
+        fixedMetals_obj.getWindow(window,plt_obj,(0,0,0),1)
         
         # drawVio(plt_obj,(1,0,0),0.9)
         # net_obj.getNet("net2110",window,plt_obj,(0,1,0),1)

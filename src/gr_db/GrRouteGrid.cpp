@@ -1438,7 +1438,7 @@ double GrRouteGrid::getNumVio(const GrNet& net, bool hasCommit) const {
             numVio = numVio + numVioTmp;
 
             // log() << "numVioTmpWireGuide: "  << numVioTmp << std::endl;
-            if(debug && numVioTmp>0){
+            if(numVioTmp>0){
                 log() << "important " << std::endl;
                 log() << net.getName() << ","
                     << guide.layerIdx << ","
@@ -1725,6 +1725,10 @@ double GrRouteGrid::getNumVio(const GrEdge& edge, double selfUsage) const {
             getWireUsage(tempEdge) + selfUsage + getFixedUsage(tempEdge) +
                 sqrt((getInCellViaNum(tempEdge.u) + getInCellViaNum(tempEdge.v)) / 2) * db::setting.unitSqrtViaUsage -
                 getWireCapacity(tempEdge));
+        // numVio += max(
+        //     0.0,
+        //     getWireUsage(tempEdge) + selfUsage + getFixedUsage(tempEdge) -
+        //         getWireCapacity(tempEdge));
 
         // log() << " tempEdge_layerIdx: " << layerIdx 
         //         << ", dir: " << i 

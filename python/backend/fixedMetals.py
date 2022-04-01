@@ -12,7 +12,7 @@ sys.path.insert(0, import_path)
 from backend.pltcairo import *
 from backend.param import *
 
-class Net:
+class FixedMetals:
     def __init__(self,db):
         self.db = db
 
@@ -26,15 +26,18 @@ class Net:
         # window = [x*2000 for x in window]
         # self.pltWindow(window)
 
-    def getWindow(self,net_name,window,plt_obj,color,alpha):
+    def getWindow(self,window,plt_obj,color,alpha):
         db = self.db
         die_df = db["die"]
-        net_df = db["net"]
+        fixedMetals_df = db["fixedMetals"]
         args = db["args"]
         
         # surface = plt_obj.init(window)
+        fixedMetals_filter = fixedMetals_df.loc[ (fixedMetals_df.xl >= window[XL] )& (fixedMetals_df.xh <= window[XH])]
+        fixedMetals_filter = fixedMetals_filter.loc[ (fixedMetals_filter.yl >= window[YL] )& (fixedMetals_filter.yh <= window[YH])]
+        # fixedMetals_filter = fixedMetals_filter.loc[ fixedMetals_filter.l == 0]
        
-        net_filter = net_df.loc[ net_df.net_name == net_name]
+        # net_filter = net_df.loc[ net_df.net_name == net_name]
         # only second layer
         # net_filter = net_filter.loc[net_filter.l == 3]
 
@@ -42,16 +45,16 @@ class Net:
         # net_filter = net_filter.loc[net_filter.type == "wire"]
         # print(net_filter)
 
-        xls = net_filter.xl.values
-        yls = net_filter.yl.values
-        xhs = net_filter.xh.values
-        yhs = net_filter.yh.values
+        xls = fixedMetals_filter.xl.values
+        yls = fixedMetals_filter.yl.values
+        xhs = fixedMetals_filter.xh.values
+        yhs = fixedMetals_filter.yh.values
 
         ws = [np.abs(xhs[i]-xls[i]) for i in np.arange(len(xls))]
         hs = [np.abs(yhs[i]-yls[i]) for i in np.arange(len(yls))]
 
 
-        plt_obj.run(net_filter.xl.values,net_filter.yl.values,\
+        plt_obj.run(xls,yls,\
                     ws,hs,color,alpha)
 
         # plt_obj.drawText(txts)

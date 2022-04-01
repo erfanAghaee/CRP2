@@ -36,6 +36,7 @@ class Vio:
        
         vio_filter = vio_df.loc[ (vio_df.xl >= window[XL] )& (vio_df.xh <= window[XH])]
         vio_filter = vio_filter.loc[ (vio_df.yl >= window[YL] )& (vio_df.yh <= window[YH])]
+        vio_filter = vio_filter.loc[ vio_df.l == 3]
 
         xls = vio_filter.xl.values
         yls = vio_filter.yl.values

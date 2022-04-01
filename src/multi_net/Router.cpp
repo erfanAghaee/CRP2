@@ -207,6 +207,7 @@ void Router::run() {
 
         db::routeStat.clear();
         guideGenStat.reset();
+        congMap.init(cellWidth, cellHeight);   
 
         netsToRoute.clear();
         for (auto& net : grDatabase.nets){
@@ -415,8 +416,8 @@ void Router::run() {
         }
     }
 
-    grDatabase.logNets(iter);
-    grDatabase.logVio(iter);
+    // grDatabase.logNets(iter);
+    // grDatabase.logVio(iter);
 
     profile_time_str << "postProcessing" << "," << std::to_string(profile_time.getTimer()) << std::endl;
 

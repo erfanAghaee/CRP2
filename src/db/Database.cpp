@@ -586,6 +586,8 @@ void Database::markPinAndObsOccupancy() {
     }
 
     markFixedMetalBatch(fixedMetalVec, 0, fixedMetalVec.size());
+
+    logFixedMetals(fixedMetalVec);
 }
 
 void Database::initMTSafeMargin() {
@@ -705,6 +707,26 @@ void Database::logCellLocations(int iter){
     file << stream.str();
     file.close();
 }//end logCellLocations
+
+void Database::logFixedMetals(vector<std::pair<BoxOnLayer, int>>& fixedMetalVec){
+    std::string file_name = db::setting.directory +  db::setting.benchmarkName+ ".fixedMetals.csv";
+    
+    std::ofstream file(file_name);
+    std::stringstream stream;
+    stream << "l,xl,yl,xh,yh" << std::endl;
+
+    for(auto fixedMetal : fixedMetalVec){
+        auto box = fixedMetal.first;
+        stream << box.layerIdx
+               << "," << box.lx()
+               << "," << box.ly()
+               << "," << box.hx()
+               << "," << box.hy()
+               << std::endl;
+    }
+    file << stream.str();
+    file.close();
+}//end logFixedMetals
 
 
 void Database::logDie(){
