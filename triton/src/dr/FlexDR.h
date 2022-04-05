@@ -101,6 +101,8 @@ namespace fr {
     std::vector<std::vector<frCoord> > via2turnMinLen;
 
     std::vector<int>                   numViols;
+    int iter_drc=0;
+    int iter_nets=0;
 
     // others
     void init();
@@ -202,6 +204,7 @@ namespace fr {
 
     // utility
     void reportDRC();
+    void logNets();
   };
 
   class FlexDRWorker;

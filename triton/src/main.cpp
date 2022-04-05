@@ -83,6 +83,8 @@ int readParams(const string &fileName) {
         else if (field == "DR_CRPFixedNetHelper") {DR_CRPFixedNetHelper = value; ++readParamCnt;}
         else if (field == "defFixedNets") {defFixedNets = value; ++readParamCnt;}
         else if (field == "filter_nets_name") {filter_nets_name = value; ++readParamCnt;}
+        else if (field == "benchDir") {benchDir = value; ++readParamCnt;}
+        else if (field == "benchName") {benchName = value; ++readParamCnt;}
       }
     }
     fin.close();
@@ -194,6 +196,14 @@ int main(int argc, char** argv) {
         argv++;
         argc--;
         DRC_RPT_FILE = *argv;
+      } else if (strcmp(*argv, "-benchDir") == 0) {
+        argv++;
+        argc--;
+        benchDir = *argv;
+      } else if (strcmp(*argv, "-benchName") == 0) {
+        argv++;
+        argc--;
+        benchName = *argv;
       } else {
         cout <<"ERROR: Illegal command line option: " <<*argv <<endl;
         return 2;

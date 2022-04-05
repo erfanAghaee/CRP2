@@ -448,62 +448,69 @@ void GrDatabase::reportRL(std::string filename){
 }//end reportRL
 
 void GrDatabase::logCongestionEdge(int iter){
-    //   std::stringstream ss;
-    // ss << "l,gridline,cp,xl,yl,xh,yh,wireUsage,fixedUsage,viaUsage,numTracks,overflow" << std::endl;
+      std::stringstream ss;
+    ss << "l,xl,yl,xh,yh,gridline,cp,wireUsage,fixedUsage,viaUsage,numTracks,overflow" << std::endl;
 
-    // // wire violations
-    // for (int layerIdx = 0; layerIdx < database.getLayerNum(); ++layerIdx) {
-    //     Dimension dir = database.getLayerDir(layerIdx);
+    for (int layerIdx = 0; layerIdx < database.getLayerNum(); ++layerIdx) {
+        Dimension dir = database.getLayerDir(layerIdx);
 
-    //     for (int gridline = 0; gridline < getNumGrPoint(dir); gridline++) {
-    //         for (int cp = 0; cp < getNumGrEdge(layerIdx); cp++) {
-    //             GrEdge tempEdge(layerIdx, gridline, cp);
+        for (int gridline = 0; gridline < getNumGrPoint(dir); gridline++) {
+            for (int cp = 0; cp < getNumGrEdge(layerIdx); cp++) {
+                GrEdge edge(layerIdx, gridline, cp);
 
-    //             // double wireUsage = getWireUsage(tempEdge); 
-    //             // double fixedUsage = getFixedUsage(tempEdge);
-    //             // double viaUsage = sqrt((getInCellViaNum(tempEdge.u) + getInCellViaNum(tempEdge.v)) / 2) * db::setting.unitSqrtViaUsage;
-    //             // double capacity = getWireCapacity(tempEdge);
-                 
-    //             // double numWire = wireUsage + fixedUsage + viaUsage ;
+                for (int i = edge.u[1 - dir]; i < edge.v[1 - dir]; i++){
+                    GrEdge tempEdge(layerIdx, gridline, i);
+                    double wireUsage = getWireUsage(tempEdge); 
+                    double fixedUsage = getFixedUsage(tempEdge);
+                    double viaUsage = sqrt((getInCellViaNum(tempEdge.u) + getInCellViaNum(tempEdge.v)) / 2) * db::setting.unitSqrtViaUsage;
+                    double capacity = getWireCapacity(tempEdge);
+                    
+                    double numWire = wireUsage + fixedUsage + viaUsage ;
+                    // double numWire = wireUsage + fixedUsage ;
 
-    //             // double overflow = max(0.0, numWire - capacity);
+                    double overflow = max(0.0, numWire - capacity);
 
-    //             double wireUsage = getWireUsage(layerIdx, gridline, cp);
-    //             double fixedUsage = getFixedUsage(layerIdx, gridline, cp);
-    //             double numWire = getWireUsage(layerIdx, gridline, cp) + getFixedUsage(layerIdx, gridline, cp);
-    //             GrEdge tempEdgeNew = GrEdge(layerIdx,gridline,cp);
+                    // double wireUsage = getWireUsage(layerIdx, gridline, cp);
+                    // double fixedUsage = getFixedUsage(layerIdx, gridline, cp);
+                    // double numWire = getWireUsage(layerIdx, gridline, cp) + getFixedUsage(layerIdx, gridline, cp);
+                    // GrEdge tempEdgeNew = GrEdge(layerIdx,gridline,cp);
 
-    //             double overflow = max(0.0, numWire - getNumTracks(layerIdx, gridline));
+                    // double overflow = max(0.0, numWire - getNumTracks(layerIdx, gridline));
 
-    //             if(overflow>0){
-    //                 ss    <<  layerIdx
-    //                       << "," << gridline
-    //                       << "," << cp
-    //                       << "," << getCoorIntvl(tempEdge.u,X).low  
-    //                       << "," << getCoorIntvl(tempEdge.u,Y).low  
-    //                       << "," << getCoorIntvl(tempEdge.v,X).high 
-    //                       << "," << getCoorIntvl(tempEdge.v,Y).high 
-    //                       << "," << wireUsage
-    //                       << "," << fixedUsage
-    //                       << "," << viaUsage
-    //                       << "," << getNumTracks(layerIdx, gridline)
-    //                       << "," << overflow << std::endl;
-    //             }
-    //         }
-    //     }
-    // }
+                    
+                    ss    <<  layerIdx
+                        << "," << getCoorIntvl(tempEdge.u,X).low  
+                        << "," << getCoorIntvl(tempEdge.u,Y).low  
+                        << "," << getCoorIntvl(tempEdge.v,X).high 
+                        << "," << getCoorIntvl(tempEdge.v,Y).high 
+                        << "," << gridline
+                        << "," << cp
+                        << "," << wireUsage
+                        << "," << fixedUsage
+                        << "," << viaUsage
+                        << "," << capacity
+                        << "," << overflow << std::endl;
+                    
+
+                }
+
+                
+            }
+        }
+    }
 
 
-    // std::string file_name_csv =  db::setting.directory +  db::setting.benchmarkName+ ".congestion.edge."+std::to_string(iter) + ".csv";
-    // std::ofstream fout(file_name_csv);
-    // fout << ss.str();
-    // fout.close();
+
+    std::string file_name_csv =  db::setting.directory +  db::setting.benchmarkName+ ".congestion.edge."+std::to_string(iter) + ".csv";
+    std::ofstream fout(file_name_csv);
+    fout << ss.str();
+    fout.close();
 }
 
 
 void GrDatabase::logCongestion(int iter){
 
-  
+  logCongestionEdge(iter);
 
 }//end logCongestion
 

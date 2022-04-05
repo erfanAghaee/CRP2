@@ -1,5 +1,6 @@
 
 
+from email.policy import default
 import os
 import sys
 import pandas as pd
@@ -13,8 +14,9 @@ from backend.pltcairo import *
 from backend.param import *
 
 class Net:
-    def __init__(self,db):
+    def __init__(self,db,type):
         self.db = db
+        self.type = type
 
 
     def run(self):
@@ -26,17 +28,23 @@ class Net:
         # window = [x*2000 for x in window]
         # self.pltWindow(window)
 
-    def getWindow(self,net_name,window,plt_obj,color,alpha):
+    def getWindow(self,window,plt_obj,color,alpha,net_name="default",l=-1):
         db = self.db
         die_df = db["die"]
-        net_df = db["net"]
+        net_df = db[self.type]
         args = db["args"]
         
         # surface = plt_obj.init(window)
+        # net_filter = net_df.copy()
+
+        net_filter = net_df.loc[ (net_df.xl >= window[XL] )& (net_df.xh <= window[XH])]
+        net_filter = net_filter.loc[ (net_df.yl >= window[YL] )& (net_df.yh <= window[YH])]
        
-        net_filter = net_df.loc[ net_df.net_name == net_name]
+        if(net_name != "default"):
+            net_filter = net_df.loc[ net_df.net_name == net_name]
         # only second layer
-        # net_filter = net_filter.loc[net_filter.l == 3]
+        if (l != -1):
+            net_filter = net_filter.loc[net_filter.l == l]
 
         # # only wire
         # net_filter = net_filter.loc[net_filter.type == "wire"]
@@ -47,8 +55,13 @@ class Net:
         xhs = net_filter.xh.values
         yhs = net_filter.yh.values
 
-        ws = [np.abs(xhs[i]-xls[i]) for i in np.arange(len(xls))]
-        hs = [np.abs(yhs[i]-yls[i]) for i in np.arange(len(yls))]
+        w = 0
+        if(self.type == "drnet"):
+            w = 100
+        
+
+        ws = [np.abs(xhs[i]-xls[i]+w) for i in np.arange(len(xls))]
+        hs = [np.abs(yhs[i]-yls[i]+w) for i in np.arange(len(yls))]
 
 
         plt_obj.run(net_filter.xl.values,net_filter.yl.values,\

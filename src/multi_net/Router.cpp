@@ -202,8 +202,7 @@ void Router::run() {
             netsToRouteTmp2.push_back(idx);
             routeAStarSeq(netsToRouteTmp2);
         }
-        grDatabase.logNets(iter);
-        grDatabase.logVio(iter);
+        
 
         db::routeStat.clear();
         guideGenStat.reset();
@@ -416,8 +415,9 @@ void Router::run() {
         }
     }
 
-    // grDatabase.logNets(iter);
-    // grDatabase.logVio(iter);
+    grDatabase.logNets(iter);
+    grDatabase.logVio(iter);
+    grDatabase.logCongestion(iter);
 
     profile_time_str << "postProcessing" << "," << std::to_string(profile_time.getTimer()) << std::endl;
 
@@ -929,6 +929,7 @@ void Router::routeApprx(const vector<int>& netsToRoute) {
         // log() << "netsToRoute after flute: " << netsToRoute.size() << std::endl;
         grDatabase.logNets(iter);
         grDatabase.logVio(iter);
+        grDatabase.logCongestion(iter);
     } else {
         
         vector<SingleNetRouter> routers;
@@ -955,6 +956,7 @@ void Router::routeApprx(const vector<int>& netsToRoute) {
         }
         grDatabase.logNets(iter);
         grDatabase.logVio(iter);
+        grDatabase.logCongestion(iter);
         // log() << "netsToRoute after maze: " << netsToRoute.size() << std::endl;
     }
 }

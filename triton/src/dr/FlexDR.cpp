@@ -1704,6 +1704,7 @@ void FlexDR::searchRepair(int iter, int size, int offset, int mazeEndIter,
   cout << "number of violations by erfan: " << getDesign()->getTopBlock()->getNumMarkers() << std::endl;
 
   reportDRC();
+  logNets();
 
 }
 
@@ -2263,115 +2264,231 @@ void FlexDR::getReport() {
   
 }//end getReport
 
+void FlexDR::logNets(){
+  std::stringstream ss;
+  ss << "net_name,l,xl,yl,xh,yh,type" << std::endl;
+
+
+  for (auto &net: getDesign()->getTopBlock()->getNets()) { 
+      for (auto &shape: net->getShapes()) {
+        frPoint bp, ep;
+        if (shape->typeId() == frcPathSeg) {
+          auto obj = static_cast<frPathSeg*>(shape.get());
+          obj->getPoints(bp, ep);
+          auto lNum = obj->getLayerNum()/2 - 1;
+          ss << net->getName() 
+             << "," << lNum
+             << "," << bp.x()
+             << "," << bp.y()
+             << "," << ep.x()
+             << "," << ep.y()
+             << ",wire" << std::endl;
+        }
+      }//end loop shapes
+
+
+      for (auto &connFig: net->getVias()) {
+        frPoint bp, ep;
+        if (connFig->typeId() == frcVia) {
+          auto via = static_cast<frVia*>(connFig.get());
+          frBox frb;
+          frTransform xform;
+          frPoint origin;
+          via->getOrigin(origin);
+          xform.set(origin);
+          auto lNum1 = via->getViaDef()->getLayer1Num();
+          auto lNum2 = via->getViaDef()->getLayer2Num();
+          for (auto &uShape: via->getViaDef()->getLayer1Figs()) {
+            auto shape_tmp = uShape.get();
+            if (shape_tmp->typeId() == frcRect) {
+              shape_tmp->getBBox(frb);
+              frb.transform(xform);
+              ss << net->getName() 
+                << "," << lNum1/2 - 1
+                << "," << frb.left()
+                << "," << frb.bottom()
+                << "," << frb.right()
+                << "," << frb.top()
+                << ",via" << std::endl;
+            } 
+          }
+          for (auto &uShape: via->getViaDef()->getLayer2Figs()) {
+            auto shape_tmp = uShape.get();
+            if (shape_tmp->typeId() == frcRect) {
+              shape_tmp->getBBox(frb);
+              frb.transform(xform);
+              ss << net->getName() 
+                << "," << lNum2/2 - 1
+                << "," << frb.left()
+                << "," << frb.bottom()
+                << "," << frb.right()
+                << "," << frb.top()
+                << ",via" << std::endl;
+            } 
+          }
+          
+        } //end if frcVia
+      }
+      for (auto it = net->getPatchWires().begin(); it != net->getPatchWires().end();) {
+        frPoint bp, ep;
+        auto obj = static_cast<frPatchWire*>(it->get());
+        it++;
+        obj->getOrigin(bp);
+        frTransform xform;
+        xform.set(bp);
+        frBox frb;
+        auto lNum = obj->getLayerNum();
+        obj->getBBox(frb);
+        frb.transform(xform);
+        ss << net->getName() 
+            << "," << lNum/2 - 1
+            << "," << frb.left()
+            << "," << frb.bottom()
+            << "," << frb.right()
+            << "," << frb.top()
+            << ",patch" << std::endl;
+      }
+
+
+  }//end loop nets
+
+
+
+    // ss <<design->getTopBlock()->getName() 
+    //    <<", " << hpwl
+    //    <<", " << std::to_string(totWlen / getDesign()->getTopBlock()->getDBUPerUU())
+    //    <<", " << std::to_string(totSCut + totMCut)
+    //    <<", " << std::to_string(getDesign()->getTopBlock()->getNumMarkers())  <<endl;
+
+    // std::cout << "OUT_FILE: " << OUT_FILE
+    //           << ", design->getTopBlock()->getName(): " << design->getTopBlock()->getName() << std::endl;
+    std::string file_name = benchDir +  benchName+ ".dr.net."+std::to_string(iter_nets)+".csv";
+    std::ofstream fout(file_name);
+    fout << ss.str();
+    fout.close();
+    iter_nets++;
+
+}//end logNets
+
 void FlexDR::reportDRC() {
   double dbu = design->getTech()->getDBUPerUU();
 
-  if (DRC_RPT_FILE == string("")) {
-    if (VERBOSE > 0) {
-      cout <<"Waring: no DRC report specified, skipped writing DRC report" <<endl;
+  // if (DRC_RPT_FILE == string("")) {
+  //   if (VERBOSE > 0) {
+  //     cout <<"Waring: no DRC report specified, skipped writing DRC report" <<endl;
+  //   }
+  //   return;
+  // }
+  // cout << "DRC_RPT_FILE: " << DRC_RPT_FILE << "\n";
+  // ofstream drcRpt(DRC_RPT_FILE.c_str());
+  std::stringstream drcRpt;
+  drcRpt << "type,src,xl,yl,xh,yh,l" << std::endl;
+  
+  for (auto &marker: getDesign()->getTopBlock()->getMarkers()) {
+    auto con = marker->getConstraint();
+    if (con) {
+      if (con->typeId() == frConstraintTypeEnum::frcShortConstraint) {
+        if (getTech()->getLayer(marker->getLayerNum())->getType() == frLayerTypeEnum::ROUTING) {
+          drcRpt <<"Short";
+        } else if (getTech()->getLayer(marker->getLayerNum())->getType() == frLayerTypeEnum::CUT) {
+          drcRpt <<"CShort";
+        }
+      } else if (con->typeId() == frConstraintTypeEnum::frcMinWidthConstraint) {
+        drcRpt <<"MinWid";
+      } else if (con->typeId() == frConstraintTypeEnum::frcSpacingConstraint) {
+        drcRpt <<"MetSpc";
+      } else if (con->typeId() == frConstraintTypeEnum::frcSpacingEndOfLineConstraint) {
+        drcRpt <<"EOLSpc";
+      } else if (con->typeId() == frConstraintTypeEnum::frcSpacingTablePrlConstraint) {
+        drcRpt <<"MetSpc";
+      } else if (con->typeId() == frConstraintTypeEnum::frcCutSpacingConstraint) {
+        drcRpt <<"CutSpc";
+      } else if (con->typeId() == frConstraintTypeEnum::frcMinStepConstraint) {
+        drcRpt <<"MinStp";
+      } else if (con->typeId() == frConstraintTypeEnum::frcNonSufficientMetalConstraint) {
+        drcRpt <<"NSMet";
+      } else if (con->typeId() == frConstraintTypeEnum::frcSpacingSamenetConstraint) {
+        drcRpt <<"MetSpc";
+      } else if (con->typeId() == frConstraintTypeEnum::frcOffGridConstraint) {
+        drcRpt <<"OffGrid";
+      } else if (con->typeId() == frConstraintTypeEnum::frcMinEnclosedAreaConstraint) {
+        drcRpt <<"MinHole";
+      } else if (con->typeId() == frConstraintTypeEnum::frcAreaConstraint) {
+        drcRpt <<"MinArea";
+      } else if (con->typeId() == frConstraintTypeEnum::frcLef58CornerSpacingConstraint) {
+        drcRpt <<"CornerSpc";
+      } else if (con->typeId() == frConstraintTypeEnum::frcLef58CutSpacingConstraint) {
+        drcRpt <<"CutSpc";
+      } else if (con->typeId() == frConstraintTypeEnum::frcLef58RectOnlyConstraint) {
+        drcRpt <<"RectOnly";
+      } else if (con->typeId() == frConstraintTypeEnum::frcLef58RightWayOnGridOnlyConstraint) {
+        drcRpt <<"RightWayOnGridOnly";
+      } else if (con->typeId() == frConstraintTypeEnum::frcLef58MinStepConstraint) {
+        drcRpt <<"MinStp";
+      } else {
+        drcRpt << "unknown";
+      }
+    } else {
+      drcRpt << "nullptr";
     }
-    return;
-  }
-  cout << "DRC_RPT_FILE: " << DRC_RPT_FILE << "\n";
-  ofstream drcRpt(DRC_RPT_FILE.c_str());
-  drcRpt << "type,srcs,box,layer" << std::endl;
-  if (drcRpt.is_open()) {
-    for (auto &marker: getDesign()->getTopBlock()->getMarkers()) {
-      auto con = marker->getConstraint();
-      if (con) {
-        if (con->typeId() == frConstraintTypeEnum::frcShortConstraint) {
-          if (getTech()->getLayer(marker->getLayerNum())->getType() == frLayerTypeEnum::ROUTING) {
-            drcRpt <<"Short";
-          } else if (getTech()->getLayer(marker->getLayerNum())->getType() == frLayerTypeEnum::CUT) {
-            drcRpt <<"CShort";
+    // drcRpt <<endl;
+    // get source(s) of violation
+    drcRpt << ",";
+    for (auto src: marker->getSrcs()) {
+      if (src) {
+        switch (src->typeId()) {
+          case frcNet:
+            drcRpt << (static_cast<frNet*>(src))->getName() << " ";
+            break;
+          case frcInstTerm: {
+            frInstTerm* instTerm = (static_cast<frInstTerm*>(src));
+            drcRpt <<instTerm->getInst()->getName() <<"/" <<instTerm->getTerm()->getName() << " ";
+            break;
           }
-        } else if (con->typeId() == frConstraintTypeEnum::frcMinWidthConstraint) {
-          drcRpt <<"MinWid";
-        } else if (con->typeId() == frConstraintTypeEnum::frcSpacingConstraint) {
-          drcRpt <<"MetSpc";
-        } else if (con->typeId() == frConstraintTypeEnum::frcSpacingEndOfLineConstraint) {
-          drcRpt <<"EOLSpc";
-        } else if (con->typeId() == frConstraintTypeEnum::frcSpacingTablePrlConstraint) {
-          drcRpt <<"MetSpc";
-        } else if (con->typeId() == frConstraintTypeEnum::frcCutSpacingConstraint) {
-          drcRpt <<"CutSpc";
-        } else if (con->typeId() == frConstraintTypeEnum::frcMinStepConstraint) {
-          drcRpt <<"MinStp";
-        } else if (con->typeId() == frConstraintTypeEnum::frcNonSufficientMetalConstraint) {
-          drcRpt <<"NSMet";
-        } else if (con->typeId() == frConstraintTypeEnum::frcSpacingSamenetConstraint) {
-          drcRpt <<"MetSpc";
-        } else if (con->typeId() == frConstraintTypeEnum::frcOffGridConstraint) {
-          drcRpt <<"OffGrid";
-        } else if (con->typeId() == frConstraintTypeEnum::frcMinEnclosedAreaConstraint) {
-          drcRpt <<"MinHole";
-        } else if (con->typeId() == frConstraintTypeEnum::frcAreaConstraint) {
-          drcRpt <<"MinArea";
-        } else if (con->typeId() == frConstraintTypeEnum::frcLef58CornerSpacingConstraint) {
-          drcRpt <<"CornerSpc";
-        } else if (con->typeId() == frConstraintTypeEnum::frcLef58CutSpacingConstraint) {
-          drcRpt <<"CutSpc";
-        } else if (con->typeId() == frConstraintTypeEnum::frcLef58RectOnlyConstraint) {
-          drcRpt <<"RectOnly";
-        } else if (con->typeId() == frConstraintTypeEnum::frcLef58RightWayOnGridOnlyConstraint) {
-          drcRpt <<"RightWayOnGridOnly";
-        } else if (con->typeId() == frConstraintTypeEnum::frcLef58MinStepConstraint) {
-          drcRpt <<"MinStp";
-        } else {
-          drcRpt << "unknown";
-        }
-      } else {
-        drcRpt << "nullptr";
-      }
-      // drcRpt <<endl;
-      // get source(s) of violation
-      drcRpt << ",";
-      for (auto src: marker->getSrcs()) {
-        if (src) {
-          switch (src->typeId()) {
-            case frcNet:
-              drcRpt << (static_cast<frNet*>(src))->getName() << " ";
-              break;
-            case frcInstTerm: {
-              frInstTerm* instTerm = (static_cast<frInstTerm*>(src));
-              drcRpt <<instTerm->getInst()->getName() <<"/" <<instTerm->getTerm()->getName() << " ";
-              break;
-            }
-            case frcTerm: {
-              frTerm* term = (static_cast<frTerm*>(src));
-              drcRpt <<"PIN/" << term->getName() << " ";
-              break;
-            }
-            case frcInstBlockage: {
-              frInstBlockage* instBlockage = (static_cast<frInstBlockage*>(src));
-              drcRpt <<instBlockage->getInst()->getName() <<"/OBS" << " ";
-              break;
-            }
-            case frcBlockage: {
-              drcRpt << "PIN/OBS" << " ";
-              break;
-            }
-            default:
-              std::cout << "Error: unexpected src type in marker\n";
+          case frcTerm: {
+            frTerm* term = (static_cast<frTerm*>(src));
+            drcRpt <<"PIN/" << term->getName() << " ";
+            break;
           }
+          case frcInstBlockage: {
+            frInstBlockage* instBlockage = (static_cast<frInstBlockage*>(src));
+            drcRpt <<instBlockage->getInst()->getName() <<"/OBS" << " ";
+            break;
+          }
+          case frcBlockage: {
+            drcRpt << "PIN/OBS" << " ";
+            break;
+          }
+          default:
+            std::cout << "Error: unexpected src type in marker\n";
         }
-      }
-      drcRpt << ",";
-      // get violation bbox
-      frBox bbox;
-      marker->getBBox(bbox);
-      drcRpt << bbox.left() / dbu << " " << bbox.bottom() / dbu << " "
-             << bbox.right() / dbu << " " << bbox.top() / dbu << ",";
-      if (getTech()->getLayer(marker->getLayerNum())->getType() == frLayerTypeEnum::CUT && 
-          marker->getLayerNum() - 1 >= getTech()->getBottomLayerNum()) {
-        drcRpt << getTech()->getLayer(marker->getLayerNum() - 1)->getName() << "\n";
-      } else {
-        drcRpt << getTech()->getLayer(marker->getLayerNum())->getName() << "\n";
       }
     }
-  } else {
-    cout << "Error: Fail to open DRC report file\n";
+    drcRpt << ",";
+    // get violation bbox
+    frBox bbox;
+    marker->getBBox(bbox);
+    drcRpt << bbox.left() << "," << bbox.bottom() << ","
+            << bbox.right() << "," << bbox.top() << ",";
+    if (getTech()->getLayer(marker->getLayerNum())->getType() == frLayerTypeEnum::CUT && 
+        marker->getLayerNum() - 1 >= getTech()->getBottomLayerNum()) {
+      // drcRpt << getTech()->getLayer(marker->getLayerNum() - 1)->getName() << "\n";
+      drcRpt << (marker->getLayerNum()/2) - 1 << "\n";
+    } else {
+      // drcRpt << getTech()->getLayer(marker->getLayerNum())->getName() << "\n";
+      drcRpt << (marker->getLayerNum()/2)-1 << "\n";
+    }
   }
+
+
+  std::string file_name_csv =  benchDir +  benchName+ ".dr.drc."+std::to_string(iter_drc)+".csv";
+  // std::cout << "log name: " << file_name_csv << std::endl;
+  std::ofstream fout(file_name_csv);
+  fout << drcRpt.str();
+  fout.close();
+
+
+  iter_drc++;
   
 }
 

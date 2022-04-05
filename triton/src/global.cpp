@@ -41,6 +41,8 @@ string OUT_FILE;
 string REF_OUT_FILE;
 string OUT_MAZE_FILE;
 string DRC_RPT_FILE;
+string benchDir;
+string benchName;
 
 // to be removed
 int OR_SEED = -1;

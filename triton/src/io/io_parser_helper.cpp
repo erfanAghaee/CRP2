@@ -732,6 +732,8 @@ void io::Parser::postProcessGuide() {
     writeGuideFile();
   }
 
+  logGuidePostprocessing();
+
 }
 
 void io::Parser::buildGCellPatterns_helper(frCoord &GCELLGRIDX, frCoord &GCELLGRIDY,
@@ -965,3 +967,69 @@ void io::Parser::writeGuideFile() {
     }
   }
 }
+
+void io::Parser::logGuidePostprocessing(){
+  std::stringstream ss;
+  ss << "net_name,l,xl,yl,xh,yh,type" << std::endl;
+  
+  for (auto &net: design->topBlock->getNets()) {
+    auto netName = net->getName();
+
+    for (auto &guide: net->getGuides()) {
+      frPoint bp, ep;
+      guide->getPoints(bp, ep);
+      frPoint bpIdx, epIdx;
+      design->getTopBlock()->getGCellIdx(bp, bpIdx);
+      design->getTopBlock()->getGCellIdx(ep, epIdx);
+      frBox bbox, ebox;
+      design->getTopBlock()->getGCellBox(bpIdx, bbox);
+      design->getTopBlock()->getGCellBox(epIdx, ebox);
+      frLayerNum bNum = guide->getBeginLayerNum();
+      frLayerNum eNum = guide->getEndLayerNum();
+      // append unit guide in case of stacked via
+      if (bNum != eNum) {
+        auto startLayerName = tech->getLayer(bNum)->getLayerNum()/2 - 1;
+        auto endLayerName = tech->getLayer(eNum)->getLayerNum()/2 - 1;
+        // outputGuide << bbox.left()  << " " << bbox.bottom() << " "
+        //             << bbox.right() << " " << bbox.top()    << " "
+        //             << startLayerName <<".5" << endl;
+
+        
+        for(int layerName = startLayerName; layerName <= endLayerName; layerName++ ){
+          ss << netName
+             << "," << layerName
+             << "," <<  bbox.left()
+             << "," <<  bbox.bottom()
+             << "," <<  bbox.right()
+             << "," <<  bbox.top()
+             << ", -1" << std::endl;
+        }
+        
+        
+      } else {
+        auto layerName = tech->getLayer(bNum)->getLayerNum()/2 - 1;
+        // outputGuide << bbox.left()  << " " << bbox.bottom() << " "
+        //             << ebox.right() << " " << ebox.top()    << " "
+        //             << layerName << endl;
+        ss << netName
+             << "," <<  layerName
+             << "," <<  bbox.left()
+             << "," <<  bbox.bottom()
+             << "," <<  ebox.right()
+             << "," <<  ebox.top()
+             << ", -1" << std::endl;
+      }
+
+    
+    }//end guide loop
+    
+  }//end net loop
+
+
+  std::string file_name_csv =  benchDir +  benchName+ ".dr.guide.csv";
+  std::cout << "log name: " << file_name_csv << std::endl;
+  std::ofstream fout(file_name_csv);
+  fout << ss.str();
+  fout.close();
+
+}//end logGuidePostprocessing

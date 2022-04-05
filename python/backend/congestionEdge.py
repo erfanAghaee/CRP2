@@ -12,7 +12,7 @@ sys.path.insert(0, import_path)
 from backend.pltcairo import *
 from backend.param import *
 
-class FixedMetals:
+class CongestionEdge:
     def __init__(self,db):
         self.db = db
 
@@ -29,27 +29,41 @@ class FixedMetals:
     def getWindow(self,window,plt_obj,color,alpha,l=-1):
         db = self.db
         die_df = db["die"]
-        fixedMetals_df = db["fixedMetals"]
+        congestion_df = db["congestion"]
         args = db["args"]
         
         # surface = plt_obj.init(window)
-        fixedMetals_filter = fixedMetals_df.loc[ (fixedMetals_df.xl >= window[XL] )& (fixedMetals_df.xh <= window[XH])]
-        fixedMetals_filter = fixedMetals_filter.loc[ (fixedMetals_filter.yl >= window[YL] )& (fixedMetals_filter.yh <= window[YH])]
-        if(l != -1):
-            fixedMetals_filter = fixedMetals_filter.loc[ fixedMetals_filter.l == l]
        
-        # net_filter = net_df.loc[ net_df.net_name == net_name]
-        # only second layer
-        # net_filter = net_filter.loc[net_filter.l == 3]
+        congestion_filter = congestion_df.loc[ (congestion_df.xl >= window[XL] )& (congestion_df.xh <= window[XH])]
+        congestion_filter = congestion_filter.loc[ (congestion_df.yl >= window[YL] )& (congestion_df.yh <= window[YH])]
+        if(l != -1):
+            congestion_filter = congestion_filter.loc[ congestion_df.l == l]
 
-        # # only wire
-        # net_filter = net_filter.loc[net_filter.type == "wire"]
-        # print(net_filter)
 
-        xls = fixedMetals_filter.xl.values
-        yls = fixedMetals_filter.yl.values
-        xhs = fixedMetals_filter.xh.values
-        yhs = fixedMetals_filter.yh.values
+        txts_wireUsage = congestion_filter.wireUsage.values
+        txts_fixedUsage = congestion_filter.fixedUsage.values
+        txts_viaUsage = congestion_filter.viaUsage.values
+        txts_numTracks = congestion_filter.numTracks.values
+        txts = []
+
+        for i in np.arange(len(txts_wireUsage)):
+            # txt = "w:{},f:{}\nv:{},t:{}\nr:{}".format(txts_wireUsage[i],\
+            #     txts_fixedUsage[i],\
+            #     txts_viaUsage[i],\
+            #     txts_numTracks[i])
+            txt = "{:.2f}".format(txts_wireUsage[i]+txts_fixedUsage[i]+txts_viaUsage[i]-txts_numTracks[i])
+                
+            txts.append(txt)
+        
+        # txts = [str(s) for s in np.arange(len(txts_wireUsage))]
+
+        # txts = [txts[i]+"/"+str(txts_viaUsage[i]) \
+        #     for i in np.arange(len(txts_viaUsage))]
+
+        xls = congestion_filter.xl.values
+        yls = congestion_filter.yl.values
+        xhs = congestion_filter.xh.values
+        yhs = congestion_filter.yh.values
 
         ws = [np.abs(xhs[i]-xls[i]) for i in np.arange(len(xls))]
         hs = [np.abs(yhs[i]-yls[i]) for i in np.arange(len(yls))]
@@ -58,7 +72,7 @@ class FixedMetals:
         plt_obj.run(xls,yls,\
                     ws,hs,color,alpha)
 
-        # plt_obj.drawText(txts)
+        plt_obj.drawText(txts,color=(1,1,1),font=12)
         
         # return surface
 

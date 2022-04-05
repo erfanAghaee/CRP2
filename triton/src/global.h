@@ -46,6 +46,8 @@ extern std::string DBPROCESSNODE;
 extern std::string OUT_MAZE_FILE;
 extern std::string DRC_RPT_FILE;
 extern std::string defFixedNets;
+extern std::string benchDir;
+extern std::string benchName;
 // to be removed
 extern int OR_SEED;
 extern double OR_K;

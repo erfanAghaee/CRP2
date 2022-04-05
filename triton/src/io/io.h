@@ -69,6 +69,9 @@ namespace fr {
       void printNodeMap(std::map<std::pair<frPoint, frLayerNum>, std::set<int> > &nodeMap);
       void printRects(std::vector<frRect> &rects);
 
+
+      void logGuidePostprocessing();
+
     protected:
       void readLef();
       void readDef();
@@ -139,6 +142,7 @@ namespace fr {
 
       // postProcessGuide functions
       void genGuides(frNet* net, std::vector<frRect> &rects);
+      // void genGuidesV2(frNet* net, std::vector<frRect> &rects);
       void genGuides_addCoverGuide(frNet* net, std::vector<frRect> &rects);
       void genGuides_merge(std::vector<frRect> &rects, std::vector<std::map<frCoord, boost::icl::interval_set<frCoord> > > &intvs);
       void genGuides_split(std::vector<frRect> &rects, std::vector<std::map<frCoord, boost::icl::interval_set<frCoord> > > &intvs,

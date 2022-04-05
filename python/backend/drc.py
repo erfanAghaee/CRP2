@@ -12,7 +12,7 @@ sys.path.insert(0, import_path)
 from backend.pltcairo import *
 from backend.param import *
 
-class FixedMetals:
+class DRC:
     def __init__(self,db):
         self.db = db
 
@@ -29,27 +29,20 @@ class FixedMetals:
     def getWindow(self,window,plt_obj,color,alpha,l=-1):
         db = self.db
         die_df = db["die"]
-        fixedMetals_df = db["fixedMetals"]
+        drc_df = db["drc"]
         args = db["args"]
         
         # surface = plt_obj.init(window)
-        fixedMetals_filter = fixedMetals_df.loc[ (fixedMetals_df.xl >= window[XL] )& (fixedMetals_df.xh <= window[XH])]
-        fixedMetals_filter = fixedMetals_filter.loc[ (fixedMetals_filter.yl >= window[YL] )& (fixedMetals_filter.yh <= window[YH])]
-        if(l != -1):
-            fixedMetals_filter = fixedMetals_filter.loc[ fixedMetals_filter.l == l]
        
-        # net_filter = net_df.loc[ net_df.net_name == net_name]
-        # only second layer
-        # net_filter = net_filter.loc[net_filter.l == 3]
+        drc_filter = drc_df.loc[ (drc_df.xl >= window[XL] )& (drc_df.xh <= window[XH])]
+        drc_filter = drc_filter.loc[ (drc_df.yl >= window[YL] )& (drc_df.yh <= window[YH])]
+        if(l != -1):
+            drc_filter = drc_filter.loc[ drc_df.l == l]
 
-        # # only wire
-        # net_filter = net_filter.loc[net_filter.type == "wire"]
-        # print(net_filter)
-
-        xls = fixedMetals_filter.xl.values
-        yls = fixedMetals_filter.yl.values
-        xhs = fixedMetals_filter.xh.values
-        yhs = fixedMetals_filter.yh.values
+        xls = drc_filter.xl.values
+        yls = drc_filter.yl.values
+        xhs = drc_filter.xh.values
+        yhs = drc_filter.yh.values
 
         ws = [np.abs(xhs[i]-xls[i]) for i in np.arange(len(xls))]
         hs = [np.abs(yhs[i]-yls[i]) for i in np.arange(len(yls))]
