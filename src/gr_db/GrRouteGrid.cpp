@@ -489,7 +489,22 @@ double GrRouteGrid::getCellResource(int layerIdx, int x, int y) const {
     }
     cellUsage /= 2;
     cellUsage += sqrt(grDatabase.getInCellViaNum({layerIdx, x, y})) * db::setting.unitSqrtViaUsage;
-    return totalRsrc - cellUsage;
+
+    double result = totalRsrc - cellUsage;
+
+    // bool debug =true;
+    // // hard code temp by erfan
+    // if(debug){
+    //     // log() << "low_y: "  << low_y << "result: " << result << std::endl;
+    //     if(586 < getCoorIntvl(GrPoint({layerIdx,x, y}),Y).low){
+            
+    //         result = result - 20;
+    //     }
+    //     // log() << "alow_y: "  << low_y << "result: " << result << std::endl;
+            
+    // }
+
+    return result;
 }
 
 void GrRouteGrid::print() const { GCellGrid::print(); }
@@ -1438,33 +1453,33 @@ double GrRouteGrid::getNumVio(const GrNet& net, bool hasCommit) const {
             numVio = numVio + numVioTmp;
 
             // log() << "numVioTmpWireGuide: "  << numVioTmp << std::endl;
-            if(numVioTmp>0){
-                log() << "important " << std::endl;
-                log() << net.getName() << ","
-                    << guide.layerIdx << ","
-                    << getCoor(guide[X].low, X) << ","
-                    << getCoor(guide[Y].low, Y) << ","
-                    << getCoor(guide[X].high + 1, X) << ","
-                    << getCoor(guide[Y].high + 1, Y) << ", edge: "
-                    << getCoorIntvl(tempEdge.u,X).low << ","
-                    << getCoorIntvl(tempEdge.u,Y).low << ","
-                    << getCoorIntvl(tempEdge.v,X).high << ","
-                    << getCoorIntvl(tempEdge.v,Y).high << ",vio:"
-                    << numVioTmp << std::endl;
+            // if(numVioTmp>0){
+            //     log() << "important " << std::endl;
+            //     log() << net.getName() << ","
+            //         << guide.layerIdx << ","
+            //         << getCoor(guide[X].low, X) << ","
+            //         << getCoor(guide[Y].low, Y) << ","
+            //         << getCoor(guide[X].high + 1, X) << ","
+            //         << getCoor(guide[Y].high + 1, Y) << ", edge: "
+            //         << getCoorIntvl(tempEdge.u,X).low << ","
+            //         << getCoorIntvl(tempEdge.u,Y).low << ","
+            //         << getCoorIntvl(tempEdge.v,X).high << ","
+            //         << getCoorIntvl(tempEdge.v,Y).high << ",vio:"
+            //         << numVioTmp << std::endl;
                 
-                for(int cp = guide[1 - dir].low; cp < guide[1 - dir].high; cp++){
-                    log() << "l: " << guide.layerIdx
-                          << ", gridline: " << gridline 
-                          << ", cp: " << cp << std::endl;
-                    GrEdge tempEdgeNew = GrEdge(guide.layerIdx,gridline,cp);
-                    log() << "edge: "
-                          << getCoorIntvl(tempEdgeNew.u,X).low << ","
-                          << getCoorIntvl(tempEdgeNew.u,Y).low << ","
-                          << getCoorIntvl(tempEdgeNew.v,X).high << ","
-                          << getCoorIntvl(tempEdgeNew.v,Y).high << std::endl;
+            //     for(int cp = guide[1 - dir].low; cp < guide[1 - dir].high; cp++){
+            //         log() << "l: " << guide.layerIdx
+            //               << ", gridline: " << gridline 
+            //               << ", cp: " << cp << std::endl;
+            //         GrEdge tempEdgeNew = GrEdge(guide.layerIdx,gridline,cp);
+            //         log() << "edge: "
+            //               << getCoorIntvl(tempEdgeNew.u,X).low << ","
+            //               << getCoorIntvl(tempEdgeNew.u,Y).low << ","
+            //               << getCoorIntvl(tempEdgeNew.v,X).high << ","
+            //               << getCoorIntvl(tempEdgeNew.v,Y).high << std::endl;
 
-                }
-            }
+            //     }
+            // }
 
 
         }
@@ -1491,12 +1506,12 @@ double GrRouteGrid::getNumVio(const GrNet& net, bool hasCommit) const {
                         
                         numVio = numVio + numVioTmp;
                         // log() << "numVioTmpViaGuide: "  << numVioTmp << std::endl;
-                        if(debug && numVioTmp>0){
-                            log() << "vio:"
-                                << getCoorIntvl(GrPoint(min(viaGuides[g1].layerIdx, viaGuides[g2].layerIdx), x, y), X) << ","
-                                << getCoorIntvl(GrPoint(min(viaGuides[g1].layerIdx, viaGuides[g2].layerIdx), x, y), Y) << ","
-                                << numVioTmp << std::endl;
-                        }
+                        // if(debug && numVioTmp>0){
+                        //     log() << "vio:"
+                        //         << getCoorIntvl(GrPoint(min(viaGuides[g1].layerIdx, viaGuides[g2].layerIdx), x, y), X) << ","
+                        //         << getCoorIntvl(GrPoint(min(viaGuides[g1].layerIdx, viaGuides[g2].layerIdx), x, y), Y) << ","
+                        //         << numVioTmp << std::endl;
+                        // }
                     }
                         
             }
@@ -1720,11 +1735,23 @@ double GrRouteGrid::getNumVio(const GrEdge& edge, double selfUsage) const {
 
     for (int i = edge.u[1 - dir]; i < edge.v[1 - dir]; i++) {
         GrEdge tempEdge(layerIdx, gridline, i);
-        numVio += max(
-            0.0,
-            getWireUsage(tempEdge) + selfUsage + getFixedUsage(tempEdge) +
-                sqrt((getInCellViaNum(tempEdge.u) + getInCellViaNum(tempEdge.v)) / 2) * db::setting.unitSqrtViaUsage -
-                getWireCapacity(tempEdge));
+
+        // if(getWireUsage(tempEdge) == 0){
+        //     numVio += max(
+        //         0.0,
+        //         getWireUsage(tempEdge) + selfUsage + getFixedUsage(tempEdge) -2 +
+        //             sqrt((getInCellViaNum(tempEdge.u) + getInCellViaNum(tempEdge.v)) / 2) * db::setting.unitSqrtViaUsage -
+        //             getWireCapacity(tempEdge));
+
+        // }else{
+            numVio += max(
+                0.0,
+                getWireUsage(tempEdge) + selfUsage + getFixedUsage(tempEdge) +
+                    sqrt((getInCellViaNum(tempEdge.u) + getInCellViaNum(tempEdge.v)) / 2) * db::setting.unitSqrtViaUsage -
+                    getWireCapacity(tempEdge));
+        // }
+
+        
         // numVio += max(
         //     0.0,
         //     getWireUsage(tempEdge) + selfUsage + getFixedUsage(tempEdge) -

@@ -23,6 +23,7 @@ from backend.fixedMetals import *
 from backend.utils import *
 from backend.gcell import *
 from backend.pltcairo import *
+from backend.animation import *
 
 
 def drawCRP(args):
@@ -248,8 +249,10 @@ def drawGuideCompare(args):
 
 
 def menu(args):
-    drawCRP(args)
+    mainAnimation(args)
+    # drawCRP(args)
     # drawGuideCompare(args)
+    
 
     
 

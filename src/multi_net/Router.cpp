@@ -212,7 +212,7 @@ void Router::run() {
         for (auto& net : grDatabase.nets){
             if (grDatabase.hasVio(net)) {
                 netsToRoute.push_back(net.dbNet.idx);
-                log() << "violation " << net.getName() << std::endl;
+                // log() << "violation " << net.getName() << std::endl;
             }
         }
             
@@ -1432,3 +1432,8 @@ void Router::routeAStarSeq(vector<int>& netsToRoute){
 
 
 }//end routeAStarSeq
+
+void Router::logAll(){
+    
+
+}

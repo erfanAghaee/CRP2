@@ -57,6 +57,9 @@ private:
     void gridMapReport();
 
 
+    void logAll();
+
+
     void visualiseCircuit();
 
     void filterNets();
@@ -69,6 +72,10 @@ private:
     
     // l, gridline, cp -> vector of net_idx
     std::unordered_map<std::tuple<int,int,int>,std::set<int>> viol_dict;
+  
+
+    int log_iter=0;
+
     
     
 };

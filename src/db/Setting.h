@@ -11,6 +11,7 @@ class Setting {
 public:
     // basic
     std::string directory="./";
+    std::string lookuptbs_dir="./..";
     std::string outputFile;
     std::string outputFileDef;
     bool refinePlacement;
@@ -101,6 +102,7 @@ public:
     bool findAllPermutations=false;
     bool RLOutput=false;
     bool moveToRemoveViol=false;
+
 
     void makeItSilent();
     void adapt();

@@ -21,7 +21,7 @@ public:
 
     void readPermutations(){
         for(int ii = 1; ii <= 3; ii++ ){
-            std::string file_name = "./../lookupTable/perm"+\
+            std::string file_name = db::setting.lookuptbs_dir +"/perm"+\
                                      std::to_string(ii)+".txt";
             std::ifstream file(file_name);
             std::vector<std::vector<int>> mat;
@@ -54,7 +54,7 @@ public:
 
     void readIellgalPlacementBoxes(std::string& bench_name){
         
-        std::string file_name = "./../lookupTable/illegal_placement_boxs/"+\
+        std::string file_name = db::setting.lookuptbs_dir +"/illegal_placement_boxs/"+\
                                     bench_name+".illegal"+".txt";
         std::ifstream file(file_name);
         std::string str; 
@@ -74,7 +74,7 @@ public:
 
     void readOriginOffsetDie(std::string& bench_name){
         
-        std::string file_name = "./../lookupTable/origin_offset_die/"+\
+        std::string file_name = db::setting.lookuptbs_dir +"/origin_offset_die/"+\
                                     bench_name+".offset"+".txt";
         std::ifstream file(file_name);
         std::string str; 
