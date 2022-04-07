@@ -18,6 +18,7 @@ from backend.cell import *
 from backend.net import *
 from backend.vio import *
 from backend.drc import *
+from backend.db import *
 from backend.congestionEdge import *
 from backend.fixedMetals import *
 from backend.utils import *
@@ -29,75 +30,27 @@ from backend.pltcairo import *
 def mainAnimation(args):
     specific_net = "net60637"
 
-    print(args.dir)
-    db = {}
-    db["cell"] = pd.read_csv(args.dir + "cells/" + args.bench + ".cell.0.csv", \
-        dtype={"x":'float64',"y":'float64',"w":'float64',"h":"float64"})
-    db["die"] = pd.read_csv(args.dir + "misc/" + args.bench + ".die.csv",\
-        dtype={"die_xl":'float64',"die_yl":'float64',"die_xh":'float64',"die_yh":"float64"} )
-
-    db["fixedMetals"] = pd.read_csv(args.dir + "misc/" + args.bench + ".fixedMetals.csv",\
-        dtype={"xl":'float64',"yl":'float64',"xh":'float64',"yh":"float64"} )
-
-
-    db["args"] = args
-    db["gcell"] = pd.read_csv(args.dir + "misc/" + args.bench + ".gcell.csv", \
-        dtype={"l":"float64","x":'float64',"y":'float64',"w":'float64',"h":"float64"})
-
-    db["net"] = pd.read_csv(args.dir + "nets/" + args.bench + ".net.0.csv", \
-        dtype={"x":'float64',"y":'float64',"w":'float64',"h":"float64"})
-    
-    db["netDRGuide"] = pd.read_csv(args.dir + "DR/" + args.bench + ".dr.guide.csv", \
-        dtype={"x":'float64',"y":'float64',"w":'float64',"h":"float64"})
-
-    die_df = db["die"]
-
-    net_DRGuide_obj = Net(db,"netDRGuide")
-    
-
-
-    fixedMetals_obj = FixedMetals(db)
-
+   
 
     # iteration of gr
+    l = 2
     for i in np.arange(5):
 
-        if i != 4:
-            continue
+        # if i != 3:
+        #     continue
 
-        
+        db = getDB(args,iter_gr=i,iter_dr=0)
 
-
-        db["net"] = pd.read_csv(args.dir + "nets/" + args.bench + ".net."+str(i)+".csv", \
-            dtype={"l": "float64","xl":'float64',"yl":'float64',"xh":'float64',"yh":"float64"})
-        
-
-        db["vio"] = pd.read_csv(args.dir + "vios/" + args.bench + ".vio."+str(i)+".csv", \
-            dtype={"l": "float64","xl":'float64',"yl":'float64',"xh":'float64',"yh":"float64"})
-
-
-
-        db["congestion"] = pd.read_csv(args.dir + "congestions/" + args.bench + ".congestion.edge."+str(i)+".csv", \
-            dtype={"l": "float64","xl":'float64',"yl":'float64',"xh":'float64',"yh":"float64",\
-                "wireUsage":"float64","fixedUsage":"float64",\
-                    "viaUsage":"float64","numTracks":"float64",\
-                        "overflow":"float64"})
-
+        die_df = db["die"]
+        net_DRGuide_obj = Net(db,"netDRGuide")
+        fixedMetals_obj = FixedMetals(db)
         cell_obj = Cell(db)
-        # cell_obj.run()
-
         gcell_obj = GCell(db)
-        # gcell_obj.run()
         net_obj = Net(db,"net")
-        
-
         vio_obj = Vio(db)
-
+        drnet_obj = Net(db,"drnet")
+        drc_obj = DRC(db)
         congestion_obj = CongestionEdge(db)
-
-
-        
-
 
         # 81.5
         # window = [315.30,574.2,333.2,589.5]
@@ -105,52 +58,38 @@ def mainAnimation(args):
         # window = [x*2000 for x in window]
         # window = [642000,1164000,1371000,178000]
         # window = [417,582,445,589]
-        # window = [417,562,660,589]
-        # window = [x*2000 for x in window]
+        window = [417,562,660,589]
+        window = [x*2000 for x in window]
 
 
-        window = [
-                  die_df["die_xl"].values[0]
-                , die_df["die_yl"].values[0]
-                , die_df["die_xh"].values[0]
-                , die_df["die_yh"].values[0]
-            ]
+        # window = [
+        #         die_df["die_xl"].values[0]
+        #     , die_df["die_yl"].values[0]
+        #     , die_df["die_xh"].values[0]
+        #     , die_df["die_yh"].values[0]
+        # ]
+
+
+        plt_obj = PltCairo()
+        surface = plt_obj.init(window)
+
+        cell_obj.getWindow(window,plt_obj,(0,0,1),1,text=False)
+        gcell_obj.getWindow(window,plt_obj,(1,0,0),0.001)
+        net_obj.getWindow(window,plt_obj,(0,1,0),0.8,net_name=specific_net)
+        vio_obj.getWindow(window,plt_obj,(0.6,0.1,0.6),0.8,l=l)
+        fixedMetals_obj.getWindow(window,plt_obj,(0,0,0),1)
+        drc_obj.getWindow(window,plt_obj,(1,0,0),1)
+        net_DRGuide_obj.getWindow(window,plt_obj,(0.8,0.1,0.1),0.8,net_name=specific_net)
+        drnet_obj.getWindow(window,plt_obj,(0,0,1),1,net_name=specific_net)
+        congestion_obj.getWindow(window,plt_obj,(0.5,0.1,0.7),0.1,l=l)
+
+        surface.write_to_png(args.dir+ "imgs/" +"net.gr."+str(i)+".png")
+        
 
         
         
 
 
 
-        # surface.write_to_png(args.dir+ "imgs/" +"net.window.png")  # Output to PNG
-        l = 2
+       
         
-        # iteration of dr
-        for j in np.arange(10):
-            plt_obj = PltCairo()
-            surface = plt_obj.init(window)
-            # cell_obj.getWindow(window,plt_obj,(0,0,1),1,text=False)
-            # gcell_obj.getWindow(window,plt_obj,(1,0,0),0.001)
-
-            
-            net_obj.getWindow(window,plt_obj,(0,1,0),0.8,net_name=specific_net)
-            # net_obj.getWindow(window,plt_obj,(0,1,0),0.8,l=l)
-            
-            vio_obj.getWindow(window,plt_obj,(0.6,0.1,0.6),0.8,l=l)
-            fixedMetals_obj.getWindow(window,plt_obj,(0,0,0),1)
-            # net_DRGuide_obj.getWindow(specific_net,window,plt_obj,(1,0,0),0.5)
-            
-            db["drc"] = pd.read_csv(args.dir + "drc/" + args.bench + ".dr.drc."+str(j)+".csv", \
-                dtype={"l": "float64","xl":'float64',"yl":'float64',"xh":'float64',"yh":"float64"})
-            db["drnet"] = pd.read_csv(args.dir + "drnets/" + args.bench + ".dr.net."+str(j)+".csv", \
-                dtype={"l": "float64","xl":'float64',"yl":'float64',"xh":'float64',"yh":"float64"})
-            drnet_obj = Net(db,"drnet")
-            drc_obj = DRC(db)
-
-            # drc_obj.getWindow(window,plt_obj,(0.9,1,0.1),1,l=l)
-            drc_obj.getWindow(window,plt_obj,(1,0,0),1)
-            
-            net_DRGuide_obj.getWindow(window,plt_obj,(0.8,0.1,0.1),0.8,net_name=specific_net)
-            drnet_obj.getWindow(window,plt_obj,(0,0,1),1,net_name=specific_net)
-            # congestion_obj.getWindow(window,plt_obj,(0.5,0.1,0.7),0.1,l=l)
-            surface.write_to_png(args.dir+ "imgs/" +"net.gr."+str(i)+".dr."+str(j)+".png")  # Output to PNG
-    # surface.write_to_png(args.dir+ "imgs/" +"net.window."+str(i)+".png")  # Output to PNG

@@ -26,6 +26,9 @@ class GCell:
         self.pltWindow(window)
 
     def getWindow(self,window,plt_obj,color,alpha):
+        if not("gcell" in self.db):
+            return
+
         db = self.db
         die_df = db["die"]
         cell_df = db["gcell"]

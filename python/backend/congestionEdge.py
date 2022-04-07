@@ -27,6 +27,9 @@ class CongestionEdge:
         # self.pltWindow(window)
 
     def getWindow(self,window,plt_obj,color,alpha,l=-1):
+        if not("congestion" in self.db):
+            return
+
         db = self.db
         die_df = db["die"]
         congestion_df = db["congestion"]
@@ -74,54 +77,4 @@ class CongestionEdge:
 
         plt_obj.drawText(txts,color=(1,1,1),font=12)
         
-        # return surface
-
-    # def pltWindow(self,window):
-    #     db = self.db
-    #     plt_obj = PltCairo()
-    #     die_df = db["die"]
-    #     cell_df = db["cell"]
-    #     args = db["args"]
         
-    #     surface = plt_obj.init(window)
-
-        
-    #     cell_filter = cell_df.loc[ (cell_df.x >= window[XL] )& (cell_df.x <= window[XH])]
-        
-    #     cell_filter = cell_filter.loc[ (cell_df.y >= window[YL] )& (cell_df.y <= window[YH])]
-        
-    #     txts = cell_filter.cell_name.values
-
-    #     plt_obj.run(cell_filter.x.values,cell_filter.y.values,\
-    #                 cell_filter.w.values,cell_filter.h.values)
-
-    #     plt_obj.drawText(txts)
-        
-    #     surface.write_to_png(args.dir+ "imgs/" +"cells.window.png")  # Output to PNG
-
-
-    # def pltAllCells(self):
-    #     db = self.db
-    #     plt_obj = PltCairo()
-    #     die_df = db["die"]
-    #     cell_df = db["cell"]
-    #     args = db["args"]
-    #     window = [0,0,0,0]
-    #     if die_df is not np.nan:
-    #         window = [
-    #               die_df["die_xl"].values[0]
-    #             , die_df["die_yl"].values[0]
-    #             , die_df["die_xh"].values[0]
-    #             , die_df["die_yh"].values[0]
-    #         ]
-    #     else:
-    #         print("invalid window box to plot in cell class!")
-    #         sys.exit()
-    #     surface = plt_obj.init(window)
-    #     plt_obj.run(cell_df.x.values,cell_df.y.values,\
-    #                 cell_df.w.values,cell_df.h.values)
-        
-    #     surface.write_to_png(args.dir+ "imgs/" +"cells.all.png")  # Output to PNG
-        
-
-

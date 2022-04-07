@@ -27,6 +27,9 @@ class Vio:
         # self.pltWindow(window)
 
     def getWindow(self,window,plt_obj,color,alpha,l=-1):
+        if not("vio" in self.db):
+            return
+
         db = self.db
         die_df = db["die"]
         vio_df = db["vio"]

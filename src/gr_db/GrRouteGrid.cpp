@@ -843,28 +843,28 @@ double GrRouteGrid::printAllVio() const {
 
                 double overflow = max(0.0, numWire - getNumTracks(layerIdx, gridline));
 
-                if(overflow>0){
-                    GrEdge tempEdge(layerIdx,gridline,cp);         
-                    auto lx = getCoorIntvl(tempEdge.u,X).low/2000.0;//getCoor(tempEdge.lowerGrPoint().x, X)/2000.0;
-                    auto ly = getCoorIntvl(tempEdge.u,Y).low/2000.0;//getCoor(tempEdge.lowerGrPoint().y, Y)/2000.0;
-                    auto hx = getCoorIntvl(tempEdge.v,X).high/2000.0;//getCoor(tempEdge.upperGrPoint().x+1, X)/2000.0;
-                    auto hy = getCoorIntvl(tempEdge.v,Y).high/2000.0;//getCoor(tempEdge.upperGrPoint().y+1, Y)/2000.0;
+                // if(overflow>0){
+                //     GrEdge tempEdge(layerIdx,gridline,cp);         
+                //     auto lx = getCoorIntvl(tempEdge.u,X).low/2000.0;//getCoor(tempEdge.lowerGrPoint().x, X)/2000.0;
+                //     auto ly = getCoorIntvl(tempEdge.u,Y).low/2000.0;//getCoor(tempEdge.lowerGrPoint().y, Y)/2000.0;
+                //     auto hx = getCoorIntvl(tempEdge.v,X).high/2000.0;//getCoor(tempEdge.upperGrPoint().x+1, X)/2000.0;
+                //     auto hy = getCoorIntvl(tempEdge.v,Y).high/2000.0;//getCoor(tempEdge.upperGrPoint().y+1, Y)/2000.0;
 
-                    log() << "vio layer: " << layerIdx
-                          << ", dir: " << dir
-                          << ", gridline: " << gridline
-                          << ", cp: " << cp
-                          << ", wireusage: " << getWireUsage(layerIdx, gridline, cp)
-                          << ", fixedusage: " << getFixedUsage(layerIdx, gridline, cp)
-                          << ", tracks: " << getNumTracks(layerIdx, gridline) 
-                          << ", lx: " << lx 
-                          << ", ly: " << ly 
-                          << ", hx: " << hx 
-                          << ", hy: " << hy 
-                          << std::endl;
+                //     log() << "vio layer: " << layerIdx
+                //           << ", dir: " << dir
+                //           << ", gridline: " << gridline
+                //           << ", cp: " << cp
+                //           << ", wireusage: " << getWireUsage(layerIdx, gridline, cp)
+                //           << ", fixedusage: " << getFixedUsage(layerIdx, gridline, cp)
+                //           << ", tracks: " << getNumTracks(layerIdx, gridline) 
+                //           << ", lx: " << lx 
+                //           << ", ly: " << ly 
+                //           << ", hx: " << hx 
+                //           << ", hy: " << hy 
+                //           << std::endl;
 
 
-                }
+                // }
 
                 shortLen[layerIdx] += overflow * dist;
             }

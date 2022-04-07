@@ -587,7 +587,7 @@ void Database::markPinAndObsOccupancy() {
 
     markFixedMetalBatch(fixedMetalVec, 0, fixedMetalVec.size());
 
-    logFixedMetals(fixedMetalVec);
+    // logFixedMetals(fixedMetalVec);
 }
 
 void Database::initMTSafeMargin() {
@@ -708,23 +708,49 @@ void Database::logCellLocations(int iter){
     file.close();
 }//end logCellLocations
 
-void Database::logFixedMetals(vector<std::pair<BoxOnLayer, int>>& fixedMetalVec){
-    std::string file_name = db::setting.directory +  db::setting.benchmarkName+ ".fixedMetals.csv";
+// void Database::logFixedMetals(vector<std::pair<BoxOnLayer, int>>& fixedMetalVec){
+void Database::logFixedMetals(int iter){
+    std::string file_name = db::setting.directory + \
+     db::setting.benchmarkName+ ".fixedMetals."+std::to_string(iter)+".csv";
     
     std::ofstream file(file_name);
-    std::stringstream stream;
-    stream << "l,xl,yl,xh,yh" << std::endl;
+    std::stringstream ss;
+    ss << "l,xl,yl,xh,yh" << std::endl;
 
-    for(auto fixedMetal : fixedMetalVec){
-        auto box = fixedMetal.first;
-        stream << box.layerIdx
-               << "," << box.lx()
-               << "," << box.ly()
-               << "," << box.hx()
-               << "," << box.hy()
-               << std::endl;
+
+
+    for (int l_idx = 0; l_idx < database.getLayerNum(); l_idx++){
+        auto rtree = database.getFixedMetals(l_idx);
+        for(auto tmp : rtree){
+            // ss << l_idx 
+            //    << ", " << tmp.first 
+            //    << ", " << tmp.second << std::endl;
+            auto b = tmp.first;
+            auto box = utils::BoxT<DBU>(bg::get<bg::min_corner, 0>(b),
+                                    bg::get<bg::min_corner, 1>(b),
+                                    bg::get<bg::max_corner, 0>(b),
+                                    bg::get<bg::max_corner, 1>(b));
+            // log() << tmp.second << std::endl;
+
+            ss << std::to_string(l_idx) 
+               << ", " << std::to_string(box.lx())
+               << ", " << std::to_string(box.ly())
+               << ", " << std::to_string(box.hx())
+               << ", " << std::to_string(box.hy()) << std::endl;
+               
+        }
     }
-    file << stream.str();
+
+    // for(auto fixedMetal : fixedMetalVec){
+    //     auto box = fixedMetal.first;
+    //     stream << box.layerIdx
+    //            << "," << box.lx()
+    //            << "," << box.ly()
+    //            << "," << box.hx()
+    //            << "," << box.hy()
+    //            << std::endl;
+    // }
+    file << ss.str();
     file.close();
 }//end logFixedMetals
 

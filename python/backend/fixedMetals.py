@@ -27,6 +27,9 @@ class FixedMetals:
         # self.pltWindow(window)
 
     def getWindow(self,window,plt_obj,color,alpha,l=-1):
+        if not("fixedMetals" in self.db):
+            return
+
         db = self.db
         die_df = db["die"]
         fixedMetals_df = db["fixedMetals"]

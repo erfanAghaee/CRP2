@@ -6,4 +6,4 @@
 #include "enum.h"
 
 
-
+enum RouterName { PATTERNROUTE=0,ASTAR=1};

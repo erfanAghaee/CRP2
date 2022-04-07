@@ -27,6 +27,9 @@ class DRC:
         # self.pltWindow(window)
 
     def getWindow(self,window,plt_obj,color,alpha,l=-1):
+        if not("drc" in self.db):
+            return
+
         db = self.db
         die_df = db["die"]
         drc_df = db["drc"]
