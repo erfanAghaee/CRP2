@@ -78,6 +78,7 @@ public:
     void logDie();
     // void logFixedMetals(vector<std::pair<BoxOnLayer, int>>& fixedMetalVec);
     void logFixedMetals(int iter);
+    
 
     // function for filtering the functions in the felow. 
     void initPolicy();

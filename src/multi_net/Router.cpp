@@ -148,6 +148,8 @@ Router::Router() {
 
 void Router::run() {
     allNetStatus.resize(database.nets.size(), db::RouteStatus::FAIL_UNPROCESSED);
+    utils::timer profile_time;
+    std::stringstream profile_time_str;
     
     
     // it is used to route specific nets
@@ -158,8 +160,16 @@ void Router::run() {
 
     if(!db::setting.refinePlacement){
         vector<int> netsToRoute;
-        applyOnlyRoute(netsToRoute); 
+        ripupReroute(netsToRoute); 
     }else{
+        vector<int> netsToRoute;
+        ripupReroute(netsToRoute);
+        netsToRoute.clear();
+        for(int i = 0; i < db::setting.numRefinePlacement; i++){
+            applyPlacement(netsToRoute,i, profile_time, profile_time_str);
+            route(netsToRoute,PATTERNROUTE);
+            netsToRoute.clear();
+        }//end refinePlacement loop
 
     }//end refinePlacement
     
@@ -682,11 +692,11 @@ void Router::run() {
 //     updateRouteTable();
 // }
 
-// void Router::applyPlacement(vector<int>& netsToRoute,int iter_t,utils::timer& profile_time,std::stringstream& profile_time_str){
-//     netsToRoute.clear();
-//     Placer place(congMap,routeTable,iter_t, profile_time,profile_time_str);
-//     place.runMT(netsToRoute,cellWidth, cellHeight);
-// }
+void Router::applyPlacement(vector<int>& netsToRoute,int iter_t,utils::timer& profile_time,std::stringstream& profile_time_str){
+    netsToRoute.clear();
+    Placer place(congMap,routeTable,iter_t, profile_time,profile_time_str);
+    place.runMT(netsToRoute,cellWidth, cellHeight);
+}
 
 // void Router::applyOnlyRoutePlacement(vector<int>& netsToRoute){
 //     bool debug = false;
@@ -748,14 +758,16 @@ void Router::run() {
 //     }
 // }// end applyOnlyRoute
 
-void Router::applyOnlyRoute(vector<int>& netsToRoute){
+void Router::ripupReroute(vector<int>& netsToRoute){
 
-    for (int iter = 0; iter < db::setting.rrrIterLimit; iter++) {        
+    // for (int iter = 0; iter < db::setting.rrrIterLimit; iter++) {        
+    for (int iter = 0; iter < 1; iter++) {        
         std::vector<int> netsToRoute;
         printRouteStart("routing",iter);
         routeStateClear();
         getNetsToRoute(netsToRoute,iter);
         sortNets(netsToRoute);  // Note: only effective when doing mazeroute sequentially
+
         updateCost(iter);
         
         if (iter > 0 ) {
@@ -779,6 +791,33 @@ void Router::applyOnlyRoute(vector<int>& netsToRoute){
         // break;       
     }
 }// end applyOnlyRoute
+
+void Router::route(const vector<int>& netsToRoute, RouterName routerName){
+    log() << "route ..." << std::endl;
+    routeStateClear();
+    // getNetsToRoute(netsToRoute,iter);
+    // sortNets(netsToRoute);  // Note: only effective when doing mazeroute sequentially
+    // updateCost(iter);
+    
+    
+    ripup(netsToRoute);
+    congMap.init(cellWidth, cellHeight);
+    
+            
+    if(routerName == PATTERNROUTE){
+        routeApprx(netsToRoute, PATTERNROUTE);
+    }else if (routerName == ASTAR){
+        routeApprx(netsToRoute, ASTAR);
+    }
+    
+
+    // printRouteEnd("routing",iter);
+
+    updateRouteTable(); 
+    printStat();
+    logAll();
+    log() << "end route!" << std::endl;
+}//end route
 
 
 
@@ -1231,25 +1270,25 @@ void Router::filterNets(){
     }//end for net 
 }//end filterNets
 
-void Router::logCoef(){
-    // coef_stream << std::to_string(iter)
-    //             << "," << std::to_string(database.unitWireCostRaw)
-    //             << "," << std::to_string(database.unitViaCostRaw)
-    //             << "," << std::to_string(database.unitShortVioCostRaw)
-    //             << "," << std::to_string(0) //database.unitShortVioCost)
-    //             << "," << std::to_string(0) //database.unitShortVioCostDiscounted)
-    //             << "," << std::to_string(database.unitViaCost)
-    //             << "," << std::to_string(0) // step)
-    //             << "," << std::to_string(db::setting.rrrInitVioCostDiscount )
-    //             << "," << std::to_string(db::setting.rrrIterLimit )
-    //             << "," << std::to_string(db::setting.initLogisticSlope )
-    //             << "," << std::to_string(db::setting.rrrFadeCoeff )
-    //             << "," << std::to_string(grDatabase.unitViaMultiplier)
-    //             << "," << std::to_string(grDatabase.logisticSlope) 
-    //             << "," << std::to_string(grDatabase.wireCapDiscount) 
-    //             << std::endl;
+// void Router::logCoef(int iter){
+//     // coef_stream << std::to_string(iter)
+//     //             << "," << std::to_string(database.unitWireCostRaw)
+//     //             << "," << std::to_string(database.unitViaCostRaw)
+//     //             << "," << std::to_string(database.unitShortVioCostRaw)
+//     //             << "," << std::to_string(0) //database.unitShortVioCost)
+//     //             << "," << std::to_string(0) //database.unitShortVioCostDiscounted)
+//     //             << "," << std::to_string(database.unitViaCost)
+//     //             << "," << std::to_string(0) // step)
+//     //             << "," << std::to_string(db::setting.rrrInitVioCostDiscount )
+//     //             << "," << std::to_string(db::setting.rrrIterLimit )
+//     //             << "," << std::to_string(db::setting.initLogisticSlope )
+//     //             << "," << std::to_string(db::setting.rrrFadeCoeff )
+//     //             << "," << std::to_string(grDatabase.unitViaMultiplier)
+//     //             << "," << std::to_string(grDatabase.logisticSlope) 
+//     //             << "," << std::to_string(grDatabase.wireCapDiscount) 
+//     //             << std::endl;
     
-}//end logCoef
+// }//end logCoef
 
 
 void Router::gridMapReport(){
@@ -1365,6 +1404,7 @@ void Router::logAll(){
     grDatabase.logNets(log_iter);
     grDatabase.logVio(log_iter);
     grDatabase.logCongestion(log_iter);
+    grDatabase.logCoef(log_iter);
     log_iter++;
     log() << "end log!" << std::endl;
 }

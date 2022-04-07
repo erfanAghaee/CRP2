@@ -22,6 +22,7 @@ public:
     void logVio(int iter);
     void logCongestionEdge(int iter);
     void logCongestion(int iter);
+    void logCoef(int iter);
 
     // std::set<int> critical_cells;
 private:

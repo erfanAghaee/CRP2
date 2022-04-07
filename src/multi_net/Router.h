@@ -36,10 +36,11 @@ private:
     // void updateCostInit();
     void updateRouteTable();
 
-    void applyOnlyRoute(vector<int>& netsToRoute);
+    void ripupReroute(vector<int>& netsToRoute);
+    void route(const vector<int>& netsToRoute, RouterName routeName);
     // void applyOnlyRoutePlacement(vector<int>& netsToRoute);
-    // void applyPlacement(vector<int>& netsToRoute,int iter_t,utils::timer& profile_time,std::stringstream& profile_time_str);
-    // void applyFluteRoute3D(vector<int>& netsToRoute);
+    void applyPlacement(vector<int>& netsToRoute,int iter_t,utils::timer& profile_time,std::stringstream& profile_time_str);
+    void applyFluteRoute3D(vector<int>& netsToRoute);
     // void investigateRoute(int iter_i,std::vector<int>& netsToRoute);
 
     void printStat();
@@ -67,7 +68,7 @@ private:
     std::set<int> filter_nets;
 
 
-    void logCoef();
+    // void logCoef();
     std::stringstream coef_stream;
     
     // l, gridline, cp -> vector of net_idx

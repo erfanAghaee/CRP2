@@ -247,6 +247,50 @@ void GrDatabase::logGCellGrid(){
     file.close();
 }//end logCellLocations
 
+void GrDatabase::logCoef(int iter){
+
+
+    std::string file_name = db::setting.directory +  db::setting.benchmarkName+ ".coef."+
+        std::to_string(iter)+".csv";
+    std::ofstream file(file_name);
+    std::stringstream ss;
+    ss << "name,value" << std::endl;
+    
+    ss << "unitWireCostRaw" << "," << std::to_string(database.unitWireCostRaw) << std::endl;
+    ss << "unitViaCostRaw "<< "," << std::to_string(database.unitViaCostRaw) << std::endl;
+    ss << "unitShortVioCostRaw" << "," << std::to_string(database.unitShortVioCostRaw) << std::endl;
+
+    for (int i = 0; i < database.getLayerNum(); ++i) {
+        ss << "unitShortVioCost" << i << ","<< database.unitShortVioCost[i] << std::endl;
+    }
+
+    for (int i = 0; i < database.getLayerNum(); ++i) {
+        ss << "unitShortVioCostDiscounted" << i << ","
+           << database.unitShortVioCostDiscounted[i] << std::endl;
+    }
+
+
+    ss << "unitViaCost" << "," << std::to_string(database.unitViaCost) << std::endl;
+    // ss << "," << std::to_string(step) // step) << std::endl;
+    ss << "rrrInitVioCostDiscount" << "," << 
+        std::to_string(db::setting.rrrInitVioCostDiscount ) << std::endl;
+    ss << "rrrIterLimit" << "," << 
+        std::to_string(db::setting.rrrIterLimit ) << std::endl;
+    ss << "initLogisticSlope" << "," << 
+        std::to_string(db::setting.initLogisticSlope ) << std::endl;
+    ss << "rrrFadeCoeff" << "," << 
+        std::to_string(db::setting.rrrFadeCoeff ) << std::endl;
+    ss << "unitViaMultiplier" << "," << 
+        std::to_string(unitViaMultiplier) << std::endl;
+    ss << "logisticSlope" << "," << std::to_string(logisticSlope)  << std::endl;
+    ss << "wireCapDiscount" << "," << std::to_string(wireCapDiscount)  << std::endl;    
+    ss << "unitSqrtViaUsage" << "," << std::to_string(db::setting.unitSqrtViaUsage)  << std::endl;    
+    
+    file << ss.str();
+    file.close();
+        
+}//end logCoef
+
 void GrDatabase::reportGR(std::string filename) {
     log() << "Writing GR report to file..." << std::endl;
 

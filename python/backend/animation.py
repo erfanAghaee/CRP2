@@ -58,30 +58,30 @@ def mainAnimation(args):
         # window = [x*2000 for x in window]
         # window = [642000,1164000,1371000,178000]
         # window = [417,582,445,589]
-        window = [417,562,660,589]
-        window = [x*2000 for x in window]
+        # window = [417,562,660,589]
+        # window = [x*2000 for x in window]
 
 
-        # window = [
-        #         die_df["die_xl"].values[0]
-        #     , die_df["die_yl"].values[0]
-        #     , die_df["die_xh"].values[0]
-        #     , die_df["die_yh"].values[0]
-        # ]
+        window = [
+                die_df["die_xl"].values[0]
+            , die_df["die_yl"].values[0]
+            , die_df["die_xh"].values[0]
+            , die_df["die_yh"].values[0]
+        ]
 
 
         plt_obj = PltCairo()
         surface = plt_obj.init(window)
 
         cell_obj.getWindow(window,plt_obj,(0,0,1),1,text=False)
-        gcell_obj.getWindow(window,plt_obj,(1,0,0),0.001)
-        net_obj.getWindow(window,plt_obj,(0,1,0),0.8,net_name=specific_net)
+        # gcell_obj.getWindow(window,plt_obj,(1,0,0),0.001)
+        # net_obj.getWindow(window,plt_obj,(0,1,0),0.8,net_name=specific_net)
         vio_obj.getWindow(window,plt_obj,(0.6,0.1,0.6),0.8,l=l)
-        fixedMetals_obj.getWindow(window,plt_obj,(0,0,0),1)
-        drc_obj.getWindow(window,plt_obj,(1,0,0),1)
-        net_DRGuide_obj.getWindow(window,plt_obj,(0.8,0.1,0.1),0.8,net_name=specific_net)
-        drnet_obj.getWindow(window,plt_obj,(0,0,1),1,net_name=specific_net)
-        congestion_obj.getWindow(window,plt_obj,(0.5,0.1,0.7),0.1,l=l)
+        # fixedMetals_obj.getWindow(window,plt_obj,(0,0,0),1)
+        # drc_obj.getWindow(window,plt_obj,(1,0,0),1)
+        # net_DRGuide_obj.getWindow(window,plt_obj,(0.8,0.1,0.1),0.8,net_name=specific_net)
+        # drnet_obj.getWindow(window,plt_obj,(0,0,1),1,net_name=specific_net)
+        # congestion_obj.getWindow(window,plt_obj,(0.5,0.1,0.7),0.1,l=l)
 
         surface.write_to_png(args.dir+ "imgs/" +"net.gr."+str(i)+".png")
         

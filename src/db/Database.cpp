@@ -755,6 +755,8 @@ void Database::logFixedMetals(int iter){
 }//end logFixedMetals
 
 
+
+
 void Database::logDie(){
     std::string file_name = db::setting.directory +  db::setting.benchmarkName+ ".die.csv";
     std::ofstream file(file_name);
