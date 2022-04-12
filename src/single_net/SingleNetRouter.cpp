@@ -29,9 +29,11 @@ void SingleNetRouter::mazeRoute() {
         status = db::RouteStatus::SUCC_ONE_PIN;
         
     } else {
-        MazeRoute mazeRouter(grNet);
+        MazeRoute mazeRouter(grNet,FINEGRID);
         mazeRouter.constructGridGraph(guides);
         status = mazeRouter.run();
+        // grid graph stream for debugging purpose
+        stream_str = mazeRouter.getGridGraphStreamString();
     }
 
     db::routeStat.increment(db::RouteStage::MAZE, status);
@@ -69,11 +71,16 @@ void SingleNetRouter::planMazeRoute(const CongestionMap& congMap) {
     // if(grNet.getName() == "net10214"){
     //     debug = true;
     //     log() << "maze: " << grNet.getName() << std::endl;
-    // }
-
-    MazeRoute mazeRouter(tmpNet);
+    // }    
+    MazeRoute mazeRouter(tmpNet,COARSEGRID);
     mazeRouter.constructGridGraph(congMap);
     status = mazeRouter.run();
+
+    stream_coarseGrid_str = mazeRouter.getCoarseGridGraphStreamString();
+
+
+    // log() << "stream_coarseGrid_str" << stream_coarseGrid_str << std::endl;
+    
 
 
     if(debug)
@@ -92,6 +99,8 @@ void SingleNetRouter::planMazeRoute(const CongestionMap& congMap) {
         else
             return min((coor + 1) * cellHeight, grDatabase.getNumGrPoint(Y)) - 1;
     };
+
+    
 
     guides.clear();
     tmpNet.postOrderVisitGridTopo([&](std::shared_ptr<gr::GrSteiner> node) {
@@ -120,6 +129,7 @@ void SingleNetRouter::planMazeRoute(const CongestionMap& congMap) {
             }
         }
     });
+
 
     // maintain connectivity
     auto mergedPinAccessBoxes = grNet.getMergedPinAccessBoxes([&](const gr::GrPoint& point) {

@@ -226,7 +226,7 @@ void GrDatabase::logGCellGrid(){
     
     std::ofstream file(file_name);
     std::stringstream stream;
-    stream << "l,x,y,w,h,dir" << std::endl;
+    stream << "l,x,y,w,h,dir,gcellX,gcellY" << std::endl;
 
     for (int layerIdx = 0; (layerIdx + 1) < database.getLayerNum(); ++layerIdx) {
        Dimension dir = database.getLayerDir(layerIdx);
@@ -239,6 +239,8 @@ void GrDatabase::logGCellGrid(){
                    << "," <<  getCoorIntvl(grPoint,X).high
                    << "," <<  getCoorIntvl(grPoint,Y).high
                    << "," <<  dir
+                   << "," <<  grPoint.x
+                   << "," <<  grPoint.y
                    << std::endl;
             }
         }

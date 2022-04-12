@@ -3,6 +3,8 @@
 #include "GridGraph.h"
 #include "multi_net/CongestionMap.h"
 
+enum MAZE_TYPE { COARSEGRID = 0, FINEGRID = 1};
+
 class Solution {
 public:
     db::CostT cost;
@@ -16,8 +18,13 @@ public:
 
 class MazeRoute {
 public:
-    MazeRoute(gr::GrNet &grNetData) : grNet(grNetData) {
+    MazeRoute(gr::GrNet &grNetData, MAZE_TYPE type_in) 
+        : grNet(grNetData) 
+        , type(type_in)
+    {
         iter = 0;
+        int cellWidth = 1;
+        int cellHeight = 1;
     }
 
     void constructGridGraph(const vector<gr::GrBoxOnLayer> &guides);
@@ -26,9 +33,14 @@ public:
 
     int iter;
 
+    std::string getGridGraphStreamString(){return graph.stream.str();}
+    std::string getCoarseGridGraphStreamString(){return graph.stream_coarse.str();}
+
 private:
     gr::GrNet &grNet;
     GridGraph graph;
+    // this can be finegrid or corasegrid
+    MAZE_TYPE type;
 
     vector<db::CostT> vertexCosts;              // min cost upper bound for each vertex
     vector<std::shared_ptr<Solution>> pinSols;  // best solution for each pin
@@ -36,4 +48,6 @@ private:
 
     db::RouteStatus route(int startPin);
     void getResult();
+    int cellWidth; 
+    int cellHeight; 
 };

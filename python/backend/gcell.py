@@ -40,13 +40,17 @@ class GCell:
         cell_filter = cell_df.loc[ (cell_df.x >= window[XL] )& (cell_df.x <= window[XH])]
         
         cell_filter = cell_filter.loc[ (cell_df.y >= window[YL] )& (cell_df.y <= window[YH])]
+
+        xs_txt = cell_filter.gcellX.values
+        ys_txt = cell_filter.gcellY.values
         
-        # txts = cell_filter.cell_name.values
+        txts = [ "("+str(xs_txt[i]) +","+ str(ys_txt[i]) + ")" \
+            for i in np.arange(len(cell_filter.gcellX.values))]
 
         plt_obj.run(cell_filter.x.values,cell_filter.y.values,\
                     cell_filter.w.values,cell_filter.h.values,color,alpha)
 
-        # plt_obj.drawText(txts)
+        plt_obj.drawText(txts,font=72,up=True)
         
         # return surface
 

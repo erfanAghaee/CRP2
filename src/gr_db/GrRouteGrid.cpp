@@ -64,27 +64,14 @@ void GrRouteGrid::markFixed(int layerIdx, int gridline, int cp, int num_track, D
 }
 
 void GrRouteGrid::useWire(int layerIdx, int gridline, int cp, double usage) {
-    // log() << "useWire Map: " 
-    //       << ", layerIdx: " << layerIdx
-    //       << ", gridline: " << gridline
-    //       << ", cp: " << cp 
-    //       << ", usage: " << usage 
-    //       << ", cur_routedWireMap: " << routedWireMap[layerIdx][gridline][cp] << std::endl;
-    
     routedWireMap[layerIdx][gridline][cp] += usage;
 }
 
 void GrRouteGrid::useVia(int layerIdx, int x, int y, double usage) { 
-        // log() << "useVia Map: " 
-        //   << ", layerIdx: " << layerIdx
-        //   << ", x: " << x
-        //   << ", y: " << y 
-        //   << ", usage: " << usage 
-        //   << ", cur_routedViaMap: " << routedViaMap[layerIdx][x][y] << std::endl;
-    routedViaMap[layerIdx][x][y] += usage; }
+    routedViaMap[layerIdx][x][y] += usage; 
+}
 
 void GrRouteGrid::useWire(const GrBoxOnLayer& box) {
-    // log() << "box: " << box << std::endl;
     int layerIdx = box.layerIdx;
     auto dir = database.getLayerDir(layerIdx);
     double usage = 1.0 / (box[dir].range() + 1);
@@ -93,11 +80,6 @@ void GrRouteGrid::useWire(const GrBoxOnLayer& box) {
 }
 
 void GrRouteGrid::useWirePessimistic(const GrBoxOnLayer& box) {
-    // log() << "box: " << box << std::endl;
-    // log() << getCoor(box[X].low, X) << ", "
-    //       << getCoor(box[Y].low, Y) << ", "
-    //       << getCoor(box[X].high + 1, X) << ", "
-    //       << getCoor(box[Y].high + 1, Y) << std::endl;
     int layerIdx = box.layerIdx;
     auto dir = database.getLayerDir(layerIdx);
     double usage = 1.0 / (box[dir].range() + 1);
@@ -112,8 +94,7 @@ void GrRouteGrid::useVia(const GrBoxOnLayer& box) {
 }
 
 void GrRouteGrid::useNet(const GrNet& net) {
-    // log() << "useNet: " << net.getName() << std::endl;
-    for (const auto& guide : net.wireRouteGuides) useWirePessimistic(guide);
+    for (const auto& guide : net.wireRouteGuides) useWire(guide);
 
     const auto& viaGuides = net.viaRouteGuides;
     for (int g1 = 0; g1 < viaGuides.size(); g1++) {
@@ -137,15 +118,11 @@ void GrRouteGrid::removeWire(const GrBoxOnLayer& box) {
     double usage = 1.0 / (box[dir].range() + 1);
     for (int gridline = box[dir].low; gridline <= box[dir].high; gridline++)
         for (int cp = box[1 - dir].low; cp < box[1 - dir].high; cp++) {
-            // log() << "layerIdx: " << layerIdx 
-            //       << ", gridline: " << gridline
-            //       << ", cp: " << cp << std::endl;
             routedWireMap[layerIdx][gridline][cp] -= usage;
         }
 }
 
 void GrRouteGrid::removeWireRelax(const GrBoxOnLayer& box, std::vector<std::pair<std::tuple<int,int,int>,double>>& wireMap_tpls) {
-    // std::vector<std::pair<std::tuple<int,int,int>,double>> wireMap_tpls;
     int layerIdx = box.layerIdx;
     auto dir = database.getLayerDir(layerIdx);
     double usage = 1.0 / (box[dir].range() + 1);
@@ -162,36 +139,22 @@ void GrRouteGrid::removeViaRelax(const GrBoxOnLayer& box, std::vector<std::pair<
     double usage = 1.0 / ((box[X].range() + 1) * (box[Y].range() + 1));
     for (int x = box[X].low; x <= box[X].high; x++)
         for (int y = box[Y].low; y <= box[Y].high; y++) {
-            // log() << "box.layerIdx: " << box.layerIdx 
-            //       << ", x: " << x
-            //       << ", y: " << y << std::endl;
             std::tuple<int,int,int> tpl(box.layerIdx,x,y);
             viaMap_tpls.push_back(std::make_pair(tpl,usage));
             // routedViaMap[box.layerIdx][x][y] -= usage;
         }
-    // for (auto& pair : routedViaMap[box.layerIdx][x][y])
-    //     if (pair.first == netIdx) pair.second = 0;
 }
 
 void GrRouteGrid::removeVia(const GrBoxOnLayer& box) {
     double usage = 1.0 / ((box[X].range() + 1) * (box[Y].range() + 1));
     for (int x = box[X].low; x <= box[X].high; x++)
         for (int y = box[Y].low; y <= box[Y].high; y++) {
-            // log() << "box.layerIdx: " << box.layerIdx 
-            //       << ", x: " << x
-            //       << ", y: " << y << std::endl;
             routedViaMap[box.layerIdx][x][y] -= usage;
         }
-    // for (auto& pair : routedViaMap[box.layerIdx][x][y])
-    //     if (pair.first == netIdx) pair.second = 0;
 }
 
 void GrRouteGrid::removeNet(GrNet& net) {
-    // log() << "net: " << net.getName() << std::endl;
-    // log() << "remove wire: " <<  std::endl;
     for (const auto& guide : net.wireRouteGuides) removeWire(guide);
-
-    // log() << "remove via: " <<  std::endl;
     const auto& viaGuides = net.viaRouteGuides;
     for (int g1 = 0; g1 < viaGuides.size(); g1++) {
         for (int g2 = g1 + 1; g2 < viaGuides.size(); g2++) {
@@ -214,11 +177,8 @@ void GrRouteGrid::removeNetRelax(GrNet& net,std::vector<std::pair<std::tuple<int
 
     
     for (const auto& guide : net.wireRouteGuides){
-        // log() << "guide: " << guide << std::endl;
         removeWireRelax(guide,wireMap_tpls);
     } 
-
-    // log() << "remove via: " <<  std::endl;
     const auto& viaGuides = net.viaRouteGuides;
     for (int g1 = 0; g1 < viaGuides.size(); g1++) {
         for (int g2 = g1 + 1; g2 < viaGuides.size(); g2++) {
@@ -237,38 +197,7 @@ void GrRouteGrid::removeNetRelax(GrNet& net,std::vector<std::pair<std::tuple<int
     }
 
     // net.wireRouteGuides.clear();
-    // net.viaRouteGuides.clear();
-
-    bool debug = false;
-    if(debug){
-        log() << "wire usage" << std::endl;
-        for(auto wire_map_pair : wireMap_tpls){
-        auto tpls = wire_map_pair.first;
-        auto usage = wire_map_pair.second;
-        auto layerIdx = std::get<0>(tpls);
-        auto gridline = std::get<1>(tpls);
-        auto cp = std::get<2>(tpls);
-        log() << "layerIdx: " << layerIdx 
-                << ", gridline: " << gridline
-                << ", cp: " << cp 
-                << ", usage: " << usage 
-                << std::endl;
-        }
-        log() << "via usage" << std::endl;
-        for(auto via_map_pair : viaMap_tpls){
-            auto tpls = via_map_pair.first;
-            auto usage = via_map_pair.second;
-            auto layerIdx = std::get<0>(tpls);
-            auto x = std::get<1>(tpls);
-            auto y = std::get<2>(tpls);
-            log() << "layerIdx: " << layerIdx 
-                    << ", x: " << x
-                    << ", y: " << y 
-                    << ", usage: " << usage 
-                    << std::endl;
-        }
-    }
-    
+    // net.viaRouteGuides.clear();  
 }//end removeNetRelax
 
 double GrRouteGrid::getWireCapacity(const GrEdge& edge) const {
@@ -318,7 +247,6 @@ double GrRouteGrid::getCellResource(const GrPoint& point) const { return getCell
 double GrRouteGrid::getInCellUsedArea(const GrPoint& point) const {
     // note: the area defined here = # of used tracks * avg_used_length (total used length of tracks in the gcell)
     // todo: consider boundary effect
-    bool debug = false;
     double used_area = 0;
     int layerIdx = point.layerIdx;
     auto dir = database.getLayerDir(layerIdx);
@@ -326,12 +254,6 @@ double GrRouteGrid::getInCellUsedArea(const GrPoint& point) const {
     int low_y = point.y - (dir == X);
     auto low_edge = GrEdge({layerIdx, low_x, low_y}, point);
     if (low_x >= 0 && low_y >= 0) {
-        if(debug)
-        log() << "getInCellUsedArea: "
-              << ", low_x: " << low_x
-              << ", low_y: " << low_y 
-              << ", getFixedUsage(low_edge): " << getFixedUsage(low_edge) 
-              << ", getWireUsage(low_edge): " << getWireUsage(low_edge) << std::endl; 
         used_area += getFixedUsage(low_edge) + getWireUsage(low_edge);
     }
     int high_x = point.x + (dir == Y);
@@ -339,15 +261,7 @@ double GrRouteGrid::getInCellUsedArea(const GrPoint& point) const {
     auto high_edge = GrEdge(point, {layerIdx, high_x, high_y});
     if (high_x < getNumGrPoint(X) && high_y < getNumGrPoint(Y)) {
         used_area += getFixedUsage(high_edge) + getWireUsage(high_edge);
-        if(debug)
-        log() << "getInCellUsedArea: "
-              << ", high_x: " << high_x
-              << ", high_y: " << high_y 
-              << ", getFixedUsage(high_edge): " << getFixedUsage(high_edge) 
-              << ", getWireUsage(high_edge): " << getWireUsage(high_edge) << std::endl;
     }
-
-
 
     return used_area / 2;
 }
@@ -388,7 +302,6 @@ double GrRouteGrid::getInCellViaNum(const GrPoint& point) const {  // get the nu
         // side = -1, from lower layer to current layer; side = 0 from current layer to upper layer
         auto via_point = GrPoint({point.layerIdx + side, point.x, point.y});
         if (via_point.layerIdx < 0 || via_point.layerIdx >= database.getLayerNum() - 1) continue;
-        // log() << "via_point: " << via_point << std::endl;
         num += getViaUsage(via_point);
     }
     return num;
@@ -401,7 +314,6 @@ double GrRouteGrid::getInCellViaNumRelax(const GrPoint& point, std::vector<std::
         // side = -1, from lower layer to current layer; side = 0 from current layer to upper layer
         auto via_point = GrPoint({point.layerIdx + side, point.x, point.y});
         if (via_point.layerIdx < 0 || via_point.layerIdx >= database.getLayerNum() - 1) continue;
-        // log() << "via_point: " << via_point << std::endl;
         num += getViaUsageRelax(via_point,viaMap_tpls);
     }
     return num;
@@ -464,12 +376,8 @@ double GrRouteGrid::getViaUsageRelax(int layerIdx, int x, int y,std::vector<std:
     }
 
 double GrRouteGrid::getViaUsage(int layerIdx, int x, int y) const { 
-    // log() << "layerIdx: " << x 
-    //       << ", x: " << x 
-    //       << ", y: " << y 
-    //       << ", routedViaMap: " << routedViaMap[layerIdx][x][y] << std::endl;
     return routedViaMap[layerIdx][x][y];
-    }
+}
 
 double GrRouteGrid::getCellResource(int layerIdx, int x, int y) const {
     auto layerDir = database.getLayerDir(layerIdx);
@@ -492,192 +400,11 @@ double GrRouteGrid::getCellResource(int layerIdx, int x, int y) const {
 
     double result = totalRsrc - cellUsage;
 
-    // bool debug =true;
-    // // hard code temp by erfan
-    // if(debug){
-    //     // log() << "low_y: "  << low_y << "result: " << result << std::endl;
-    //     if(586 < getCoorIntvl(GrPoint({layerIdx,x, y}),Y).low){
-            
-    //         result = result - 20;
-    //     }
-    //     // log() << "alow_y: "  << low_y << "result: " << result << std::endl;
-            
-    // }
-
     return result;
 }
 
 void GrRouteGrid::print() const { GCellGrid::print(); }
 
-void GrRouteGrid::logWireUsage(std::string log_name){
-    // UsageMapT routedWireMap;  // model cross-cell routing
-    bool debug = false;
-
-    UsageMapT routedViaMap;
-
-    int numLayers = database.getLayerNum();
-    if(debug){
-        log() << "num Layers: " << numLayers << std::endl;
-        for (int l = 0; l < numLayers; l++) {
-            auto dir = database.getLayerDir(l);
-            log() << "l: " << l 
-                << ", dir: " << dir
-                << ", getNumGrPoint(dir): " << getNumGrPoint(dir)
-                << ", getNumGrEdge(l): " << getNumGrEdge(l) << std::endl;
-        }
-
-        log() << "Writing routedViaMap to csv file..." << std::endl;
-    }
-    
-    
-
-    std::stringstream ss;
-    ss << "layer,gridLine,cp,numWire,fixedUsage,numTracks,usage,dist,cost,\
-    wire2,fix2,via2,via_u,via_v,usage2,cap2" << std::endl;
-
-    for (int layerIdx = 0; layerIdx < database.getLayerNum(); ++layerIdx) {
-        Dimension dir = database.getLayerDir(layerIdx);
-
-        for (int gridline = 0; gridline < getNumGrPoint(dir); gridline++) {
-            for (int cp = 0; cp < getNumGrEdge(layerIdx); cp++) {
-                GrEdge tempEdge(layerIdx, gridline, cp);
-
-                double numWire = getWireUsage(layerIdx, gridline, cp);
-                double fixedUsage = getFixedUsage({layerIdx, gridline, cp});
-                double numTracks = getNumTracks(layerIdx, gridline);
-                double usage = (numWire + getFixedUsage({layerIdx, gridline, cp})) / getNumTracks(layerIdx, gridline);
-                DBU dist = (getCoor(cp + 2, 1 - dir) - getCoor(cp, 1 - dir)) / 2;
-                double wireCost = getWireCost(tempEdge);
-
-                if(debug)
-                    log() << "edge: " << tempEdge
-                        << ", wireCost: " << wireCost << std::endl;
-
-                // log() << "LayerIdx: " << layerIdx
-                //       << ", dir: " << dir
-                //       << ", getNumGrPoint(dir): "  << getNumGrPoint(dir) 
-                //       << ", getNumGrEdge(layerIdx): " << getNumGrEdge(layerIdx)
-                //       << std::endl;
-
-                double numWire2 = getWireUsage(tempEdge);
-                double fixedUsage2 = getFixedUsage(tempEdge);
-                double viaUsage2 = sqrt((getInCellViaNum(tempEdge.u) + getInCellViaNum(tempEdge.v)) / 2) * db::setting.unitSqrtViaUsage;
-                double via_u = getInCellViaNum(tempEdge.u);
-                double via_v = getInCellViaNum(tempEdge.v);
-                double usage2 = numWire2+fixedUsage2+viaUsage2;
-                double wireCap2 = getWireCapacity(tempEdge);
-
-                ss << std::to_string(layerIdx)
-                   << "," << std::to_string(gridline)
-                   << "," << std::to_string(cp)
-                   << "," << std::to_string(numWire)
-                   << "," << std::to_string(fixedUsage)
-                   << "," << std::to_string(numTracks)
-                   << "," << std::to_string(usage)
-                   << "," << std::to_string(dist)
-                   << "," << std::to_string(wireCost)
-                //     2
-                   << "," << std::to_string(numWire2)
-                   << "," << std::to_string(fixedUsage2)
-                   << "," << std::to_string(viaUsage2)
-                   << "," << std::to_string(via_u)
-                   << "," << std::to_string(via_v)
-                   << "," << std::to_string(usage2)
-                   << "," << std::to_string(wireCap2)
-
-                   << std::endl;
-                // int bucketIdx = buckets.size() - 1;
-                // while (buckets[bucketIdx] >= usage) --bucketIdx;
-                // bucketIdx = max(bucketIdx, 0);
-                // wireUsageGrid[bucketIdx]++;
-                // wireUsageLength[bucketIdx] += dist;
-                // wirelength += dist * numWire;
-            }
-        }
-    }
-
-    
-
-    // std::cout << "get RsrcUsage: " << getRsrcUsage(1,1,1) << std::endl;
-    // for (int l_idx = 0; l_idx < database.getLayerNum(); l_idx++){
-    //     auto dir = database.getLayerDir(l_idx);
-    //     for (int g = 0; g < getNumGrPoint(dir); ++g)
-    //         for (int cp = 0; cp < getNumGrEdge(l_idx); ++cp)
-    //         {
-    //             log() << std::to_string(l_idx) << ", " << std::to_string(g)
-    //                << ", " << std::to_string(cp) << ", ";
-    //             log() << routedViaMap[l_idx][g][cp]<< std::endl;
-
-    //             // log() << std::to_string(l_idx) << ", " << std::to_string(x_idx)
-    //             //       << ", " << std::to_string(y_idx) << ", "
-    //             //       << std::to_string(grDatabase.getCellResource({l_idx, x_idx, y_idx})) << ", "
-    //             //       << rsrcMap[l_idx][x_idx][y_idx]<< std::endl;
-    //         }
-
-    // }
-
-    // log() <<  "routedViaMap.size():  "<< routedViaMap.size()  << std::endl;
-        
-    
-    // std::string file_name_csv = "congestionMap.csv";
-    std::ofstream fout(log_name);
-    fout << ss.str();
-    fout.close();
-}
-
-
-
-
-
-
-void GrRouteGrid::logRoutedViaMap(std::string log_name){
-    // UsageMapT routedWireMap;  // model cross-cell routing
-    UsageMapT routedViaMap;
-
-    log() << "Writing routedViaMap to csv file..." << std::endl;
-
-    std::stringstream ss;
-    ss << "layer,x,y,via_usage,via_cost" << std::endl;
-
-    for (int layerIdx = 0; (layerIdx + 1) < database.getLayerNum(); ++layerIdx) {
-        for (int x = 0; x < getNumGrPoint(X); x++) {
-            for (int y = 0; y < getNumGrPoint(Y); y++) {
-                ss << std::to_string(layerIdx)
-                   << "," <<  std::to_string(x)
-                   << "," <<  std::to_string(y)
-                   << "," <<  std::to_string(getViaUsage(layerIdx, x, y))
-                   << "," <<  std::to_string(getViaCost(gr::GrPoint(layerIdx,  x, y)))
-                   << std::endl;
-            }
-        }
-    }
-
-    // std::cout << "get RsrcUsage: " << getRsrcUsage(1,1,1) << std::endl;
-    // for (int l_idx = 0; l_idx < database.getLayerNum(); l_idx++){
-    //     auto dir = database.getLayerDir(l_idx);
-    //     for (int g = 0; g < getNumGrPoint(dir); ++g)
-    //         for (int cp = 0; cp < getNumGrEdge(l_idx); ++cp)
-    //         {
-    //             log() << std::to_string(l_idx) << ", " << std::to_string(g)
-    //                << ", " << std::to_string(cp) << ", ";
-    //             log() << routedViaMap[l_idx][g][cp]<< std::endl;
-
-    //             // log() << std::to_string(l_idx) << ", " << std::to_string(x_idx)
-    //             //       << ", " << std::to_string(y_idx) << ", "
-    //             //       << std::to_string(grDatabase.getCellResource({l_idx, x_idx, y_idx})) << ", "
-    //             //       << rsrcMap[l_idx][x_idx][y_idx]<< std::endl;
-    //         }
-
-    // }
-
-    // log() <<  "routedViaMap.size():  "<< routedViaMap.size()  << std::endl;
-        
-    
-    // std::string file_name_csv = "congestionMap.csv";
-    std::ofstream fout(log_name);
-    fout << ss.str();
-    fout.close();
-}
 
 void GrRouteGrid::printAllUsageAndVio() const {
     const int width = 10;
@@ -2203,73 +1930,6 @@ double GrRouteGrid2D::getCost2D(int dir, int gridline, int cp) const {
     // log() << "cost: " << cost << std::endl;
     return cost;
 }
-
-
-void GrRouteGrid2D::logWireUsage2D(std::string log_name,const GrRouteGrid& routeGrid){
- 
-
- 
-
-    std::stringstream ss;
-    ss << "layer,gridLine,cp,wireUsageMap2D,fixedMetalMap2D,capacityMap2D,costMap2D" << std::endl;
-    // ss << "layer,gridLine,cp" << std::endl;
-
-    
-
-
-
-    int numLayers = database.getLayerNum();
-    int xNumGrPoint = routeGrid.getNumGrPoint(X);
-    int yNumGrPoint = routeGrid.getNumGrPoint(Y);
-    int xNumGrEdge = yNumGrPoint - 1;
-    int yNumGrEdge = xNumGrPoint - 1;
-
-
-
-    for (int l = 0; l < numLayers; l++) {
-        auto dir = database.getLayerDir(l);
-        if (l==2) 
-            break;
-
-        if (dir == X) {
-            for (int gridline = 0; gridline < xNumGrPoint; gridline++) {
-                for (int cp = 0; cp < xNumGrEdge; cp++) {                   
-                    ss << std::to_string(1)
-                       << "," << std::to_string(gridline)
-                       << "," << std::to_string(cp)
-                       << "," << std::to_string(wireUsageMap2D[X][gridline][cp])
-                       << "," << std::to_string(fixedMetalMap2D[X][gridline][cp])
-                       << "," << std::to_string(capacityMap2D[X][gridline][cp]) 
-                       << "," << std::to_string(getCost2D(X,gridline,cp))
-                       << std::endl;
-                }
-            }
-        } 
-        else {
-            for (int gridline = 0; gridline < yNumGrPoint; gridline++) {
-                for (int cp = 0; cp < yNumGrEdge; cp++) {
-                    ss << std::to_string(0)
-                       << "," << std::to_string(gridline)
-                       << "," << std::to_string(cp)
-                       << "," << std::to_string(wireUsageMap2D[Y][gridline][cp])
-                       << "," << std::to_string(fixedMetalMap2D[Y][gridline][cp] )
-                       << "," << std::to_string(capacityMap2D[Y][gridline][cp] ) 
-                       << "," << std::to_string(getCost2D(Y,gridline,cp))
-                       << std::endl;
-                }
-            }
-        }
-        
-    }
-
-
-    std::ofstream fout(log_name);
-    fout << ss.str();
-    fout.close();
-
-
-    
-}//end logWireUsage2D
 
 
 

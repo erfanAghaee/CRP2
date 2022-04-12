@@ -175,8 +175,8 @@ public:
     bool operator!=(const IntervalT& rhs) const { return !(*this == rhs); }
 
     friend inline std::ostream& operator<<(std::ostream& os, const IntervalT<T>& interval) {
-        os << "(" << interval.low/2000.0 << ", " << interval.high/2000.0 << ")";
-        // os << "(" << interval.low << ", " << interval.high << ")";
+        // os << "(" << interval.low/2000.0 << ", " << interval.high/2000.0 << ")";
+        os << "(" << interval.low << ", " << interval.high << ")";
         return os;
     }
 };

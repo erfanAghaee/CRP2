@@ -249,9 +249,11 @@ def drawGuideCompare(args):
 
 
 def menu(args):
-    mainAnimation(args)
+    # mainAnimation(args)
     # drawCRP(args)
     # drawGuideCompare(args)
+    # mainCoef(args)
+    mainAstar(args)
     
 
     

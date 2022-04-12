@@ -55,6 +55,15 @@ class CongestionEdge:
             #     txts_viaUsage[i],\
             #     txts_numTracks[i])
             txt = "{:.2f}".format(txts_wireUsage[i]+txts_fixedUsage[i]+txts_viaUsage[i]-txts_numTracks[i])
+            # txt0 = "{:.1f}".format(txts_wireUsage[i])
+            # txt1 = "{:.1f}".format(txts_fixedUsage[i])
+            
+            # txt2 = "{:.1f}".format(txts_viaUsage[i])
+            # txt3 = "{:.1f}".format(txts_numTracks[i])
+            # txt = txt3
+            # txt = txt0 + "|"+txt1 + "|"+txt2 + "|"+txt3 
+            # # txt =txt1 +"|"+txt3 
+            # print("txt0:",txt0)
                 
             txts.append(txt)
         
@@ -75,6 +84,6 @@ class CongestionEdge:
         plt_obj.run(xls,yls,\
                     ws,hs,color,alpha)
 
-        plt_obj.drawText(txts,color=(1,1,1),font=12)
+        plt_obj.drawText(txts,color=(1,1,1),font=64)
         
         

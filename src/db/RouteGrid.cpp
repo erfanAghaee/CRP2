@@ -26,7 +26,7 @@ void RouteGrid::init() {
     if(db::setting.debug){
         log() << "unitViaCostRaw: " << unitViaCostRaw<< std::endl;
     }
-    unitViaCost = unitViaCostRaw / unitWireCostRaw;
+    unitViaCost = unitViaCostRaw / unitWireCostRaw ;//* 10
     if(db::setting.debug){
         log() << "unitViaCost: " << unitViaCost<< std::endl;
     }
@@ -45,7 +45,7 @@ void RouteGrid::init() {
         //       << "m2Pitch: " << m2Pitch 
         //       << "unitWireCostRaw: " << unitWireCostRaw 
         //       << "unitShortVioCostRaw * layers[i].width / m2Pitch / m2Pitch / unitWireCostRaw: " << unitShortVioCostRaw * layers[i].width / m2Pitch / m2Pitch / unitWireCostRaw << std::endl;
-        unitShortVioCost[i] = unitShortVioCostRaw * layers[i].width / m2Pitch / m2Pitch / unitWireCostRaw;
+        unitShortVioCost[i] = unitShortVioCostRaw * layers[i].width / m2Pitch / m2Pitch / unitWireCostRaw ;
     }
 
     // log() << "unitShortVioCost layers..." << std::endl;

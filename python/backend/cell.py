@@ -2,6 +2,7 @@
 
 import os
 import sys
+from tkinter import font
 import pandas as pd
 import numpy as np
 
@@ -39,7 +40,7 @@ class Cell:
                     cell_filter.w.values,cell_filter.h.values,color,alpha)
 
         if(text):
-            plt_obj.drawText(txts)
+            plt_obj.drawText(txts,font=42)
         
         # return surface
 

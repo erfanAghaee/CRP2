@@ -94,6 +94,46 @@ def getDB(args,iter_gr,iter_dr):
         dtype={"l": "float64","xl":'float64',"yl":'float64',"xh":'float64',"yh":"float64"})
     except:
         print("No drnet input!")
+    
+
+    try:
+        db["patternroute"] = pd.read_csv(args.dir + "patternroute/" + args.bench + ".patternroute."\
+        +str(iter_gr)+".csv", \
+        dtype={"xl":'float64',"yl":'float64',"xh":'float64',"yh":"float64",\
+            "cost":"str"})
+    except:
+        print("No patternRoute input!")
+
+
+    
+    try:
+        db["coef"] = pd.read_csv(args.dir + "coef/" + args.bench + ".coef."\
+        +str(iter_gr)+".csv",\
+            dtype={"name":"str","value":"float64"})
+    except:
+        print("No coef input!")
+
+    try:
+        db["astar"] = pd.read_csv(args.dir + "astar/" + args.bench + ".astar."\
+        +str(iter_gr)+".csv",\
+            dtype={"idx":"float64","net_name":"str",\
+                "l":"float64","xl":"float64","yl":"float64","xh":"float64",\
+                "hy":"float64","eBackward":"float64","eForward":"float64",\
+                "eDown":"float64","eUp":"float64","eBackwardCost":"float64",\
+                "eForwardCost":"float64","eDownCost":"float64","eUpCost":"float64"})
+    except:
+        print("No astar input!")
+
+    try:
+        db["astarcoarsegrid"] = pd.read_csv(args.dir + "astar/" + args.bench + ".astar.coarsegrid."\
+        +str(iter_gr)+".csv",\
+            dtype={"idx":"float64","net_name":"str",\
+                "l":"float64","xl":"float64","yl":"float64","xh":"float64",\
+                "hy":"float64","eBackward":"float64","eForward":"float64",\
+                "eDown":"float64","eUp":"float64","eBackwardCost":"float64",\
+                "eForwardCost":"float64","eDownCost":"float64","eUpCost":"float64"})
+    except:
+        print("No astar input!")
 
 
     return db

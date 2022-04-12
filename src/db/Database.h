@@ -23,6 +23,11 @@ public:
     std::string debug_net = "net941";
     std::vector<int> db_hpwls;
 
+    // streams for debugging
+    std::string patternRoute_stream="";
+    std::string astar_stream="";
+    std::string astar_stream_coarse="";
+
     LookupTbs lookup_tb;
     utils::BoxT<DBU> dieRegion;
     std::unordered_map<std::string,int> netsToIdx;
@@ -78,6 +83,11 @@ public:
     void logDie();
     // void logFixedMetals(vector<std::pair<BoxOnLayer, int>>& fixedMetalVec);
     void logFixedMetals(int iter);
+    void logPatternRoute(int iter);
+    void logAstar(int iter);
+    void logAstarCoraseGrid(int iter);
+
+    
     
 
     // function for filtering the functions in the felow. 
@@ -97,6 +107,7 @@ public:
     std::vector<utils::BoxT<DBU>> illegal_placement_boxs;
     int origin_offset_die;
     
+
 
 private:
     RsynService rsynService;

@@ -49,8 +49,6 @@ public:
 
     void print() const;
     void printAllUsageAndVio() const;
-    void logRoutedViaMap(std::string log_name);
-    void logWireUsage(std::string log_name);
 
     double getWirelength() const;
 
@@ -184,7 +182,7 @@ public:
     void useWire2D(int dir, int gridline, int cp, double usage = 1);
     void removeUsage2D(int dir, int gridline, int cp, double usage = 1);
     double getCost2D(int dir, int gridline, int cp) const;
-    void logWireUsage2D(std::string log_name,const GrRouteGrid& routeGrid);
+    
 
 private:
     UsageMapT wireUsageMap2D;   // 2d, first dim show X,Y

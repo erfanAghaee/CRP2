@@ -172,6 +172,30 @@ void Router::run() {
         }//end refinePlacement loop
 
     }//end refinePlacement
+
+
+        // // postprocessing
+    if(db::setting.postProcessing){
+        if(db::setting.debug){
+            log() << "postProcessing..." << std::endl;
+        }
+        for (auto& net : grDatabase.nets) {
+            if(filter_nets.size() != 0){
+                if(filter_nets.find(net.dbNet.idx) != filter_nets.end()){
+                    GuideGenerator guideGen(net);
+                    guideGen.genPatchGuides();
+                }
+            }else{
+                GuideGenerator guideGen(net);
+                guideGen.genPatchGuides();
+            }
+            
+        }
+        if(db::setting.debug){
+            log() << "end postProcessing..." << std::endl;
+        }
+    }
+
     
     // database.logCellLocations(0);
     // database.logDie();
@@ -759,9 +783,14 @@ void Router::applyPlacement(vector<int>& netsToRoute,int iter_t,utils::timer& pr
 // }// end applyOnlyRoute
 
 void Router::ripupReroute(vector<int>& netsToRoute){
+    
 
-    // for (int iter = 0; iter < db::setting.rrrIterLimit; iter++) {        
-    for (int iter = 0; iter < 1; iter++) {        
+    injectCongestion();
+
+
+
+    for (int iter = 0; iter < db::setting.rrrIterLimit; iter++) {        
+    // for (int iter = 0; iter < 1; iter++) {        
         std::vector<int> netsToRoute;
         printRouteStart("routing",iter);
         routeStateClear();
@@ -770,15 +799,18 @@ void Router::ripupReroute(vector<int>& netsToRoute){
 
         updateCost(iter);
         
-        if (iter > 0 ) {
+        // if (iter > 0 ) {
             ripup(netsToRoute);
             congMap.init(cellWidth, cellHeight);
-        }
+            
+        // }
                 
         if(iter == 0){
             routeApprx(netsToRoute, PATTERNROUTE);
+            // routeApprx(netsToRoute, ASTAR);
         }else{
             routeApprx(netsToRoute, ASTAR);
+            // routeApprx(netsToRoute, PATTERNROUTE);
         }
         
 
@@ -908,6 +940,7 @@ void Router::routeApprx(const vector<int>& netsToRoute, RouterName routerName) {
         routers.reserve(netsToRoute.size());
         for (auto id : netsToRoute) routers.emplace_back(grDatabase.nets[id]);
 
+        
         vector<vector<int>> batches = getBatches(routers, netsToRoute);
         // log() << "netsToRoute before maze: " << netsToRoute.size() << std::endl;
         for (const vector<int>& batch : batches) {
@@ -924,8 +957,11 @@ void Router::routeApprx(const vector<int>& netsToRoute, RouterName routerName) {
                 int netIdx = netsToRoute[jobIdx];
                 congMap.update(grDatabase.nets[netIdx]);
                 allNetStatus[netIdx] = router.status;
+                database.astar_stream = database.astar_stream + router.stream_str;
+                database.astar_stream_coarse = database.astar_stream_coarse + router.stream_coarseGrid_str;
             }
         }
+        
         // grDatabase.logNets(iter);
         // grDatabase.logVio(iter);
         // grDatabase.logCongestion(iter);
@@ -949,8 +985,10 @@ void Router::fluteAllAndRoute(const vector<int>& netsToRoute) {
 
     grDatabase.init2DMaps(grDatabase);
 
-    for (auto& router : initRouters)
+    for (auto& router : initRouters){
         if (router.grNet.needToRoute()) router.plan_fluteOnly();
+    }
+        
     if(db::setting.debug){
         printlog("finish planning");
     }
@@ -967,16 +1005,16 @@ void Router::fluteAllAndRoute(const vector<int>& netsToRoute) {
     }
     for (auto& router : initRouters)
         if (router.grNet.needToRoute()) router.getRoutingOrder();
-    if(db::setting.debug){
-        printlog("finish edge shifting");
-        grDatabase.logRoutedViaMap("routedViaMap_after_gr.csv");
-    }
+
 
     for (int i = 0; i < routers.size(); i++) {
         auto& router = routers[i];
         router.initRoutePattern(initRouters[i]);
         router.finish();
         allNetStatus[netsToRoute[i]] = router.status;
+
+        // pattern route stream for debugging purposes. 
+        database.patternRoute_stream = database.patternRoute_stream + initRouters[i].stream.str();
     }
     if(db::setting.debug){
         printlog("finish pattern route");
@@ -1405,6 +1443,9 @@ void Router::logAll(){
     grDatabase.logVio(log_iter);
     grDatabase.logCongestion(log_iter);
     grDatabase.logCoef(log_iter);
+    database.logPatternRoute(log_iter);
+    database.logAstar(log_iter);
+    database.logAstarCoraseGrid(log_iter);
     log_iter++;
     log() << "end log!" << std::endl;
 }
@@ -1431,3 +1472,36 @@ void Router::routeStateClear(){
 }//end routeStateClear
 
 
+void Router::injectCongestion(){
+
+    struct fakeCong{
+        utils::IntervalT<int> xx;
+        utils::IntervalT<int> yy;
+        int l; //layer
+        int usage;
+    };
+
+    std::vector<fakeCong> congestion = {
+        //  xx,yy,l,usage
+        {utils::IntervalT<int>(5, 7),utils::IntervalT<int>(9,9),2,6},
+        {utils::IntervalT<int>(5, 7),utils::IntervalT<int>(8,8),2,6},
+        {utils::IntervalT<int>(5, 7),utils::IntervalT<int>(7,7),2,6},
+        {utils::IntervalT<int>(5, 7),utils::IntervalT<int>(6,6),2,6},
+        {utils::IntervalT<int>(5, 7),utils::IntervalT<int>(5,5),2,6},
+        {utils::IntervalT<int>(5, 6),utils::IntervalT<int>(4,4),2,6},
+        {utils::IntervalT<int>(5, 6),utils::IntervalT<int>(3,3),2,6},
+        {utils::IntervalT<int>(5, 6),utils::IntervalT<int>(2,2),2,6},
+        {utils::IntervalT<int>(5, 6),utils::IntervalT<int>(1,1),2,6},
+        {utils::IntervalT<int>(5, 6),utils::IntervalT<int>(0,0),2,6}
+    };
+
+    
+    for (auto cong : congestion){      
+        gr::GrBoxOnLayer grBox(cong.l,cong.xx,cong.yy);
+        for(int i = 0; i < cong.usage; i++){
+            grDatabase.useWire(grBox);        
+        }
+    }
+    
+
+}//end fakeViolationGenerator

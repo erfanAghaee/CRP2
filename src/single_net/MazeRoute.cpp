@@ -17,6 +17,8 @@ void MazeRoute::constructGridGraph(const CongestionMap &congMap) {
     mergedPinAccessBoxes =
         grNet.getMergedPinAccessBoxes([&](const gr::GrPoint &point) { return graphBuilder.grPointToPoint(point); });
     graphBuilder.run(mergedPinAccessBoxes);
+    cellWidth = congMap.getCellWidth();
+    cellHeight = congMap.getCellHeight();
 }
 
 db::RouteStatus MazeRoute::run() {
@@ -37,9 +39,9 @@ db::RouteStatus MazeRoute::run() {
 db::RouteStatus MazeRoute::route(int startPin) {
     bool debug = false;
 
-    // if(grNet.getName() == "net10214"){
-    //     debug = true;
-    // }
+    if(grNet.getName() == "net1237"){
+        debug = true;
+    }
 
     // define std::priority_queue
     auto solComp = [](const std::shared_ptr<Solution> &lhs, const std::shared_ptr<Solution> &rhs) {
@@ -131,7 +133,16 @@ db::RouteStatus MazeRoute::route(int startPin) {
         printlog(visitedPin, nPinToConnect, mergedPinAccessBoxes.size(), mergedPinAccessBoxes);
         printlog(graph.checkConn());
         graph.writeDebugFile(grNet.getName() + "." + std::to_string(iter)+ ".graph");
+        std::string net_name = grNet.getName();
+        if(type == FINEGRID){
+            graph.logGridGraph(net_name);
+        }else if (type == COARSEGRID){
+            graph.logCoarseGridGraph(net_name,cellWidth,cellHeight);            
+        }
+
     }
+
+
 
     return db::RouteStatus::SUCC_NORMAL;
 }

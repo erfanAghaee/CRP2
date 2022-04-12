@@ -27,6 +27,9 @@ private:
     void updateWireCostMap(const gr::PointOnLayer& point);
     double calcCrsnEdgeCost(const gr::PointOnLayer& u, const gr::PointOnLayer& v);
     double calcCrsnViaCost(const gr::PointOnLayer& via);
+    // used in CUGR
+    double calcCrsnEdgeCostOld(const gr::PointOnLayer& u, const gr::PointOnLayer& v);
+    double calcCrsnViaCostOld(const gr::PointOnLayer& via);
 
     int xCrsnScale;
     int yCrsnScale;

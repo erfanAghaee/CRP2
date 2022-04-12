@@ -125,7 +125,7 @@ class PltCairo:
         return surface
 
     
-    def drawText(self,texts,color=(1,0,0),font=24):
+    def drawText(self,texts,color=(1,0,0),font=12,up=False):
         self.ctx.set_font_size(font)
         self.ctx.select_font_face("monospace", cairo.FONT_SLANT_NORMAL,
                                 cairo.FONT_WEIGHT_NORMAL)
@@ -133,6 +133,8 @@ class PltCairo:
         for i in np.arange(len(self.node_xl)):
             x = self.node_xl[i]
             y = self.node_yh[i]
+            if(up):
+                y = self.node_yh[i] - 100
             self.ctx.move_to(x,y)
             self.ctx.set_source_rgba(color[0], color[1], color[2], alpha=1)
             self.ctx.show_text(texts[i])

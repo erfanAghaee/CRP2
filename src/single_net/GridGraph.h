@@ -35,7 +35,16 @@ public:
     vector<int>& getVertices(int pinIdx) { return pinToVertex[pinIdx]; }
 
     void writeDebugFile(const std::string& fn) const;
+    void logGridGraph(std::string& net_name);
+    void logCoarseGridGraph(std::string& net_name,int cellWidth, int cellHeight);
+
+    
     bool checkConn() const;
+
+    // stream for debugging
+    std::stringstream stream;
+    std::stringstream stream_coarse;
+    std::stringstream stream_time;
 
 private:
     int edgeCount;

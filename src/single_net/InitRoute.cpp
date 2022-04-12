@@ -4,159 +4,26 @@ using namespace std;
 
 mutex fluteMutex;
 
-struct hash_tuple {  // hash binary tuple
-    template <class T>
-    size_t operator()(const tuple<T, T>& tup) const {
-        auto hash1 = hash<T>{}(get<0>(tup));
-        auto hash2 = hash<T>{}(get<1>(tup));
-        return hash1 ^ hash2;
-    }
-};
 
 void InitRoute::runFlute() {
-    std::vector<std::pair<std::tuple<int,int,int>,double>> wireMap_tpls;
-    std::vector<std::pair<std::tuple<int,int,int>,double>> viaMap_tpls;
-    grDatabase.removeNetRelax(grNet,wireMap_tpls,viaMap_tpls);
-    // if(grNet.getName() == "net275" )debug = false;
-    if(debug){
-        log() << "grNet: " << grNet.getName() << ", initRoute ..." << std::endl;
-    }
+
     // get net center
     // float net_ctrz = 0;
     float net_ctrx = 0;
     float net_ctry = 0;
 
-    // log() << "runFlute " << grNet.getName() << std::endl;
-    int i = 0;
-    for (auto& pinBoxes : grNet.pinAccessBoxes) {
-        // float pin_ctrz = 0;
-        float pin_ctrx = 0;
-        float pin_ctry = 0;
-        for (auto& pinBox : pinBoxes) {
-            pin_ctrx += pinBox.x;
-            pin_ctry += pinBox.y;
-            // log() << "pinBox.x: " << pinBox.x
-            //       << ", pinBox.y: " << pinBox.y << std::endl;
-        }
-        pin_ctrx /= pinBoxes.size();
-        pin_ctry /= pinBoxes.size();
-
-        net_ctrx += pin_ctrx;
-        net_ctry += pin_ctry;
-    }
-    net_ctrx /= grNet.pinAccessBoxes.size();
-    net_ctry /= grNet.pinAccessBoxes.size();
-
-    // if(debug)
-    //     log() << "net_ctrx: " << net_ctrx
-    //         << ", net_ctry: " << net_ctry << std::endl;
+    auto net_ctr_pair = getNetCenter();
+    net_ctrx = net_ctr_pair.first;
+    net_ctry = net_ctr_pair.second;
 
     // get pin center
     vector<tuple<int, int>> pinCenters;
+    getPinCenter(pinCenters, net_ctrx, net_ctry);
 
-    for (auto& pinBoxes : grNet.pinAccessBoxes) {
-        float xCenter = 0;
-        float yCenter = 0;
-        for (auto& pinBox : pinBoxes) {
-            xCenter += pinBox.x;
-            yCenter += pinBox.y;
-            if(debug)
-                log() << "i: " << i 
-                      << ", pinBox.x: " << pinBox.x << ", pinBox.y: " << pinBox.y << std::endl;
-            // log() << "xCenter: " << xCenter << ", yCenter: " << yCenter << std::endl;
-        }
-        // log() << "pinBoxes.size(): " << pinBoxes.size() << std::endl;
-        xCenter /= pinBoxes.size();
-        yCenter /= pinBoxes.size();
-
-        // for(auto tmp : pinCenters){
-        // log() << "xCenter: " << xCenter << ", yCenter: " << yCenter << std::endl;
-        // }
-        // 3 kinds of accessibility (0) totally vio-free (1) one side vio-free (2) no side vio-free
-        float min_dist[3];
-        min_dist[0] = min_dist[1] = min_dist[2] = numeric_limits<float>::max();
-        int best_box[3] = {-1, -1, -1};
-
-        for (int pb = 0; pb < pinBoxes.size(); pb++) {
-            // check pin box's accessibility
-            auto& pb_x = pinBoxes[pb].x;
-            auto& pb_y = pinBoxes[pb].y;
-            int layer_idx = pinBoxes[pb].layerIdx;
-            if(debug)
-                log() << "pinsBox: [x: " <<  pb_x << ", y: " << pb_y << std::endl;
-            int is_x = database.getLayerDir(layer_idx) == X ? 1 : 0;
-            auto low_edge =
-                gr::GrEdge({layer_idx, max(pb_x - (1 - is_x), 0), max(pb_y - is_x, 0)}, {layer_idx, pb_x, pb_y});
-            auto high_edge = gr::GrEdge({layer_idx, pb_x, pb_y},
-                                        {layer_idx,
-                                         min(pb_x + (1 - is_x), grDatabase.getNumGrPoint(X) - 1),
-                                         min(pb_y + is_x, grDatabase.getNumGrPoint(Y) - 1)});
-
-            if(debug){
-                log() << "low_edge: " << low_edge << std::endl;
-                log() << "low_edge has viol: " << grDatabase.hasVio(low_edge, false) << std::endl;
-                log() << "high_edge: " << high_edge << std::endl;
-                log() << "high_edge has viol: " << grDatabase.hasVio(high_edge, false) << std::endl;
-            }
-                
-
-            int pb_access = 0;
-            if(relax){
-                // log() << "relax mode ... " << std::endl;
-                pb_access += int(grDatabase.hasVioRelax(low_edge,wireMap_tpls,viaMap_tpls, false));
-                pb_access += int(grDatabase.hasVioRelax(high_edge,wireMap_tpls,viaMap_tpls, false));
-            }else{
-                pb_access += int(grDatabase.hasVio(low_edge, false));
-                pb_access += int(grDatabase.hasVio(high_edge, false));
-            }
-            
-            
-            if(debug){
-                log() << "grDatabase.hasVio(low_edge, false): " << int(grDatabase.hasVio(low_edge, false)) << std::endl;
-                log() << "grDatabase.hasVio(high_edge, false): " << int(grDatabase.hasVio(high_edge, false)) << std::endl;
-                log() << "pb_access: " << pb_access << std::endl; 
-            }
-                
-            // pb_access = 0;
-
-            // float dist = abs(pinBoxes[pb].x - net_ctrx) + abs(pinBoxes[pb].y - net_ctrx);
-            float dist = abs(pinBoxes[pb].x - net_ctrx) + abs(pinBoxes[pb].y - net_ctry);
-            if(debug){
-                log() << "pb: " << pb 
-                      << ", pinBoxes[pb].x: " << pinBoxes[pb].x 
-                      << ", pinBoxes[pb].y: " << pinBoxes[pb].y 
-                      << ", net_ctrx: "  << net_ctrx
-                      << ", net_ctry: "  << net_ctry 
-                      << ", dist: " << dist << std::endl;
-
-            }
-
-            if (dist < min_dist[pb_access]) {
-                min_dist[pb_access] = dist;
-                best_box[pb_access] = pb;
-            }
-        }
-        for (int ac = 0; ac < 3; ac++) {
-            if (best_box[ac] != -1) {
-                pinCenters.emplace_back(make_tuple(pinBoxes[best_box[ac]].x, pinBoxes[best_box[ac]].y));
-                break;
-            }
-        }
-        i++;
-    }
-
-    // log() << "pinCenters" << std::endl;
-    // for(auto tmp : pinCenters){
-    //     log() << "x: " << std::get<0>(tmp) << ", y: " << std::get<1>(tmp) << std::endl;
-    // }
 
     // location to pins
     unordered_map<tuple<int, int>, vector<int>, hash_tuple> loc2Pins;
-    for (int i = 0; i < pinCenters.size(); i++) {
-        loc2Pins[pinCenters[i]].emplace_back(i);
-    }
-
-    // log() << "loc2Pins size: " << loc2Pins.size() << std::endl;
+    getLoc2Pins(loc2Pins,pinCenters);
 
     // flute
     int degree = loc2Pins.size();
@@ -171,8 +38,6 @@ void InitRoute::runFlute() {
         const tuple<int, int>& loc = loc2pin.first;
         xs[pt_cnt] = get<0>(loc);
         ys[pt_cnt] = get<1>(loc);
-        if(debug)
-            log() << "x: " << get<0>(loc) << ", y: " << get<1>(loc) << std::endl;
         pt_cnt++;
     }
     if (degree >= 2) {
@@ -180,45 +45,7 @@ void InitRoute::runFlute() {
         Tree flutetree = flute(degree, xs, ys, ACCURACY);
         fluteMutex.unlock();
         // log() << "flutetree length: " << flutetree.length << std::endl;
-        unordered_map<tuple<int, int>, int, hash_tuple> loc2Node;  // location -> RouteNode index
-        for (int i = 0; i < degree * 2 - 2; i++) {
-            Branch& branch1 = flutetree.branch[i];
-            Branch& branch2 = flutetree.branch[branch1.n];
-            tuple<int, int> fluteEdge[2];
-            fluteEdge[0] = make_tuple(branch1.x, branch1.y);
-            fluteEdge[1] = make_tuple(branch2.x, branch2.y);
-            // create route nodes
-            for (int j = 0; j < 2; j++) {
-                tuple<int, int>& nodeLoc = fluteEdge[j];
-                if (loc2Node.find(nodeLoc) == loc2Node.end()) {
-                    RouteNode node(fluteEdge[j]);
-                    // pin info
-                    if (loc2Pins.find(nodeLoc) != loc2Pins.end()) {
-                        node.pinIdxs = loc2Pins[nodeLoc];
-                        for (int pIdx : node.pinIdxs) {
-                            int layerIdx = grNet.pinAccessBoxes[pIdx][0].layerIdx;
-                            node.pinLayers.emplace_back(layerIdx);
-
-                            // for (auto& box: grNet.pinAccessBoxes[pIdx]) {
-                            //     if (box.layerIdx != layerIdx) {
-                            //         log() << "Error: Pin across layers spotted" << endl;
-                            //     }
-                            // }
-                        }
-                    }
-                    node.idx = node_cnt;
-                    routeNodes[node_cnt++] = node;
-                    loc2Node[nodeLoc] = routeNodes.size() - 1;
-                }
-            }
-            // add connectivity info
-            if (fluteEdge[0] != fluteEdge[1]) {
-                int nodeIdx1 = loc2Node[fluteEdge[0]];
-                int nodeIdx2 = loc2Node[fluteEdge[1]];
-                routeNodes[nodeIdx1].toConnect.insert(nodeIdx2);
-                routeNodes[nodeIdx2].toConnect.insert(nodeIdx1);
-            }
-        }
+        constructRouteNodes(flutetree,degree,loc2Pins, node_cnt);
     } else if (degree == 1) {
         auto nodeLoc = make_tuple(xs[0], ys[0]);
         RouteNode node(nodeLoc);
@@ -237,37 +64,23 @@ void InitRoute::runFlute() {
     } else {
         log() << "Error: degree = 0." << std::endl;
     }
-}
+
+    logRouteNodes();
+}//end runFlute
 
 
 void InitRoute::patternRoute() {
     utils::timer pattern_route_time;
 
     int layer_cnt = database.getLayerNum();  
-    bool debug = false;
-    if(debug)
-        log() << "patternRoute grNet: " << grNet.getName() << std::endl;
-    // if(grNet.getName() == database.debug_net) debug = false;
 
-    if(debug){
-        log() << "grNet: " << grNet.getName() << std::endl;
-        log() << "database.getUnitViaCost(): " << database.getUnitViaCost() << std::endl;
-        log() << "grDatabase.getLogisticSlope(): " << grDatabase.getLogisticSlope() << std::endl;
-        log() << "grDatabase.getUnitViaMultiplier(): " << grDatabase.getUnitViaMultiplier() << std::endl;
-    }
 
         
 
     for (auto& edge : routeEdges) {
         auto& fromNode = routeNodes[edge.from];
         auto& toNode = routeNodes[edge.to];
-        // if(debug){
-        //     log() << "edge: [from: " << edge.from << ", to: " << edge.to << "]" << std::endl;
-        //     log() << "[fromNode: [x: " << fromNode.x <<", y: " << fromNode.y << "] "
-        //         << ", idx: " << fromNode.idx << "]"
-        //         << ", toNode: [x: " << toNode.x << ",y: " << toNode.y 
-        //         << ", idx: " << toNode.idx << "]" << std::endl;
-        // }
+
         
         // Initialize fromNode's exitCosts
         fromNode.exitCosts.resize(layer_cnt, numeric_limits<db::CostT>::max());
@@ -283,16 +96,6 @@ void InitRoute::patternRoute() {
                 int highest_layer = max(highest_pin, layer_idx);
                 db::CostT exit_cost = grDatabase.getStackViaCost(gr::GrPoint(lowest_layer, fromNode.x, fromNode.y),
                                                                  highest_layer - lowest_layer);
-                // if(debug){
-                //     auto tmp = grDatabase.getStackViaCost(gr::GrPoint(lowest_layer, fromNode.x, fromNode.y),
-                //                                                  highest_layer - lowest_layer,true);
-                //     log() << "grDatabase.getUnitViaMultiplier(): " << grDatabase.getUnitViaMultiplier() << std::endl;
-                //     log() << "grPoint: [l: " << layer_idx
-                //           << ", x: " << fromNode.x
-                //           << ", y: " << fromNode.y 
-                //           << "], exitCost: " << exit_cost << std::endl;
-                // }
-
 
                 fromNode.exitCosts[layer_idx] = exit_cost;
             }
@@ -333,15 +136,7 @@ void InitRoute::patternRoute() {
                     
                     db::CostT cost = prev_cost + via_cost;
 
-                    // if(debug){
-                    //     auto tmp = grDatabase.getStackViaCost(gr::GrPoint(via_bottom, fromNode.x, fromNode.y), via_height,true);
-                    //     log() << "grDatabase.getUnitViaMultiplier(): " << grDatabase.getUnitViaMultiplier() << std::endl;
-                    //     log() << "grPoint: [l: " << via_bottom
-                    //       << ", x: " << fromNode.x
-                    //       << ", y: " << fromNode.y 
-                    //       << "], via_height: " << via_height 
-                    //       << " ,exitCost: " << via_cost << ", prev_cost: " << prev_cost << ", cost: " << cost << std::endl;
-                    // }
+
                         
                     
                     if (cost < fromNode.exitCosts[layer_idx]) {
@@ -353,47 +148,151 @@ void InitRoute::patternRoute() {
                 }
             }
         }
-        // if(debug){
-        //     log() << "bf fromNode print..." << std::endl;
-        //     fromNode.print();
-        //     log() << "bf toNode print..." << std::endl;
-        //     toNode.print();
-        // }
-        // Patterns
-        LShape(edge);
-        // if(debug){
-        //     log() << "af fromNode print..." << std::endl;
-        //     fromNode.print();
-        //     log() << "af toNode print..." << std::endl;
-        //     toNode.print();
-        // }
-    }
 
-    // if(debug){
-    //     log() << "routeNodes: " << std::endl;
-    //     for(auto routeNode : routeNodes){
-    //         log() << "routeNode: [idx: " << routeNode.first 
-    //               << ", x: " << routeNode.second.x 
-    //               << ", y: " << routeNode.second.y 
-    //               << ", id: " << routeNode.second.idx << std::endl;
-    //     }
-    //     log() << "exit and enter edge costs: " << std::endl;
-    //     for(auto routeNode : routeNodes){
-    //         log() << "routeNode idx: " << routeNode.first << std::endl;
-    //         for(auto exit_cost : routeNode.second.exitCosts){
-    //             log() << "exitCost: " << exit_cost << std::endl;
-    //         }
-    //         for(auto enter_costs : routeNode.second.enterCosts){
-    //             log() << "enterCost id: " << enter_costs.first << std::endl;
-    //             for(auto entr_cost : enter_costs.second){
-    //                 log() << "enterCost: " << entr_cost << std::endl;
-    //             }
-    //         }
-    //     }
-    // }
-    // log() << "pattern_route_time: " << pattern_route_time << std::endl;
+        LShape(edge);
+
+        
+
+    }
     
 }//end patternRoute
+
+
+std::pair<float,float> InitRoute::getNetCenter(){
+    float net_ctrx = 0;
+    float net_ctry = 0;
+    for (auto& pinBoxes : grNet.pinAccessBoxes) {
+        // float pin_ctrz = 0;
+        float pin_ctrx = 0;
+        float pin_ctry = 0;
+        for (auto& pinBox : pinBoxes) {
+            pin_ctrx += pinBox.x;
+            pin_ctry += pinBox.y;
+            // log() << "pinBox.x: " << pinBox.x
+            //       << ", pinBox.y: " << pinBox.y << std::endl;
+        }
+        pin_ctrx /= pinBoxes.size();
+        pin_ctry /= pinBoxes.size();
+
+        net_ctrx += pin_ctrx;
+        net_ctry += pin_ctry;
+    }
+    net_ctrx /= grNet.pinAccessBoxes.size();
+    net_ctry /= grNet.pinAccessBoxes.size();
+
+    return std::make_pair(net_ctrx,net_ctry);
+}//end getNetCenter
+
+void InitRoute::getPinCenter(vector<tuple<int, int>>& pinCenters, float net_ctrx,float net_ctry){
+    for (auto& pinBoxes : grNet.pinAccessBoxes) {
+        float xCenter = 0;
+        float yCenter = 0;
+        for (auto& pinBox : pinBoxes) {
+            xCenter += pinBox.x;
+            yCenter += pinBox.y;
+        }
+        
+        xCenter /= pinBoxes.size();
+        yCenter /= pinBoxes.size();
+
+        
+        // 3 kinds of accessibility (0) totally vio-free (1) one side vio-free (2) no side vio-free
+        float min_dist[3];
+        min_dist[0] = min_dist[1] = min_dist[2] = numeric_limits<float>::max();
+        int best_box[3] = {-1, -1, -1};
+
+        for (int pb = 0; pb < pinBoxes.size(); pb++) {
+            // check pin box's accessibility
+            auto& pb_x = pinBoxes[pb].x;
+            auto& pb_y = pinBoxes[pb].y;
+            int layer_idx = pinBoxes[pb].layerIdx;
+            
+            int is_x = database.getLayerDir(layer_idx) == X ? 1 : 0;
+            auto low_edge =
+                gr::GrEdge({layer_idx, max(pb_x - (1 - is_x), 0), max(pb_y - is_x, 0)}, {layer_idx, pb_x, pb_y});
+            auto high_edge = gr::GrEdge({layer_idx, pb_x, pb_y},
+                                        {layer_idx,
+                                         min(pb_x + (1 - is_x), grDatabase.getNumGrPoint(X) - 1),
+                                         min(pb_y + is_x, grDatabase.getNumGrPoint(Y) - 1)});
+
+            
+                
+
+            int pb_access = 0;
+           
+            pb_access += int(grDatabase.hasVio(low_edge, false));
+            pb_access += int(grDatabase.hasVio(high_edge, false));
+           
+            
+            
+
+            // pb_access = 0;
+
+            // float dist = abs(pinBoxes[pb].x - net_ctrx) + abs(pinBoxes[pb].y - net_ctrx);
+            float dist = abs(pinBoxes[pb].x - net_ctrx) + abs(pinBoxes[pb].y - net_ctry);
+
+
+            if (dist < min_dist[pb_access]) {
+                min_dist[pb_access] = dist;
+                best_box[pb_access] = pb;
+            }
+        }
+        for (int ac = 0; ac < 3; ac++) {
+            if (best_box[ac] != -1) {
+                pinCenters.emplace_back(make_tuple(pinBoxes[best_box[ac]].x, pinBoxes[best_box[ac]].y));
+                break;
+            }
+        }
+        // i++;
+    }
+}//end getPinCenter
+
+void InitRoute::getLoc2Pins(unordered_map<tuple<int, int>, vector<int>, hash_tuple>& loc2Pins
+    , vector<tuple<int, int>>& pinCenters){
+    for (int i = 0; i < pinCenters.size(); i++) {
+        loc2Pins[pinCenters[i]].emplace_back(i);
+    }
+}// end getLoc2Pins
+
+void InitRoute::constructRouteNodes(Tree& flutetree
+    , int degree
+    , unordered_map<tuple<int, int>, vector<int>, hash_tuple>& loc2Pins
+    , int node_cnt){
+     unordered_map<tuple<int, int>, int, hash_tuple> loc2Node;  // location -> RouteNode index
+    for (int i = 0; i < degree * 2 - 2; i++) {
+        Branch& branch1 = flutetree.branch[i];
+        Branch& branch2 = flutetree.branch[branch1.n];
+        tuple<int, int> fluteEdge[2];
+        fluteEdge[0] = make_tuple(branch1.x, branch1.y);
+        fluteEdge[1] = make_tuple(branch2.x, branch2.y);
+        // create route nodes
+        for (int j = 0; j < 2; j++) {
+            tuple<int, int>& nodeLoc = fluteEdge[j];
+            if (loc2Node.find(nodeLoc) == loc2Node.end()) {
+                RouteNode node(fluteEdge[j]);
+                // pin info
+                if (loc2Pins.find(nodeLoc) != loc2Pins.end()) {
+                    node.pinIdxs = loc2Pins[nodeLoc];
+                    for (int pIdx : node.pinIdxs) {
+                        int layerIdx = grNet.pinAccessBoxes[pIdx][0].layerIdx;
+                        node.pinLayers.emplace_back(layerIdx);
+                    }
+                }
+                node.idx = node_cnt;
+                routeNodes[node_cnt++] = node;
+                loc2Node[nodeLoc] = routeNodes.size() - 1;
+            }
+        }
+        // add connectivity info
+        if (fluteEdge[0] != fluteEdge[1]) {
+            int nodeIdx1 = loc2Node[fluteEdge[0]];
+            int nodeIdx2 = loc2Node[fluteEdge[1]];
+            routeNodes[nodeIdx1].toConnect.insert(nodeIdx2);
+            routeNodes[nodeIdx2].toConnect.insert(nodeIdx1);
+        }
+    }
+
+}//end constructRouteNodes
 
 void InitRoute::patternRouteMT() {
     bool debug = false;
@@ -735,6 +634,8 @@ void InitRoute::patternRouteMT() {
         //     log() << "af toNode print..." << std::endl;
         //     toNode.print();
         // }
+
+        
     }
 
     // if(debug){
@@ -1038,6 +939,7 @@ void InitRoute::buildTopo() {
     // dumpTo grNet
     grNet.gridTopo.emplace_back(buildTopo(rootIdx, root_enter_layer));
     gr::GrSteiner::removeRedundancy(grNet.gridTopo[0]);
+    
 
     vector<gr::GrPoint> pin_locs;
     for (auto& kv : routeNodes) {
@@ -1069,27 +971,13 @@ void InitRoute::buildTopo() {
     if (!gr::GrSteiner::checkConnectivity(grNet.gridTopo[0], pin_locs)) {
         log() << "Error: Connectivity check failed" << endl;
     }
+
+    logRoute();
 }
 
 void InitRoute::plan_fluteOnly() {
     utils::timer net_timer;
     runFlute();
-
-    // if(true){
-    //     log() << "after plan_fluteOnly (initRoute)..." << std::endl;
-    //     for (int i = 0; i < routeEdges.size(); i++) {
-    //         auto& edge = routeEdges[i];
-    //         auto& fromNode = routeNodes[edge.from];
-    //         auto& toNode = routeNodes[edge.to];
-    //         log() << "fromNode idx: " << fromNode.idx
-    //             << "[x: " << fromNode.x
-    //             << ",y: " << fromNode.y << "]" << " -> "
-    //             << "toNode idx: " << toNode.idx
-    //             << "[x: " << toNode.x
-    //             << ",y: " << toNode.y << "]" << std::endl;
-    //     }
-        
-    // }
 
     int s = routeNodes.begin()->first;
     queue<int> tmp_q;
@@ -1105,10 +993,13 @@ void InitRoute::plan_fluteOnly() {
             addUsage2D(node, routeNodes[nIdx], 1);  // update the usage
             tmp_q.push(nIdx);
         }
-    }
+    }// end while 
+
 
     grNet.dbNet.net_timer += net_timer.getTimer();
 }
+
+
 void InitRoute::edge_shift2d(std::map<int, RouteNode>& cur_routeNodes) {
     utils::timer net_timer;
     // log() << "endge_shift2d ..." << std::endl;
@@ -1541,5 +1432,125 @@ void InitRoute::removeUsage2D(RouteNode& u, RouteNode& v, double usage) {
         removeUsage2D(new2, v, usage / 2);
     }
 }
+
+void InitRoute::logRouteNodes(){
+    // net_name, layer_idx,xl,yl,xh,hy,type
+    for(auto nodeItr : routeNodes){
+        auto node = nodeItr.second;
+        int layerIdx = 0;
+        auto grPoint = gr::GrPoint({layerIdx,node.x,node.y});
+        stream << grNet.getName()
+            << "," << std::to_string(layerIdx)
+            << "," << grDatabase.getCoorIntvl(grPoint,X).low
+            << "," << grDatabase.getCoorIntvl(grPoint,Y).low
+            << "," << grDatabase.getCoorIntvl(grPoint,X).high
+            << "," << grDatabase.getCoorIntvl(grPoint,Y).high
+            << "," << "routeNode"
+            << "," << "-1" // cost
+            << std::endl;
+    }//end for loop
+
+}//end logRouteNodes
+
+void InitRoute::logRoute(){
+    // net_name, layer_idx,xl,yl,xh,hy,type
+    // auto& fromNode = routeNodes[edge.from];
+    // auto& toNode = routeNodes[edge.to];
+
+    // int layerIdx = 0;
+
+    // auto grPointfrom = gr::GrPoint({layerIdx,fromNode.x,fromNode.y});
+    // auto grPointto = gr::GrPoint({layerIdx,toNode.x,toNode.y});
+
+    // DBU xl_1 = std::min(grDatabase.getCoorIntvl(grPointfrom,X).low
+    //             ,grDatabase.getCoorIntvl(grPointto,X).high);
+    // DBU xl_2 = std::min(grDatabase.getCoorIntvl(grPointfrom,X).high
+    //             ,grDatabase.getCoorIntvl(grPointto,X).low);
+    // DBU xl = std::min(xl_1,xl_2);
+
+    // DBU yl_1 = std::min(grDatabase.getCoorIntvl(grPointfrom,Y).low
+    //             ,grDatabase.getCoorIntvl(grPointto,Y).high);
+    // DBU yl_2 = std::min(grDatabase.getCoorIntvl(grPointfrom,Y).high
+    //             ,grDatabase.getCoorIntvl(grPointto,Y).low);
+    // DBU yl = std::min(yl_1,yl_2);
+
+    // DBU xh_1 = std::max(grDatabase.getCoorIntvl(grPointfrom,X).low
+    //             ,grDatabase.getCoorIntvl(grPointto,X).high);
+    // DBU xh_2 = std::max(grDatabase.getCoorIntvl(grPointfrom,X).high
+    //             ,grDatabase.getCoorIntvl(grPointto,X).low);
+    // DBU xh = std::min(xh_1,xh_2);
+
+    // DBU yh_1 = std::max(grDatabase.getCoorIntvl(grPointfrom,Y).low
+    //             ,grDatabase.getCoorIntvl(grPointto,Y).high);
+    // DBU yh_2 = std::max(grDatabase.getCoorIntvl(grPointfrom,Y).high
+    //             ,grDatabase.getCoorIntvl(grPointto,Y).low);
+    // DBU yh = std::max(yh_1,yh_2);
+
+
+    // stream << grNet.getName()
+    //     << "," << std::to_string(layerIdx)
+    //     << "," << xl
+    //     << "," << yl
+    //     << "," << xh
+    //     << "," << yh
+    //     << "," << "routeEdge"
+    //     << "," << cost // cost
+    //     << std::endl;
+
+    grNet.postOrderVisitGridTopo([&](std::shared_ptr<gr::GrSteiner> node) {
+        auto parent = node;
+        for (auto child : parent->children) {
+            if (parent->layerIdx == child->layerIdx) {
+                std::shared_ptr<gr::GrSteiner> lower, upper;
+                if ((*parent)[X] < (*child)[X] || (*parent)[Y] < (*child)[Y]) {
+                    lower = parent;
+                    upper = child;
+                } else {
+                    lower = child;
+                    upper = parent;
+                }
+
+                auto grPointLower = gr::GrPoint(lower->layerIdx, lower->x , lower->y );
+                auto grPointUpper = gr::GrPoint(upper->layerIdx, upper->x, upper->y );
+
+                gr::GrEdge edge(gr::GrPoint(lower->layerIdx, lower->x , lower->y ),
+                                gr::GrPoint(upper->layerIdx, upper->x, upper->y) );
+                db::CostT cost = grDatabase.getWireCost(edge);
+                stream << grNet.getName()
+                    << "," << std::to_string(lower->layerIdx)
+                    << "," << grDatabase.getCoorIntvl(grPointLower,X).low
+                    << "," << grDatabase.getCoorIntvl(grPointLower,Y).low
+                    << "," << grDatabase.getCoorIntvl(grPointUpper,X).high
+                    << "," << grDatabase.getCoorIntvl(grPointUpper,Y).high
+                    << "," << "wire"
+                    << "," << cost // cost
+                    << std::endl;
+
+            } else {
+                int lowest_layer = std::min(parent->layerIdx,child->layerIdx);
+                int highest_layer = std::max(parent->layerIdx,child->layerIdx);
+
+                auto grPointLower = gr::GrPoint(parent->layerIdx, (*parent)[X] , (*parent)[Y] );
+                auto grPointUpper = gr::GrPoint(child->layerIdx, (*child)[X] , (*child)[Y] );
+                
+                db::CostT cost = grDatabase.getStackViaCost(gr::GrPoint(lowest_layer, (*parent)[X], (*parent)[Y]),
+                                                        std::abs(highest_layer - lowest_layer));
+
+                stream << grNet.getName()
+                    << "," << std::to_string(highest_layer)
+                    << "," << grDatabase.getCoorIntvl(grPointLower,X).low
+                    << "," << grDatabase.getCoorIntvl(grPointLower,Y).low
+                    << "," << grDatabase.getCoorIntvl(grPointUpper,X).high
+                    << "," << grDatabase.getCoorIntvl(grPointUpper,Y).high
+                    << "," << "via"
+                    << "," << cost // cost
+                    << std::endl;
+            }
+        }
+    });
+    
+    
+
+}//end logRouteNodes
 
 std::map<int, RouteNode>& InitRoute::getRouteNodes() { return routeNodes; }

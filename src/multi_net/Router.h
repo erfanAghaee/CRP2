@@ -19,6 +19,7 @@ private:
     vector<vector<int>> routeTable;
     CongestionMap congMap;
     int cellWidth = 5, cellHeight = 5;
+    // int cellWidth = 1, cellHeight = 1;
 
     void getNetsToRoute(vector<int>& netsToRoute,int iter);
     void sortNets(vector<int>& netsToRoute);
@@ -78,6 +79,8 @@ private:
     void printRouteStart(std::string txt, int iter);
     void printRouteEnd(std::string txt, int iter);
     void routeStateClear();
+
+    void injectCongestion();
   
 
     int log_iter=0;

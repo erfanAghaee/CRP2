@@ -23,6 +23,10 @@ public:
 
     vector<gr::GrBoxOnLayer> guides;
 
+    // stream for debugging
+    std::string stream_str;
+    std::string stream_coarseGrid_str;
+    std::stringstream stream_time;
 
 
 private:

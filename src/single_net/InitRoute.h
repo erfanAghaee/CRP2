@@ -6,6 +6,18 @@
 #include "GenGuide.h"
 #include <map>
 
+
+
+
+struct hash_tuple {  // hash binary tuple
+    template <class T>
+    size_t operator()(const tuple<T, T>& tup) const {
+        auto hash1 = hash<T>{}(get<0>(tup));
+        auto hash2 = hash<T>{}(get<1>(tup));
+        return hash1 ^ hash2;
+    }
+};
+
 extern "C" {
 Tree flute(int d, DTYPE x[], DTYPE y[], int acc);
 }
@@ -39,6 +51,9 @@ public:
     RouteNode() : x(-1), y(-1) {}
     RouteNode(int nx, int ny) : x(nx), y(ny) {}
     RouteNode(std::tuple<int, int> loc) : x(std::get<0>(loc)), y(std::get<1>(loc)) {}
+
+
+    
 
     void printExitCost(){
         log() << "printExitCost..."<< std::endl;
@@ -128,6 +143,9 @@ public:
     db::RouteStatus status;
     gr::GrNet &grNet;
 
+    // stream for debugging
+    std::stringstream stream;
+    std::stringstream stream_time;
     
 
 private:
@@ -141,7 +159,22 @@ private:
     void LShape(const RouteEdge &edge);
 
     void runFlute();
+    std::pair<float,float> getNetCenter();
+    void getPinCenter(vector<tuple<int, int>>& pinCenters, float net_ctrx,float net_ctry);
+    void constructRouteNodes(Tree& flutetree
+                            , int degree
+                            , unordered_map<tuple<int, int>, vector<int>, hash_tuple>& loc2Pins
+                            , int node_cnt);
+    void getLoc2Pins( unordered_map<tuple<int, int>, vector<int>, hash_tuple>& loc2Pins
+                    , vector<tuple<int, int>>& pinCenters
+                    );
+    
+    void logRouteNodes();
+    
+    void logRoute();
+
     bool debug;
     bool relax;
+
     
 };

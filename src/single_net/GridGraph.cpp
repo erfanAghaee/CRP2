@@ -26,6 +26,70 @@ void GridGraph::writeDebugFile(const std::string &fn) const {
     }
 }
 
+void GridGraph::logGridGraph(std::string& net_name){
+    // idx,net_name,l,xl,yl,xh,yh,eBackward,eForward,eDown,eUp,eBackwardCost,
+    // eForwardCost,eDownCost,eUpCost
+    for (int i = 0; i < conn.size(); ++i) {
+        auto pointOnLayer = vertexToPoint[i];
+        auto grPoint = gr::GrPoint({pointOnLayer.layerIdx,pointOnLayer.x,pointOnLayer.y});
+        stream << std::to_string(i) // idx
+               << "," << net_name // net_name
+               << "," << std::to_string(grPoint.layerIdx) // l
+               << "," << grDatabase.getCoorIntvl(grPoint,X).low
+               << "," << grDatabase.getCoorIntvl(grPoint,Y).low
+               << "," << grDatabase.getCoorIntvl(grPoint,X).high
+               << "," << grDatabase.getCoorIntvl(grPoint,Y).high
+               << "," << conn[i][0] // eBackward
+               << "," << conn[i][1] // eForward
+               << "," << conn[i][2] // eDown
+               << "," << conn[i][3] // eUp
+               << "," << edgeCost[i][0] // eBackwardCost
+               << "," << edgeCost[i][1] // eForwardCost
+               << "," << edgeCost[i][2] // eDownCost
+               << "," << edgeCost[i][3] // eUpCost
+               << std::endl;
+    }
+
+}//end logGridGraph
+
+void GridGraph::logCoarseGridGraph(std::string& net_name,int cellWidth, int cellHeight){
+    // idx,net_name,l,xl,yl,xh,yh,eBackward,eForward,eDown,eUp,eBackwardCost,
+    // eForwardCost,eDownCost,eUpCost
+    int xCrsnScale = cellWidth;
+    int yCrsnScale = cellHeight;
+    for (int i = 0; i < conn.size(); ++i) {
+        auto pointOnLayer = vertexToPoint[i];
+
+        utils::BoxT<int> gcellBox;
+        gcellBox.x.Update(pointOnLayer[X] * xCrsnScale);
+        gcellBox.x.Update(min(pointOnLayer[X] * xCrsnScale + xCrsnScale, grDatabase.getNumGrPoint(X)) - 1);
+        gcellBox.y.Update(pointOnLayer[Y] * yCrsnScale);
+        gcellBox.y.Update(min(pointOnLayer[Y] * yCrsnScale + yCrsnScale, grDatabase.getNumGrPoint(Y)) - 1);
+        auto grPointDown = gr::GrPoint({pointOnLayer.layerIdx,gcellBox.lx(),gcellBox.ly()});
+        auto grPointUp = gr::GrPoint({pointOnLayer.layerIdx,gcellBox.hx(),gcellBox.hy()});
+
+        stream_coarse << std::to_string(i) // idx
+               << "," << net_name // net_name
+               << "," << std::to_string(pointOnLayer.layerIdx) // l
+               << "," << grDatabase.getCoorIntvl(grPointDown,X).low
+               << "," << grDatabase.getCoorIntvl(grPointDown,Y).low
+               << "," << grDatabase.getCoorIntvl(grPointUp,X).high
+               << "," << grDatabase.getCoorIntvl(grPointUp,Y).high
+               << "," << conn[i][0] // eBackward
+               << "," << conn[i][1] // eForward
+               << "," << conn[i][2] // eDown
+               << "," << conn[i][3] // eUp
+               << "," << edgeCost[i][0] // eBackwardCost
+               << "," << edgeCost[i][1] // eForwardCost
+               << "," << edgeCost[i][2] // eDownCost
+               << "," << edgeCost[i][3] // eUpCost
+               << std::endl;
+    }
+
+    
+
+}//end logGridGraph
+
 bool GridGraph::checkConn() const {
     auto BFS = [&](int s, vector<bool> &visited) {
         std::queue<int> q;
@@ -55,9 +119,24 @@ bool switchLayer(EdgeDirection direction) { return direction == UP || direction 
 EdgeDirection getOppDir(EdgeDirection direction) { return oppDirections[direction]; }
 
 void CoarseGridGraphBuilder::run(const vector<vector<gr::PointOnLayer>> &mergedPinAccessBoxes) {
+    bool debug = false;
     numPointsX = ceil(grDatabase.getNumGrPoint(X) / (double)cellWidth);
     numPointsY = ceil(grDatabase.getNumGrPoint(Y) / (double)cellHeight);
     int numPoints = numPointsX * numPointsY * database.getLayerNum();
+
+    if(grNet.getName() == "net1237"){
+        debug = true;
+        log() << "maze graphbuild net: " << grNet.getName() << std::endl;
+    }
+
+    if(debug){
+        log() << "database.getLayerNum(): " << database.getLayerNum() << std::endl;
+        log() << "numPointsX: " << numPointsX << std::endl;
+        log() << "numPointsY: " << numPointsY << std::endl;
+        log() << "grDatabase.getNumGrPoint(X): " << grDatabase.getNumGrPoint(X)<< std::endl;
+        log() << "grDatabase.getNumGrPoint(Y): " << grDatabase.getNumGrPoint(Y)<< std::endl;
+        log() << "numPoints: " << numPoints << std::endl;
+    }
 
     // 1. Give each grid point an index
     graph.vertexToPoint.reserve(numPoints);
@@ -129,10 +208,10 @@ double CoarseGridGraphBuilder::getCost(int u, int v) { return 0; }
 void GuideGridGraphBuilder::run(const vector<vector<gr::PointOnLayer>> &mergedPinAccessBoxes) {
     bool debug = false;
 
-    // if(grNet.getName() == "net10214"){
-    //     debug = true;
-    //     log() << "maze graphbuild net: " << grNet.getName() << std::endl;
-    // }
+    if(grNet.getName() == "net1237"){
+        debug = true;
+        log() << "maze graphbuild net: " << grNet.getName() << std::endl;
+    }
 
 
     if(debug){

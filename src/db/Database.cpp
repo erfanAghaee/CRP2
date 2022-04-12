@@ -775,6 +775,45 @@ void Database::logDie(){
     file.close();
 }
 
+void Database::logPatternRoute(int iter){
+    std::string file_name = db::setting.directory +  db::setting.benchmarkName
+        + ".patternroute."+std::to_string(iter)+".csv";
+    std::ofstream file(file_name);
+    std::string head;
+    head = "net_name,l,xl,yl,xh,yh,type,cost\n";
+    head = head + patternRoute_stream;
+    file << head;
+    file.close();
+    // clean the pattern stream in each iteration
+    patternRoute_stream = "";
+}
+
+void Database::logAstar(int iter){
+    std::string file_name = db::setting.directory +  db::setting.benchmarkName
+        + ".astar."+std::to_string(iter)+".csv";
+    std::ofstream file(file_name);
+    std::string head;
+    head = "idx,net_name,l,xl,yl,xh,yh,eBackward,eForward,eDown,eUp,eBackwardCost,eForwardCost,eDownCost,eUpCost\n";
+    head = head + astar_stream;
+    file << head;
+    file.close();
+    // clean the pattern stream in each iteration
+    astar_stream = "";
+}
+
+void Database::logAstarCoraseGrid(int iter){
+    std::string file_name = db::setting.directory +  db::setting.benchmarkName
+        + ".astar.coarsegrid."+std::to_string(iter)+".csv";
+    std::ofstream file(file_name);
+    std::string head;
+    head = "idx,net_name,l,xl,yl,xh,yh,eBackward,eForward,eDown,eUp,eBackwardCost,eForwardCost,eDownCost,eUpCost\n";
+    head = head + astar_stream_coarse;
+    file << head;
+    file.close();
+    // clean the pattern stream in each iteration
+    astar_stream_coarse = "";
+}
+
 void Database::writeDEF(const std::string& filename){
     DEFControlParser defParser;
     DefDscp def;
