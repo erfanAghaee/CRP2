@@ -12,6 +12,7 @@ import_path = os.path.abspath(os.path.join(os.path.join(__file__, ".."), ".."))
 sys.path.insert(0, import_path)
 
 from backend.pltcairo import *
+from backend.utils import *
 from backend.param import *
 
 class Astar:
@@ -32,10 +33,11 @@ class Astar:
         args = db["args"]
 
         
-        
+        net_filter = net_df.loc[net_df.apply(lambda row: getIntervals(row.xl,row.xh,window[XL],window[XH]),axis=1)]
+        net_filter = net_filter.loc[net_filter.apply(lambda row: getIntervals(row.yl,row.yh,window[YL],window[YH]),axis=1)]
 
-        net_filter = net_df.loc[ (net_df.xl >= window[XL] )& (net_df.xh <= window[XH])]
-        net_filter = net_filter.loc[ (net_df.yl >= window[YL] )& (net_df.yh <= window[YH])]        
+        # net_filter = net_df.loc[ (net_df.xl >= window[XL] )& (net_df.xh <= window[XH])]
+        # net_filter = net_filter.loc[ (net_df.yl >= window[YL] )& (net_df.yh <= window[YH])]        
        
         if(net_name != "default"):
             net_filter = net_filter.loc[ net_filter.net_name == net_name]
@@ -48,7 +50,7 @@ class Astar:
         net_filter.index = net_filter.index.astype(int)
 
 
-        print(net_filter)
+        # print(net_filter)
         # print(net_filter)
         xls = []
         yls = []
@@ -115,12 +117,19 @@ class Astar:
             w = 100
         
         # to show the level of edge in the gridgraph
-        shrink_grid_edge=0.37
-        xls = [xls[i] + shrink_grid_edge*(abs(xls[i]-xhs[i])) for i in np.arange(len(xls))]
-        yls = [yls[i] + shrink_grid_edge*(abs(yls[i]-yhs[i])) for i in np.arange(len(yls))]
-        xhs = [xhs[i] - shrink_grid_edge*(abs(xls[i]-xhs[i])) for i in np.arange(len(xhs))]
-        yhs = [yhs[i] - shrink_grid_edge*(abs(yls[i]-yhs[i])) for i in np.arange(len(yhs))]
+        # shrink_grid_edge=1500
+        # midx = ((xls[i]+xhs[i])/2.0)
+        # midy = ((yls[i]+yhs[i])/2.0)
 
+        # (xls[i] + ((xls[i]+xhs[i])/2.0))/2.0
+        # xls = [xls[i] + shrink_grid_edge*(abs(xls[i]-xhs[i])) for i in np.arange(len(xls))]
+        # yls = [yls[i] + shrink_grid_edge*(abs(yls[i]-yhs[i])) for i in np.arange(len(yls))]
+        # xhs = [xhs[i] - shrink_grid_edge*(abs(xls[i]-xhs[i])) for i in np.arange(len(xhs))]
+        # yhs = [yhs[i] - shrink_grid_edge*(abs(yls[i]-yhs[i])) for i in np.arange(len(yhs))]
+        xls = [(xls[i] + ((xls[i]+xhs[i])/2.0))/2 for i in np.arange(len(xls))]
+        yls = [(yls[i] + ((yls[i]+yhs[i])/2.0))/2 for i in np.arange(len(yls))]
+        xhs = [(xhs[i] + ((xls[i]+xhs[i])/2.0))/2 for i in np.arange(len(xhs))]
+        yhs = [(yhs[i] + ((yls[i]+yhs[i])/2.0))/2  for i in np.arange(len(yhs))]
 
 
         ws = [np.abs(xhs[i]-xls[i]+w) for i in np.arange(len(xls))]

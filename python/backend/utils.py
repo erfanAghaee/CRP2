@@ -1,5 +1,10 @@
 import pandas as pd
 
+
+def getIntervals(l,h,wl,wh):
+    return pd.Interval(l,h).overlaps(pd.Interval(wl, wh))
+
+
 def getArea(row):
     return abs(row.xh-row.xl)+abs(row.yh-row.yl)
 

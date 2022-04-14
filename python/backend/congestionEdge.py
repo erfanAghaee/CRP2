@@ -10,7 +10,9 @@ import_path = os.path.abspath(os.path.join(os.path.join(__file__, ".."), ".."))
 sys.path.insert(0, import_path)
 
 from backend.pltcairo import *
+from backend.utils import *
 from backend.param import *
+import matplotlib.pyplot as plt
 
 class CongestionEdge:
     def __init__(self,db):
@@ -36,9 +38,20 @@ class CongestionEdge:
         args = db["args"]
         
         # surface = plt_obj.init(window)
+
+        
        
-        congestion_filter = congestion_df.loc[ (congestion_df.xl >= window[XL] )& (congestion_df.xh <= window[XH])]
-        congestion_filter = congestion_filter.loc[ (congestion_df.yl >= window[YL] )& (congestion_df.yh <= window[YH])]
+        congestion_filter = congestion_df.loc[congestion_df.apply(lambda row: getIntervals(row.xl,row.xh,window[XL],window[XH]),axis=1)]
+        congestion_filter = congestion_filter.loc[congestion_filter.apply(lambda row: getIntervals(row.yl,row.yh,window[YL],window[YH]),axis=1)]
+
+        # congestion_filter = congestion_df.loc[ (congestion_df.xl >= window[XL] )& (congestion_df.xh <= window[XH])]
+        # congestion_filter = congestion_filter.loc[ (congestion_df.yl >= window[YL] )& (congestion_df.yh <= window[Y
+
+        # i1 = pd.Interval(0, 2)
+        # i2 = pd.Interval(1, 3)
+        # print(i1.overlaps(i2))
+
+
         if(l != -1):
             congestion_filter = congestion_filter.loc[ congestion_df.l == l]
 
@@ -86,4 +99,26 @@ class CongestionEdge:
 
         plt_obj.drawText(txts,color=(1,1,1),font=64)
         
+    def getStatistics(self,window):
+        if not("congestion" in self.db):
+            return
+
+        db = self.db
+        die_df = db["die"]
+        congestion_df = db["congestion"]
+        args = db["args"]
+        
+        # print(congestion_df)
+        grps = congestion_df.groupby(['l'])
+        avgs = grps["viaUsage"].mean()
+        norms = [float(i)/max(avgs) for i in avgs.values]
+        print(avgs)
+
+        layers = grps.groups.keys()
+
+        plt.plot(layers,norms,label="congestion.gr")
+        
+        
+        
+ 
         

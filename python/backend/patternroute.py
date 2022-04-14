@@ -11,6 +11,7 @@ import_path = os.path.abspath(os.path.join(os.path.join(__file__, ".."), ".."))
 sys.path.insert(0, import_path)
 
 from backend.pltcairo import *
+from backend.utils import *
 from backend.param import *
 
 class PatternRoute:
@@ -28,9 +29,11 @@ class PatternRoute:
         net_df = db[self.type]
         args = db["args"]
         
+        net_filter = net_df.loc[net_df.apply(lambda row: getIntervals(row.xl,row.xh,window[XL],window[XH]),axis=1)]
+        net_filter = net_filter.loc[net_filter.apply(lambda row: getIntervals(row.yl,row.yh,window[YL],window[YH]),axis=1)]
 
-        net_filter = net_df.loc[ (net_df.xl >= window[XL] )& (net_df.xh <= window[XH])]
-        net_filter = net_filter.loc[ (net_df.yl >= window[YL] )& (net_df.yh <= window[YH])]
+        # net_filter = net_df.loc[ (net_df.xl >= window[XL] )& (net_df.xh <= window[XH])]
+        # net_filter = net_filter.loc[ (net_df.yl >= window[YL] )& (net_df.yh <= window[YH])]
         net_filter = net_filter.loc[ net_filter.type == "wire"]
        
         if(net_name != "default"):

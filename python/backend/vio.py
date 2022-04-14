@@ -10,6 +10,7 @@ import_path = os.path.abspath(os.path.join(os.path.join(__file__, ".."), ".."))
 sys.path.insert(0, import_path)
 
 from backend.pltcairo import *
+from backend.utils import *
 from backend.param import *
 
 class Vio:
@@ -36,9 +37,12 @@ class Vio:
         args = db["args"]
         
         # surface = plt_obj.init(window)
+        vio_filter = vio_df.loc[vio_df.apply(lambda row: getIntervals(row.xl,row.xh,window[XL],window[XH]),axis=1)]
+        vio_filter = vio_filter.loc[vio_filter.apply(lambda row: getIntervals(row.yl,row.yh,window[YL],window[YH]),axis=1)]
+        
        
-        vio_filter = vio_df.loc[ (vio_df.xl >= window[XL] )& (vio_df.xh <= window[XH])]
-        vio_filter = vio_filter.loc[ (vio_df.yl >= window[YL] )& (vio_df.yh <= window[YH])]
+        # vio_filter = vio_df.loc[ (vio_df.xl >= window[XL] )& (vio_df.xh <= window[XH])]
+        # vio_filter = vio_filter.loc[ (vio_df.yl >= window[YL] )& (vio_df.yh <= window[YH])]
         if(l != -1):
             vio_filter = vio_filter.loc[ vio_df.l == l]
 

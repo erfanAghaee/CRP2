@@ -247,13 +247,20 @@ def drawGuideCompare(args):
     surface.write_to_png(args.dir+ "imgs/" +"netDRPreprocessing.png")  # Output to PNG
        
 
+def interval(row,wind):
+    return pd.Interval(row.xl,row.xh).overlaps(pd.Interval(wind[0], wind[1]))
 
 def menu(args):
     # mainAnimation(args)
     # drawCRP(args)
     # drawGuideCompare(args)
     # mainCoef(args)
-    mainAstar(args)
+    # mainAstar(args)
+    mainCongestion(args)
+    
+    
+    
+    
     
 
     

@@ -65,8 +65,11 @@ private:
     void visualiseCircuit();
 
     void filterNets();
+    
 
     std::set<int> filter_nets;
+    std::vector<std::string> filter_routers;
+    std::vector<std::string> filter_routers_applys;
 
 
     // void logCoef();
@@ -84,6 +87,7 @@ private:
   
 
     int log_iter=0;
+    
 
     
     

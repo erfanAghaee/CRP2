@@ -203,6 +203,12 @@ void runISPD18Flow(const boost::program_options::variables_map& vm) {
     if (vm.count("lookuptbs_dir")) {
         db::setting.lookuptbs_dir = vm.at("lookuptbs_dir").as<std::string>();
     }
+    if (vm.count("rrrRouters")) {
+        db::setting.rrrRouters = vm.at("rrrRouters").as<std::string>();
+    }
+    if (vm.count("rrrRoutersApply")) {
+        db::setting.rrrRoutersApply = vm.at("rrrRoutersApply").as<std::string>();
+    }
     
 
 
@@ -361,7 +367,8 @@ int main(int argc, char* argv[]) {
                 ("moveToRemoveViol", value<bool>())         
                 ("directory", value<std::string>())    
                 ("lookuptbs_dir", value<std::string>())    
-                
+                ("rrrRouters", value<std::string>())    
+                ("rrrRoutersApply", value<std::string>())    
                 ;
         // clang-format on
         variables_map vm;

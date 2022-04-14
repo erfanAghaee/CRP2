@@ -14,6 +14,8 @@ public:
     std::string lookuptbs_dir="./..";
     std::string outputFile;
     std::string outputFileDef;
+    std::string rrrRouters;
+    std::string rrrRoutersApply;
     bool refinePlacement;
     bool postProcessing;
     std::string name;

@@ -35,6 +35,24 @@ ostream& operator<<(ostream& os, const MTStat mtStat) {
 Router::Router() {
     routeTable.resize(database.nets.size() + 1);
     readLUT();  // read flute LUT
+
+
+    
+    boost::split(filter_routers, db::setting.rrrRouters, boost::is_any_of(","));
+    boost::split(filter_routers_applys, db::setting.rrrRoutersApply, boost::is_any_of(","));
+    
+
+    log() << "router in each iteration: "  << std::endl;
+    for(int i = 0; i < filter_routers.size() ;i++){
+        if(filter_routers_applys[i] == "1")
+            log() << "router: " << filter_routers[i] << std::endl;
+    }
+
+    if(filter_routers.size() != db::setting.rrrIterLimit){
+        log() << "Error: number of iteration of routers (rrrIters) is not equal to rrrRoutes!" << std::endl;
+        std::exit(1);
+    }
+    
 }
 
 // void Router::runISPD() {
@@ -785,7 +803,7 @@ void Router::applyPlacement(vector<int>& netsToRoute,int iter_t,utils::timer& pr
 void Router::ripupReroute(vector<int>& netsToRoute){
     
 
-    injectCongestion();
+    // injectCongestion();
 
 
 
@@ -800,18 +818,26 @@ void Router::ripupReroute(vector<int>& netsToRoute){
         updateCost(iter);
         
         // if (iter > 0 ) {
-            ripup(netsToRoute);
-            congMap.init(cellWidth, cellHeight);
+            
             
         // }
-                
-        if(iter == 0){
+        if(filter_routers[iter] == "patternroute" && filter_routers_applys[iter] =="1"){
+            ripup(netsToRoute);
+            congMap.init(cellWidth, cellHeight);
             routeApprx(netsToRoute, PATTERNROUTE);
-            // routeApprx(netsToRoute, ASTAR);
-        }else{
+        }else if(filter_routers[iter] == "astar" && filter_routers_applys[iter] =="1" ) {
+            ripup(netsToRoute);
+            congMap.init(cellWidth, cellHeight);
             routeApprx(netsToRoute, ASTAR);
-            // routeApprx(netsToRoute, PATTERNROUTE);
         }
+            
+        // if(iter == 0){
+        //     routeApprx(netsToRoute, PATTERNROUTE);
+        //     // routeApprx(netsToRoute, ASTAR);
+        // }else{
+        //     routeApprx(netsToRoute, ASTAR);
+        //     // routeApprx(netsToRoute, PATTERNROUTE);
+        // }
         
 
         printRouteEnd("routing",iter);

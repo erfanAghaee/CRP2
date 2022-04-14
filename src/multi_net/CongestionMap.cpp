@@ -76,7 +76,8 @@ double CongestionMap::calcCrsnEdgeCost(const gr::PointOnLayer& u, const gr::Poin
         return std::numeric_limits<double>::max();
     }
 
-    bool edgeCongestion = true;
+    bool edgeCongestion = false;
+    bool debug = false;
 
     int layerIdx = u.layerIdx;
     auto layerDir = database.getLayerDir(layerIdx);
@@ -92,7 +93,8 @@ double CongestionMap::calcCrsnEdgeCost(const gr::PointOnLayer& u, const gr::Poin
     double cost = 0;
     box = u_box;
     double avgRsrc = 0;
-    // log() << "u_box: " << u_box << std::endl;
+    if(debug)
+        log() << "u_box: " << u_box << std::endl;
     for (int x_idx = box.x.low; x_idx <= box.x.high; x_idx++) {
         for (int y_idx = box.y.low; y_idx <= box.y.high; y_idx++) {
             avgRsrc += rsrcMap[layerIdx][x_idx][y_idx];
@@ -100,7 +102,7 @@ double CongestionMap::calcCrsnEdgeCost(const gr::PointOnLayer& u, const gr::Poin
             if(edgeCongestion){
                 // edge cost 
                 if(layerDir == X){
-                    if(y_idx+1 > grDatabase.getNumGrPoint(X)){
+                    if(y_idx+2 >= grDatabase.getNumGrPoint(X)){
                         continue;
                     }
 
@@ -109,9 +111,9 @@ double CongestionMap::calcCrsnEdgeCost(const gr::PointOnLayer& u, const gr::Poin
                     gr::GrEdge edge(grPointSrc,grPointDst);
                     double costtmp =  grDatabase.getWireCost(edge);
                     u_costs.push_back(costtmp);
-                    // log() << "edge: " << edge << ", cost: " << costtmp << std::endl;
+                    if(debug) log() << "edge: " << edge << ", cost: " << costtmp << std::endl;
                 }else{
-                    if(x_idx+1 > grDatabase.getNumGrPoint(Y)){
+                    if(x_idx+2 >= grDatabase.getNumGrPoint(Y)){
                         continue;
                     }
 
@@ -121,7 +123,7 @@ double CongestionMap::calcCrsnEdgeCost(const gr::PointOnLayer& u, const gr::Poin
                     double costtmp =  grDatabase.getWireCost(edge);
                     u_costs.push_back(costtmp);
                     
-                    // log() << "edge: " << edge << ", cost: " << costtmp << std::endl;
+                    if(debug) log() << "edge: " << edge << ", cost: " << costtmp << std::endl;
                 }
             }
             
@@ -141,7 +143,7 @@ double CongestionMap::calcCrsnEdgeCost(const gr::PointOnLayer& u, const gr::Poin
 
     box = v_box;
     avgRsrc = 0;
-    // log() << "v_box: " << v_box << std::endl;
+    if(debug)  log() << "v_box: " << v_box << std::endl;
     for (int x_idx = box.x.low; x_idx <= box.x.high; x_idx++) {
         for (int y_idx = box.y.low; y_idx <= box.y.high; y_idx++) {
             avgRsrc += rsrcMap[layerIdx][x_idx][y_idx];
@@ -149,7 +151,7 @@ double CongestionMap::calcCrsnEdgeCost(const gr::PointOnLayer& u, const gr::Poin
             if(edgeCongestion){
                 if(layerDir == X){
 
-                    if(y_idx+1 > grDatabase.getNumGrPoint(X)){
+                    if(y_idx+2 >= grDatabase.getNumGrPoint(X)){
                         continue;
                     }
 
@@ -159,9 +161,9 @@ double CongestionMap::calcCrsnEdgeCost(const gr::PointOnLayer& u, const gr::Poin
                     gr::GrEdge edge(grPointSrc,grPointDst);
                     double costtmp =  grDatabase.getWireCost(edge);
                     v_costs.push_back(costtmp);
-                    // log() << "edge: " << edge << ", cost: " << costtmp << std::endl;
+                    if(debug)  log() << "edge: " << edge << ", cost: " << costtmp << std::endl;
                 }else{
-                    if(x_idx+1 > grDatabase.getNumGrPoint(Y)){
+                    if(x_idx+2 >= grDatabase.getNumGrPoint(Y)){
                         continue;
                     }
                     auto grPointSrc = gr::GrPoint(layerIdx, x_idx , y_idx );
@@ -170,7 +172,7 @@ double CongestionMap::calcCrsnEdgeCost(const gr::PointOnLayer& u, const gr::Poin
                     double costtmp =  grDatabase.getWireCost(edge);
                     v_costs.push_back(costtmp);
                     
-                    // log() << "edge: " << edge << ", cost: " << costtmp << std::endl;
+                    if(debug) log() << "edge: " << edge << ", cost: " << costtmp << std::endl;
                 }
             }
             
@@ -195,8 +197,14 @@ double CongestionMap::calcCrsnEdgeCost(const gr::PointOnLayer& u, const gr::Poin
             u_average = accumulate( u_costs.begin(), u_costs.end(), 0.0)/u_costs.size();  
         if(v_costs.size() > 0)
             v_average = accumulate( v_costs.begin(), v_costs.end(), 0.0)/v_costs.size();  
-        cost = (u_average + v_average)/2.0;
-        // log() << "u_avg: " << u_average << ", v_avg: " << v_average << ", cost: " << cost << std::endl;
+        if(u_costs.size() > 0 && v_costs.size() > 0)
+            cost = (u_average + v_average)/2.0;
+        else if(u_costs.size() > 0 && !(v_costs.size() > 0))
+            cost = u_average;
+        else if (!(u_costs.size() > 0) && !(v_costs.size() > 0))
+        cost = v_average;
+
+        if(debug)  log() << "u_avg: " << u_average << ", v_avg: " << v_average << ", cost: " << cost << std::endl;
     }
 
     
@@ -222,7 +230,7 @@ double CongestionMap::calcCrsnViaCostOld(const gr::PointOnLayer& via) {
 }
 
 double CongestionMap::calcCrsnViaCost(const gr::PointOnLayer& via) {
-    bool edgeCongestion = true;
+    bool edgeCongestion = false;
     utils::BoxT<int> box = getGrBox(via);
     double cost = 0;
     std::vector<double> costs;

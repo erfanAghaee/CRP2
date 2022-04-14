@@ -10,6 +10,7 @@ import_path = os.path.abspath(os.path.join(os.path.join(__file__, ".."), ".."))
 sys.path.insert(0, import_path)
 
 from backend.pltcairo import *
+from backend.utils import *
 from backend.param import *
 
 class DRC:
@@ -36,9 +37,11 @@ class DRC:
         args = db["args"]
         
         # surface = plt_obj.init(window)
+        drc_filter = drc_df.loc[drc_df.apply(lambda row: getIntervals(row.xl,row.xh,window[XL],window[XH]),axis=1)]
+        drc_filter = drc_filter.loc[drc_filter.apply(lambda row: getIntervals(row.yl,row.yh,window[YL],window[YH]),axis=1)]
        
-        drc_filter = drc_df.loc[ (drc_df.xl >= window[XL] )& (drc_df.xh <= window[XH])]
-        drc_filter = drc_filter.loc[ (drc_df.yl >= window[YL] )& (drc_df.yh <= window[YH])]
+        # drc_filter = drc_df.loc[ (drc_df.xl >= window[XL] )& (drc_df.xh <= window[XH])]
+        # drc_filter = drc_filter.loc[ (drc_df.yl >= window[YL] )& (drc_df.yh <= window[YH])]
         if(l != -1):
             drc_filter = drc_filter.loc[ drc_df.l == l]
 
@@ -54,56 +57,28 @@ class DRC:
         plt_obj.run(xls,yls,\
                     ws,hs,color,alpha)
 
-        # plt_obj.drawText(txts)
-        
-        # return surface
 
-    # def pltWindow(self,window):
-    #     db = self.db
-    #     plt_obj = PltCairo()
-    #     die_df = db["die"]
-    #     cell_df = db["cell"]
-    #     args = db["args"]
-        
-    #     surface = plt_obj.init(window)
+    
 
-        
-    #     cell_filter = cell_df.loc[ (cell_df.x >= window[XL] )& (cell_df.x <= window[XH])]
-        
-    #     cell_filter = cell_filter.loc[ (cell_df.y >= window[YL] )& (cell_df.y <= window[YH])]
-        
-    #     txts = cell_filter.cell_name.values
+    def getStatistics(self,window):
+        if not("drc" in self.db):
+            return
 
-    #     plt_obj.run(cell_filter.x.values,cell_filter.y.values,\
-    #                 cell_filter.w.values,cell_filter.h.values)
-
-    #     plt_obj.drawText(txts)
+        db = self.db
+        die_df = db["die"]
+        drc_df = db["drc"]
+        args = db["args"]
         
-    #     surface.write_to_png(args.dir+ "imgs/" +"cells.window.png")  # Output to PNG
+        # print(congestion_df)
+        grps = drc_df.groupby(['l'])
+        nums = drc_df.groupby(['l']).size()
+        norm = [float(i)/max(nums) for i in nums]
+        print(nums)
 
+        layers = grps.groups.keys()
 
-    # def pltAllCells(self):
-    #     db = self.db
-    #     plt_obj = PltCairo()
-    #     die_df = db["die"]
-    #     cell_df = db["cell"]
-    #     args = db["args"]
-    #     window = [0,0,0,0]
-    #     if die_df is not np.nan:
-    #         window = [
-    #               die_df["die_xl"].values[0]
-    #             , die_df["die_yl"].values[0]
-    #             , die_df["die_xh"].values[0]
-    #             , die_df["die_yh"].values[0]
-    #         ]
-    #     else:
-    #         print("invalid window box to plot in cell class!")
-    #         sys.exit()
-    #     surface = plt_obj.init(window)
-    #     plt_obj.run(cell_df.x.values,cell_df.y.values,\
-    #                 cell_df.w.values,cell_df.h.values)
+        plt.plot(layers,norm,label="drc.dr")
         
-    #     surface.write_to_png(args.dir+ "imgs/" +"cells.all.png")  # Output to PNG
+        # plt.plot(grps)
         
-
 

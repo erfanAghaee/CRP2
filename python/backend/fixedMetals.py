@@ -10,6 +10,7 @@ import_path = os.path.abspath(os.path.join(os.path.join(__file__, ".."), ".."))
 sys.path.insert(0, import_path)
 
 from backend.pltcairo import *
+from backend.utils import *
 from backend.param import *
 
 class FixedMetals:
@@ -35,10 +36,14 @@ class FixedMetals:
         fixedMetals_df = db["fixedMetals"]
         args = db["args"]
         
+
+        fixedMetals_filter = fixedMetals_df.loc[fixedMetals_df.apply(lambda row: getIntervals(row.xl,row.xh,window[XL],window[XH]),axis=1)]
+        fixedMetals_filter = fixedMetals_filter.loc[fixedMetals_filter.apply(lambda row: getIntervals(row.yl,row.yh,window[YL],window[YH]),axis=1)]
+        
         # surface = plt_obj.init(window)
         # fixedMetals_filter = fixedMetals_df.copy()
-        fixedMetals_filter = fixedMetals_df.loc[ (fixedMetals_df.xl >= window[XL] )& (fixedMetals_df.xh <= window[XH])]
-        fixedMetals_filter = fixedMetals_filter.loc[ (fixedMetals_filter.yl >= window[YL] )& (fixedMetals_filter.yh <= window[YH])]
+        # fixedMetals_filter = fixedMetals_df.loc[ (fixedMetals_df.xl >= window[XL] )& (fixedMetals_df.xh <= window[XH])]
+        # fixedMetals_filter = fixedMetals_filter.loc[ (fixedMetals_filter.yl >= window[YL] )& (fixedMetals_filter.yh <= window[YH])]
         if(l != -1):
             fixedMetals_filter = fixedMetals_filter.loc[ fixedMetals_filter.l == l]
        
