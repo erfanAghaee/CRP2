@@ -17,6 +17,7 @@ sys.path.insert(0, import_path)
 from backend.pltcairo import *
 from backend.param import *
 from rtree import index 
+import copy
 
 
 def plot(plt_obj,boxs,color,alpha,type):
@@ -352,6 +353,26 @@ def testRandomBoxs(args,n):
     
         draw(args,dr,gr,outofguide,"test"+str(i))
 
+def testMultiBlock(args):
+    gr = [[3,1,4,10],[5,1,8,10]]
+    dr = [[1,3,9,4],[8,4,9,5],[7,4,9,5]]
+
+    dr_res = copy.deepcopy(dr)
+    for i in range(len(gr)):
+        dr_queue = []
+        for j in range(len(dr_res)):
+            dr_queue.append(dr_res[j])
+        dr_cropped = []
+        for j in range(len(dr_queue)):
+            dr_tmp = getBoxDifference(dr_res[j],gr[i])
+
+            for k in range(len(dr_tmp)):
+                dr_cropped.append(dr_tmp[k])
+        dr_res = dr_cropped
+
+    
+    draw(args,dr,gr,dr_res,"multi")
+
 
 def outofguideInit(args):
     # dr= [[1,5,10,6]]
@@ -375,5 +396,5 @@ def outofguideInit(args):
     # testRightTopBottomCorner(args)
     # testBottomLeftRightCorner(args)
     # testWrap(args)
-    testRandomBoxs(args,200)
-    
+    # testRandomBoxs(args,10)
+    testMultiBlock(args)
