@@ -121,37 +121,44 @@ def getWirelengthWWW(box,dir):
         return getWirelength(box)
     return 0
 
-def getOffTrack(box,dir,patternTrack):
+def getOffTrack(box,dir,patternTrack,l):
+    debug = False
     dir = getDirection(box)
-    # print("dir:",dir)
+    if(debug):
+        print("dir:",dir)
 
     if dir == V:
         center = (box[XL] + box[XH])/2.0
     else:
         center = (box[YL] + box[YH])/2.0
 
-    # print(center)
+    if(debug):
+        print(center)
     
     if dir == V:
         patternTrack = patternTrack.loc[patternTrack.dir  == 'X']
     else:
         patternTrack = patternTrack.loc[patternTrack.dir  == 'Y']
 
-    # print(patternTrack)
+    if(debug):
+        print(patternTrack)
 
     start = patternTrack.start.values[0]
     step = patternTrack.step.values[0]
 
-    # print("start: ",start)
-    # print("step: ",step)
+    if(debug):
+        print("start: ",start)
+        print("step: ",step)
 
     a = float((center - start))/float(step)
     new_center = int(a)*step + start
 
-    # print("old center: ",center,", new_center: ",new_center)
+    if(debug):
+        print("old center: ",center,", new_center: ",new_center)
 
     if center != new_center:
-        print("old center: ",center,", new_center: ",new_center,", box: ",box)
+        if(debug):
+            print("old center: ",center,", new_center: ",new_center,", box: ",box, ", l: ",l)
         # # print(new_center,center)
         # print("wl:", getWirelength(box))
         return getWirelength(box)

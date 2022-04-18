@@ -205,11 +205,11 @@ class Score:
         
         # csv
         data = {
-            'dir'  : ['X', 'Y', 'X', 'Y','X', 'Y', 'X', 'Y','X', 'Y', 'X', 'Y','X', 'Y', 'X', 'Y','X','Y'], 
-            'start': [100,200,200,100,100,200,200,100,100,200,200,400,400,200,200,500,500,200],
-            'numTracks': [8728,5891,5891,8728,8728,5891,5891,8728,8728,5891,3928,5818,5818,3928,2946,4363,4363,2946],
-            'step':[200,200,200,200,200,200,200,200,200,200,300,300,300,300,400,400,400,400],
-            'l':[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8]
+            'dir'  :     ['X' , 'Y', 'X', 'Y','X' , 'Y', 'Y', 'X','X' , 'Y', 'Y', 'X','X' , 'Y', 'Y', 'X','X' ,'Y'], 
+            'start':     [100 ,200 ,100 ,200 ,100 ,200 ,200 ,100 ,100 ,200 ,200 ,400 ,400 ,200 ,200 ,500 ,500 ,200],
+            'numTracks': [8728,5891,8728,5891,8728,5891,5891,8728,8728,5891,3928,5818,5818,3928,2946,4363,4363,2946],
+            'step':      [200 ,200 ,200 ,200 ,200 ,200 ,200 ,200 ,200 ,200 ,300 ,300 ,300 ,300 ,400 ,400 ,400 ,400],
+            'l':         [0   ,0   ,1   ,1   ,2   ,2   ,3   ,3   ,4   ,4   ,5   ,5   ,6   ,6   ,7   ,7   ,8   ,8]
         }  
             
         track_pattern_df = pd.DataFrame(data)
@@ -230,18 +230,19 @@ class Score:
             track_pattern_filter = track_pattern_df.loc[track_pattern_df.l == l]
 
             drnet_filter = drnet_df.loc[drnet_df.l==l]
-            drnet_filter = drnet_filter.loc[drnet_filter.type=="wire"]
+            drnet_filter = drnet_filter.loc[(drnet_filter.type=="wire") ]
             # drnet_filter = drnet_filter.loc[drnet_filter.net_name=="net446"]
             # print(drnet_filter)
             # res = drnet_filter.parallel_apply(lambda row: \
             #     getOffTrack([row["xl"],row["yl"],row["xh"],row["yh"]],layers_dir[l],track_pattern_filter) ,axis=1 )    
             res = drnet_filter.parallel_apply(lambda row: \
-                getOffTrack([row["xl"],row["yl"],row["xh"],row["yh"]],layers_dir[l],track_pattern_filter) ,axis=1 )    
+                getOffTrack([row["xl"],row["yl"],row["xh"],row["yh"]],layers_dir[l],track_pattern_filter,l) ,axis=1 )    
             # print("l:",l,res)
             total_offtrack += np.sum(res)
-        # l = 0
+        # l = 1
         # track_pattern_filter = track_pattern_df.loc[track_pattern_df.l == l]
-        # getOffTrack([381900.0, 861400.0, 381900.0, 862400.0],l,track_pattern_filter)
+        # print(track_pattern_df)
+        # total_offtrack =getOffTrack([1291500.0, 748800.0, 1293900.0, 748800.0],layers_dir[l],track_pattern_filter,l)
         return total_offtrack
         
         
