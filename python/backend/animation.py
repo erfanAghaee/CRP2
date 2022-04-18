@@ -21,6 +21,7 @@ from backend.drc import *
 from backend.db import *
 from backend.coef import *
 from backend.astar import *
+from backend.score import *
 from backend.patternroute import *
 from backend.congestionEdge import *
 from backend.fixedMetals import *
@@ -29,21 +30,36 @@ from backend.gcell import *
 from backend.pltcairo import *
 import matplotlib.pyplot as plt
 
+def plotBox(plt_obj,boxs,color,alpha,type):
+    try:
+        if len(boxs[0]) != 4:
+            return
+    except:
+        return
+
+    xls = [box[XL] for box in boxs]
+    yls = [box[YL] for box in boxs]
+    xhs = [box[XH] for box in boxs]
+    yhs = [box[YH] for box in boxs]
+
+    ws = [np.abs(xhs[i]-xls[i]) for i in np.arange(len(xls))]
+    hs = [np.abs(yhs[i]-yls[i]) for i in np.arange(len(yls))]
+
+
+    plt_obj.run(xls,yls,ws,hs,color,alpha)
 
 def mainAnimation(args):
     # specific_net = "net60637"
-    specific_net = "net1237"
-
-   
+    specific_net = "net446"
 
     # iteration of gr
-    for l in np.arange(8):
+    for l in np.arange(1):
         for i in np.arange(4):
 
-            # if i != 3:
-            #     continue
+            if i != 3:
+                continue
 
-            db = getDB(args,iter_gr=i,iter_dr=0)
+            db = getDB(args,iter_gr=i,iter_dr=11)
 
             die_df = db["die"]
             net_DRGuide_obj = Net(db,"netDRGuide")
@@ -56,6 +72,7 @@ def mainAnimation(args):
             drc_obj = DRC(db)
             congestion_obj = CongestionEdge(db)
             patternroute_obj = PatternRoute(db,"patternroute")
+            score_obj = Score(db,"score")
             # 81.5
             # window = [315.30,574.2,333.2,589.5]
             # window = [81.5,574.2,333.2,589.5]
@@ -67,7 +84,7 @@ def mainAnimation(args):
 
 
             window = [
-                    die_df["die_xl"].values[0]
+                  die_df["die_xl"].values[0]
                 , die_df["die_yl"].values[0]
                 , die_df["die_xh"].values[0]
                 , die_df["die_yh"].values[0]
@@ -77,21 +94,40 @@ def mainAnimation(args):
             plt_obj = PltCairo()
             surface = plt_obj.init(window)
 
-            cell_obj.getWindow(window,plt_obj,(0,0,1),1,text=True)
+            # cell_obj.getWindow(window,plt_obj,(0,0,1),1,text=False)
             
-            net_obj.getWindow(window,plt_obj,(0,1,0),0.5,net_name=specific_net,l=l)
-            vio_obj.getWindow(window,plt_obj,(0.6,0.1,0.6),0.8,l=l)
-            fixedMetals_obj.getWindow(window,plt_obj,(0,0,0),1,l=0)
-            # drc_obj.getWindow(window,plt_obj,(1,0,0),1)
-            # net_DRGuide_obj.getWindow(window,plt_obj,(0.8,0.1,0.1),0.8,net_name=specific_net)
-            # drnet_obj.getWindow(window,plt_obj,(0,0,1),1,net_name=specific_net)
-            congestion_obj.getWindow(window,plt_obj,(0.5,0.1,0.7),0.1,l=l)
+            # net_obj.getWindow(window,plt_obj,(0,1,0),0.5,net_name=specific_net,l=l)
+            # # vio_obj.getWindow(window,plt_obj,(0.6,0.1,0.6),0.8,l=l)
+            # fixedMetals_obj.getWindow(window,plt_obj,(0,0,0),1,l=l)
+            # # drc_obj.getWindow(window,plt_obj,(1,0,0),1)
+            # # net_DRGuide_obj.getWindow(window,plt_obj,(0.8,0.1,0.1),0.8,net_name=specific_net)
+            # drnet_obj.getWindow(window,plt_obj,(0,0,1),1,net_name=specific_net,l=l)
+            # congestion_obj.getWindow(window,plt_obj,(0.5,0.1,0.7),0.1,l=l)
             # patternroute_obj.getWindow(window,plt_obj,(0,1,0),0.5,net_name=specific_net,l=l)
-            gcell_obj.getWindow(window,plt_obj,(1,0,0),0.001)
-
-            surface.write_to_png(args.dir+ "imgs/" +"net.gr."
-                +str(i)+ ".l." + str(l)+".png")
+            # gcell_obj.getWindow(window,plt_obj,(1,0,0),0.001)
+            # score_obj.getWindow(window,plt_obj,(1,0,0),1,net_name=specific_net,l=l)
+            
         
+
+            # surface.write_to_png(args.dir+ "imgs/" +"net.gr."
+            #     +str(i)+ ".l." + str(l)+".png")
+
+            break
+        break
+    # OFGW = score_obj.getOutOfGuideTotal("wire")
+    # OFGV = score_obj.getOutOfGuideTotal("via")
+    # wl,vias = score_obj.getWirelengthViasTotal()
+    # www = score_obj.getWrongWayWiring()
+
+    oftw = score_obj.getOffTrackTotal()
+        
+    # print("wl(wirelength):",wl)
+    # print("vias:",vias)
+    # print("OFGW(Out of guide wirelength):",OFGW)
+    # print("OFGV(Out of guide Vias):",OFGV)
+    # print("WWW (Wrong Way Wiring):",www)
+    print("oftw(off track wiring):",oftw)
+    
 
         
 def mainCoef(args): 

@@ -1,6 +1,6 @@
 
 
-from email.policy import default
+# from email.policy import default
 import os
 import sys
 import pandas as pd
@@ -20,7 +20,7 @@ class Astar:
         self.db = db
         self.type = type
 
-    def getWindow(self,window,plt_obj,color,alpha,net_name="default",l=-1):
+    def getWindow(self,window,plt_obj,color,alpha,net_name="-1",l=-1):
         # idx,net_name,l,xl,yl,xh,hy,
         # eBackward,eForward,eDown,eUp,eBackwardCost,eForwardCost,eDownCost,eUpCost
         if not(self.type in self.db):
@@ -39,7 +39,7 @@ class Astar:
         # net_filter = net_df.loc[ (net_df.xl >= window[XL] )& (net_df.xh <= window[XH])]
         # net_filter = net_filter.loc[ (net_df.yl >= window[YL] )& (net_df.yh <= window[YH])]        
        
-        if(net_name != "default"):
+        if(net_name != "-1"):
             net_filter = net_filter.loc[ net_filter.net_name == net_name]
                 
         if (l != -1):

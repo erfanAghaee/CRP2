@@ -40,8 +40,8 @@ class DRC:
         drc_filter = drc_df.loc[drc_df.apply(lambda row: getIntervals(row.xl,row.xh,window[XL],window[XH]),axis=1)]
         drc_filter = drc_filter.loc[drc_filter.apply(lambda row: getIntervals(row.yl,row.yh,window[YL],window[YH]),axis=1)]
        
-        # drc_filter = drc_df.loc[ (drc_df.xl >= window[XL] )& (drc_df.xh <= window[XH])]
-        # drc_filter = drc_filter.loc[ (drc_df.yl >= window[YL] )& (drc_df.yh <= window[YH])]
+        drc_filter = drc_df.loc[ (drc_df.xl >= window[XL] )& (drc_df.xh <= window[XH])]
+        drc_filter = drc_filter.loc[ (drc_df.yl >= window[YL] )& (drc_df.yh <= window[YH])]
         if(l != -1):
             drc_filter = drc_filter.loc[ drc_df.l == l]
 

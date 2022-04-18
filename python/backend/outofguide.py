@@ -39,17 +39,11 @@ def plot(plt_obj,boxs,color,alpha,type):
     plt_obj.run(xls,yls,ws,hs,color,alpha)
 
 def initRtree(boxs,idx):
-
     i = 0
     for box in boxs:
         idx.insert(i, (box[XL], box[YL], box[XH], box[YH]))
         i +=1
-def getUnionBox(boxs):
-    xls = [min(box[XL],box[XH]) for box in boxs]
-    yls = [min(box[YL],box[YL]) for box in boxs]
-    xhs = [max(box[XH],box[XH]) for box in boxs]
-    yhs = [max(box[YH],box[YH]) for box in boxs]
-    return [[min(xls),min(yls),max(xhs),max(yhs)]]
+
 
 
 # def contain(rectA,rectB):
@@ -85,7 +79,7 @@ def checkoutofguide(dr,gr):
     for dr_box in dr:
         ovrlp_boxs = [gr[i] for i in list(idx_gr.intersection((dr_box[XL],dr_box[YL],dr_box[XH],dr_box[YH])))]
 
-        unionbox = getUnionBox(ovrlp_boxs)
+        # unionbox = getUnionBox(ovrlp_boxs)
 
         for box in ovrlp_boxs:
             print(box,dr)
@@ -116,7 +110,6 @@ def getBoxDifference(A,B):
         return [[A[XL],A[YL],A[XH],A[YH]]] # no intersection
     else:
         if((A[XL] >= B[XL]) and (A[YL] >= B[YL]) and (A[XH] <= B[XH]) and (A[YH] <= B[YH]) ):
-            print("within")
             return [[]] # within and detailed router is inside the box
 
         # 4-direction
@@ -165,12 +158,28 @@ def getBoxDifference(A,B):
 
 
 
-def draw(args,dr,gr,outofguide,name):
-    window = [
-        0,0,20,20
-    ]
+def draw(args,dr,gr,outofguide,name,window=[0,0,20,20]):
+    # window = [
+    #     0,0,20,20
+    # ]
+    xs=[];ys=[]
+    for i in range(len(dr)):
+        xs.append(dr[i][XL]);xs.append(dr[i][XH])
+    for i in range(len(gr)):
+        xs.append(gr[i][XL]);xs.append(gr[i][XH])
+    for i in range(len(dr)):
+        ys.append(dr[i][YL]);ys.append(dr[i][YH])
+    for i in range(len(gr)):
+        ys.append(gr[i][YL]);ys.append(gr[i][YH])
 
-    gcells = initGCells(window)
+    window = [np.min(xs),np.min(ys),np.max(xs),np.max(ys)]
+    
+
+    # gcells = initGCells(window)
+    print(gr)
+    print(dr)
+    print(window)
+    
 
 
     plt_obj = PltCairo()
@@ -179,7 +188,7 @@ def draw(args,dr,gr,outofguide,name):
     
     plot(plt_obj,dr,(0,1,0),1,"dr")
     plot(plt_obj,gr,(0,0,1),0.2,"gr")
-    plot(plt_obj,gcells,(1,0,0),0.1,"gcells")
+    # plot(plt_obj,gcells,(1,0,0),0.1,"gcells")
     plot(plt_obj,outofguide,(1,0,0.3),1,"outofguide")
     
 
@@ -357,6 +366,35 @@ def testMultiBlock(args):
     gr = [[3,1,4,10],[5,1,8,10]]
     dr = [[1,3,9,4],[8,4,9,5],[7,4,9,5]]
 
+
+
+    dr=[
+        [710350.0,   525290.0,  710450.0,   525510.0],
+        [466790.0,  1130750.0,  467010.0,  1130850.0],
+        [587450.0,  1170690.0,  587550.0,  1170910.0],
+        [578050.0,  1164290.0,  578150.0,  1164510.0],
+        [671850.0,  1170690.0,  671950.0,  1170910.0],
+        [438590.0,   667750.0,  438810.0,   667850.0],
+        [724650.0,  1161090.0,  724750.0,  1161310.0],
+        [824650.0,  1159490.0,  824750.0,  1159710.0],
+        [852650.0,  1164290.0,  852750.0,  1164510.0],
+        [845050.0,   493890.0,  845150.0,   494110.0]
+    ]
+
+
+    gr= [
+        [843000,   486100,  846000,   498100],
+        [708000,   525100,  711000,   528100],
+        [438000,   666100,  441000,   669100],
+        [465000,  1128100,  468000,  1131100],
+        [723000,  1158100,  726000,  1161100],
+        [822000,  1158100,  825000,  1161100],
+        [576000,  1164100,  579000,  1167100],
+        [852000,  1164100,  855000,  1167100],
+        [585000,  1170100,  588000,  1173100],
+        [669000,  1170100,  672000,  1173100]
+    ]
+
     dr_res = copy.deepcopy(dr)
     for i in range(len(gr)):
         dr_queue = []
@@ -364,17 +402,19 @@ def testMultiBlock(args):
             dr_queue.append(dr_res[j])
         dr_cropped = []
         for j in range(len(dr_queue)):
-            dr_tmp = getBoxDifference(dr_res[j],gr[i])
+            # dr_tmp = getBoxDifference(dr_res[j],gr[i])
+            dr_tmp = getBoxDifference(dr_queue[j],gr[i])
 
             for k in range(len(dr_tmp)):
-                dr_cropped.append(dr_tmp[k])
+                if(len(dr_tmp[k]) > 0):
+                    dr_cropped.append(dr_tmp[k])
         dr_res = dr_cropped
 
     
     draw(args,dr,gr,dr_res,"multi")
 
 
-def outofguideInit(args):
+def outofguideModuleTest(args):
     # dr= [[1,5,10,6]]
     # gr= [[5,1,15,10],[3,1,4,10],[3,7,10,8]]
 
@@ -398,3 +438,29 @@ def outofguideInit(args):
     # testWrap(args)
     # testRandomBoxs(args,10)
     testMultiBlock(args)
+    pass
+
+
+
+def getOutOfGuides(args,dr,gr):
+    # gr = [[3,1,4,10],[5,1,8,10]]
+    # dr = [[1,3,9,4],[8,4,9,5],[7,4,9,5]]
+    dr_res = copy.deepcopy(dr)
+    for i in range(len(gr)):
+        dr_queue = []
+        
+        for j in range(len(dr_res)):
+            dr_queue.append(dr_res[j])
+        dr_cropped = []
+        
+        for j in range(len(dr_queue)):
+            # dr_tmp = getBoxDifference(dr_res[j],gr[i])
+            
+            dr_tmp = getBoxDifference(dr_queue[j],gr[i])
+            
+            for k in range(len(dr_tmp)):
+                if(len(dr_tmp[k]) > 0):
+                    dr_cropped.append(dr_tmp[k])
+        dr_res = dr_cropped
+
+    return dr_res

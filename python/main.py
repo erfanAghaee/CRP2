@@ -26,6 +26,7 @@ from backend.utils import *
 from backend.gcell import *
 from backend.pltcairo import *
 from backend.animation import *
+from backend.score import *
 
 
 def drawCRP(args):
@@ -253,13 +254,16 @@ def interval(row,wind):
     return pd.Interval(row.xl,row.xh).overlaps(pd.Interval(wind[0], wind[1]))
 
 def menu(args):
-    # mainAnimation(args)
+    mainAnimation(args)
     # drawCRP(args)
     # drawGuideCompare(args)
     # mainCoef(args)
     # mainAstar(args)
     # mainCongestion(args)
-    outofguideInit(args)
+    # outofguideInit(args)
+    
+    # mainScore(args)
+    # outofguideModuleTest(args)
     
     
     

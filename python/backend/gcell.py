@@ -37,13 +37,13 @@ class GCell:
         
         # surface = plt_obj.init(window)
 
-        cell_filter = cell_df.loc[cell_df.apply(lambda row: getIntervals(row.x,row.x + row.w,window[XL],window[XH]),axis=1)]
-        cell_filter = cell_filter.loc[cell_filter.apply(lambda row: getIntervals(row.y,row.y+row.h,window[YL],window[YH]),axis=1)]
+        # cell_filter = cell_df.loc[cell_df.apply(lambda row: getIntervals(row.x,row.x + row.w,window[XL],window[XH]),axis=1)]
+        # cell_filter = cell_filter.loc[cell_filter.apply(lambda row: getIntervals(row.y,row.y+row.h,window[YL],window[YH]),axis=1)]
 
         
-        # cell_filter = cell_df.loc[ (cell_df.x >= window[XL] )& (cell_df.x <= window[XH])]
+        cell_filter = cell_df.loc[ (cell_df.x >= window[XL] )& (cell_df.x <= window[XH])]
         
-        # cell_filter = cell_filter.loc[ (cell_df.y >= window[YL] )& (cell_df.y <= window[YH])]
+        cell_filter = cell_filter.loc[ (cell_df.y >= window[YL] )& (cell_df.y <= window[YH])]
 
         xs_txt = cell_filter.gcellX.values
         ys_txt = cell_filter.gcellY.values

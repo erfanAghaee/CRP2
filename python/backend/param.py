@@ -5,6 +5,8 @@ YH=3
 X=0
 Y=1
 Z=2
+H=0
+V=1
 
 layer_colors = {
     0:(0,0,1), # blue
