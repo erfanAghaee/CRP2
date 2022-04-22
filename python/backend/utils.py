@@ -111,8 +111,62 @@ def getBoxDifference(A,B):
             return  [[A[XL],A[YL],A[XH],B[YL]],[B[XH],B[YL],A[XH],B[YH]],[A[XL],B[YH],A[XH],A[YH]],[A[XL],B[YL],B[XL],B[YH]]]
 
 
+def getBoxIntersection(A,B):
+    
+    if ((A[XH] <= B[XL]) or (A[XL] >= B[XH]) or (A[YH] <= B[YL]) or (A[YL] >= B[YH])): 
+        # print("no intersection")
+        return [[]] # no intersection
+    else:
+        if((A[XL] >= B[XL]) and (A[YL] >= B[YL]) and (A[XH] <= B[XH]) and (A[YH] <= B[YH]) ):
+            return [[A[XL],A[YL],A[XH],A[YH]]] # within and detailed router is inside the box
+
+        # 4-direction
+        elif ((A[XL] < B[XL]) and (A[YL] >= B[YL]) and (A[XH] <= B[XH]) and (A[YH] <= B[YH])): # left 
+            return  [[B[XL],A[YL],A[XH],A[YH]]]
+        elif ((A[XL] >= B[XL]) and (A[YL] >= B[YL]) and (A[XH] > B[XH]) and (A[YH] <= B[YH])): # right
+            return  [[A[XL],A[YL],B[XH],A[YH]]]
+        elif ((A[XL] >= B[XL]) and (A[YL] >= B[YL]) and (A[XH] <= B[XH]) and (A[YH] > B[YH])): # top
+            return  [[A[XL],A[YL],A[XH],B[YH]]]
+        elif ((A[XL] >= B[XL]) and (A[YL] < B[YL]) and (A[XH] <= B[XH]) and (A[YH] <= B[YH])): # bottom 
+            return  [[A[XL],B[YL],A[XH],A[YH]]]
+
+        # 2-cross
+        elif ((A[XL] < B[XL]) and (A[YL] >= B[YL]) and (A[XH] > B[XH]) and (A[YH] <= B[YH])): # left-right
+            return  [[B[XL],A[YL],B[XH],A[YH]]]
+        elif ((A[XL] >= B[XL]) and (A[YL] < B[YL]) and (A[XH] <= B[XH]) and (A[YH] > B[YH])): # top-bottom
+            return  [[A[XL],B[YL],A[XH],B[YH]]]
+
+
+        # 4-corners
+        elif ((A[XL] < B[XL]) and (A[YL] < B[YL]) and (A[XH] <= B[XH]) and (A[YH] <= B[YH])): # bottom-left
+            return  [[B[XL],B[YL],A[XH],A[YH]]]
+        elif ((A[XL] >= B[XL]) and (A[YL] < B[YL]) and (A[XH] > B[XH]) and (A[YH] <= B[YH])): # bottom-right
+            return  [[A[XL],B[YL],B[XH],A[YH]]]
+        elif ((A[XL] < B[XL]) and (A[YL] >= B[YL]) and (A[XH] <= B[XH]) and (A[YH] > B[YH])): # top-left
+            return  [[B[XL],A[YL],A[XH],B[YH]]]
+        elif ((A[XL] >= B[XL]) and (A[YL] >= B[YL]) and (A[XH] > B[XH]) and (A[YH] > B[YH])): # top-right
+            return  [[A[XL],A[YL],B[XH],B[YH]]]
+
+
+        # 4-corner crossing
+        elif ((A[XL] < B[XL]) and (A[YL] >= B[YL]) and (A[XH] > B[XH]) and (A[YH] > B[YH])): # top-left-right-corner
+            return  [[B[XL],A[YL],B[XH],B[YH]]]
+        elif ((A[XL] < B[XL]) and (A[YL] < B[YL]) and (A[XH] > B[XH]) and (A[YH] <= B[YH])): # bottom-left-right-corner
+            return  [[B[XL],B[YL],B[XH],A[YH]]]
+        elif ((A[XL] < B[XL]) and (A[YL] < B[YL]) and (A[XH] <= B[XH]) and (A[YH] > B[YH])): # left-top-bottom-corner
+            return  [[B[XL],B[YL],A[XH],B[YH]]]
+        elif ((A[XL] >= B[XL]) and (A[YL] < B[YL]) and (A[XH] > B[XH]) and (A[YH] > B[YH])): # right-top-bottom-corner
+            return  [[A[XL],B[YL],B[XH],B[YH]]]
+
+
+        # wrapped
+        elif ((A[XL] < B[XL]) and (A[YL] < B[YL]) and (A[XH] > B[XH]) and (A[YH] > B[YH])): # wrap
+            return  [[B[XL],B[YL],B[XH],B[YH]]]
+
+
 def getWirelength(box):
     return abs(box[XL]-box[XH])+abs(box[YL]-box[YH])
+
 def getDirection(box):
     return (H if abs(box[XL]-box[XH]) > abs(box[YL]-box[YH]) else V)
 
@@ -164,4 +218,14 @@ def getOffTrack(box,dir,patternTrack,l):
         return getWirelength(box)
     return 0
 
+
+def getArea(box,width):
+    x = abs(box[XH]-box[XL]) 
+    y = abs(box[YH]-box[YL]) 
+    # if( x == 0):
+    x += (width*2000)
+    # if( y == 0):
+    y += (width*2000)
+
+    return x/2000.0*y/2000.0
 

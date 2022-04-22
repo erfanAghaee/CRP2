@@ -814,6 +814,26 @@ void Database::logAstarCoraseGrid(int iter){
     astar_stream_coarse = "";
 }
 
+void Database::logLayers(){
+    std::string file_name = db::setting.directory +  db::setting.benchmarkName
+        + ".layers.csv";
+    std::ofstream file(file_name);       
+    std::stringstream stream;
+    stream << "name,idx,direction,width,minArea" << std::endl;
+
+    for(auto layer : layers){
+        stream << layer.name
+               << "," << layer.idx
+               << "," << layer.direction
+               << "," << layer.width
+               << "," << layer.minArea
+               << std::endl;
+    }
+    file << stream.str();
+    file.close();
+
+}//end logLayers
+
 void Database::writeDEF(const std::string& filename){
     DEFControlParser defParser;
     DefDscp def;

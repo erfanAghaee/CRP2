@@ -50,83 +50,92 @@ def plotBox(plt_obj,boxs,color,alpha,type):
 
 def mainAnimation(args):
     # specific_net = "net60637"
-    specific_net = "net446"
+    specific_net = "net29885"
 
     # iteration of gr
-    for l in np.arange(1):
-        for i in np.arange(4):
+    # for l in np.arange(8):
+    for iter_gr in np.arange(14):
+        db = getDB(args,iter_gr=iter_gr,iter_dr=11)
 
-            if i != 3:
-                continue
-
-            db = getDB(args,iter_gr=i,iter_dr=11)
-
-            die_df = db["die"]
-            net_DRGuide_obj = Net(db,"netDRGuide")
-            fixedMetals_obj = FixedMetals(db)
-            cell_obj = Cell(db)
-            gcell_obj = GCell(db)
-            net_obj = Net(db,"net")
-            vio_obj = Vio(db)
-            drnet_obj = Net(db,"drnet")
-            drc_obj = DRC(db)
-            congestion_obj = CongestionEdge(db)
-            patternroute_obj = PatternRoute(db,"patternroute")
-            score_obj = Score(db,"score")
-            # 81.5
-            # window = [315.30,574.2,333.2,589.5]
-            # window = [81.5,574.2,333.2,589.5]
-            # window = [x*2000 for x in window]
-            # window = [642000,1164000,1371000,178000]
-            # window = [417,582,445,589]
-            # window = [417,562,660,589]
-            # window = [x*2000 for x in window]
+        die_df = db["die"]
+        net_DRGuide_obj = Net(db,"netDRGuide")
+        fixedMetals_obj = FixedMetals(db)
+        cell_obj = Cell(db)
+        gcell_obj = GCell(db)
+        net_obj = Net(db,"net")
+        vio_obj = Vio(db)
+        drnet_obj = Net(db,"drnet")
+        drc_obj = DRC(db)
+        congestion_obj = CongestionEdge(db)
+        patternroute_obj = PatternRoute(db,"patternroute")
+        score_obj = Score(db,"score")
+        # 81.5
+        # window = [315.30,574.2,333.2,589.5]
+        # window = [81.5,574.2,333.2,589.5]
+        # window = [x*2000 for x in window]
+        # window = [642000,1164000,1371000,178000]
+        # window = [417,582,445,589]
+        # window = [417,562,660,589]
+        # window = [x*2000 for x in window]
+        # window = [684,397,689,399]
+        # window = [x*2000 for x in window]
 
 
-            window = [
-                  die_df["die_xl"].values[0]
-                , die_df["die_yl"].values[0]
-                , die_df["die_xh"].values[0]
-                , die_df["die_yh"].values[0]
-            ]
+        window = [
+                die_df["die_xl"].values[0]
+            , die_df["die_yl"].values[0]
+            , die_df["die_xh"].values[0]
+            , die_df["die_yh"].values[0]
+        ]
 
 
-            plt_obj = PltCairo()
-            surface = plt_obj.init(window)
+        plt_obj = PltCairo()
+        surface = plt_obj.init(window)
 
-            # cell_obj.getWindow(window,plt_obj,(0,0,1),1,text=False)
-            
-            # net_obj.getWindow(window,plt_obj,(0,1,0),0.5,net_name=specific_net,l=l)
-            # # vio_obj.getWindow(window,plt_obj,(0.6,0.1,0.6),0.8,l=l)
-            # fixedMetals_obj.getWindow(window,plt_obj,(0,0,0),1,l=l)
-            # # drc_obj.getWindow(window,plt_obj,(1,0,0),1)
-            # # net_DRGuide_obj.getWindow(window,plt_obj,(0.8,0.1,0.1),0.8,net_name=specific_net)
-            # drnet_obj.getWindow(window,plt_obj,(0,0,1),1,net_name=specific_net,l=l)
-            # congestion_obj.getWindow(window,plt_obj,(0.5,0.1,0.7),0.1,l=l)
-            # patternroute_obj.getWindow(window,plt_obj,(0,1,0),0.5,net_name=specific_net,l=l)
-            # gcell_obj.getWindow(window,plt_obj,(1,0,0),0.001)
-            # score_obj.getWindow(window,plt_obj,(1,0,0),1,net_name=specific_net,l=l)
-            
+        # cell_obj.getWindow(window,plt_obj,(0,0,1),1,text=False)
         
+        # net_obj.getWindow(window,plt_obj,(0,1,0),0.5,net_name=specific_net,l=l)
+        vio_obj.getWindow(window,plt_obj,(0.6,0.1,0.6),0.8)
+        fixedMetals_obj.getWindow(window,plt_obj,(0,0,0),1)
+        # # drc_obj.getWindow(window,plt_obj,(1,0,0),1)
+        # # net_DRGuide_obj.getWindow(window,plt_obj,(0.8,0.1,0.1),0.8,net_name=specific_net)
+        # drnet_obj.getWindow(window,plt_obj,(0,0,1),1,net_name=specific_net,l=l)
+        # congestion_obj.getWindow(window,plt_obj,(0.5,0.1,0.7),0.1,l=l)
+        # patternroute_obj.getWindow(window,plt_obj,(0,1,0),0.5,net_name=specific_net,l=l)
+        # gcell_obj.getWindow(window,plt_obj,(1,0,0),0.001)
+        # score_obj.getWindow(window,plt_obj,(1,0,0),1,net_name=specific_net,l=l)
+        
+    
 
-            # surface.write_to_png(args.dir+ "imgs/" +"net.gr."
-            #     +str(i)+ ".l." + str(l)+".png")
+        surface.write_to_png(args.dir+ "imgs/" +"cells."
+            +str(iter_gr)+".png")
 
-            break
-        break
+        #     break
+        # break
     # OFGW = score_obj.getOutOfGuideTotal("wire")
     # OFGV = score_obj.getOutOfGuideTotal("via")
-    # wl,vias = score_obj.getWirelengthViasTotal()
+    
     # www = score_obj.getWrongWayWiring()
 
-    oftw = score_obj.getOffTrackTotal()
-        
+    # oftw = score_obj.getOffTrackTotal("wire")
+    # oftv = score_obj.getOffTrackTotal("via")
+
+    # short = score_obj.getShortAreaTotal()
+    # minArea = score_obj.getMinAreaTotal()
+
+    # it is correctly calculated 
+    # wl,vias = score_obj.getWirelengthViasTotal()    
     # print("wl(wirelength):",wl)
     # print("vias:",vias)
+
+
     # print("OFGW(Out of guide wirelength):",OFGW)
     # print("OFGV(Out of guide Vias):",OFGV)
     # print("WWW (Wrong Way Wiring):",www)
-    print("oftw(off track wiring):",oftw)
+    # print("oftw(off track wiring):",oftw)
+    # print("oftv(off track via insertion):",oftv)
+    # print("shortArea: ",short)
+    # print("# MinArea: ",minArea)
     
 
         

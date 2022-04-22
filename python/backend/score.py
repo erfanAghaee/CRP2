@@ -28,6 +28,7 @@ from backend.fixedMetals import *
 from backend.utils import *
 from backend.gcell import *
 from backend.pltcairo import *
+from rtree import index 
 # from backend.outofguide import *
 import matplotlib.pyplot as plt
 from pandarallel import pandarallel
@@ -38,6 +39,7 @@ class Score:
     def __init__(self,db,type):
         self.db = db
         self.type = type
+        self.obj_idx = 0
 
     def getOutOfGuide(self,dr,gr):
         dr_res = copy.deepcopy(dr)
@@ -182,7 +184,7 @@ class Score:
         return wl,num_vias
 
 
-    def getOffTrackTotal(self):
+    def getOffTrackTotal(self,type):
         #  start,  numTracks, steps
         # TRACKS Y 200 DO 2946 STEP 400 LAYER Metal9 ;
         # TRACKS X 500 DO 4363 STEP 400 LAYER Metal9 ;
@@ -230,7 +232,10 @@ class Score:
             track_pattern_filter = track_pattern_df.loc[track_pattern_df.l == l]
 
             drnet_filter = drnet_df.loc[drnet_df.l==l]
-            drnet_filter = drnet_filter.loc[(drnet_filter.type=="wire") ]
+            if(type=="wire"):
+                drnet_filter = drnet_filter.loc[(drnet_filter.type=="wire") ]
+            else:
+                drnet_filter = drnet_filter.loc[(drnet_filter.type=="via") ]
             # drnet_filter = drnet_filter.loc[drnet_filter.net_name=="net446"]
             # print(drnet_filter)
             # res = drnet_filter.parallel_apply(lambda row: \
@@ -238,7 +243,16 @@ class Score:
             res = drnet_filter.parallel_apply(lambda row: \
                 getOffTrack([row["xl"],row["yl"],row["xh"],row["yh"]],layers_dir[l],track_pattern_filter,l) ,axis=1 )    
             # print("l:",l,res)
-            total_offtrack += np.sum(res)
+            if(type=="wire"):
+                total_offtrack += np.sum(res)
+            else:
+                res= np.where(res>0)[0]
+                print(res)
+                print(len(res))
+                total_offtrack += len(res)
+                # print(res)
+
+
         # l = 1
         # track_pattern_filter = track_pattern_df.loc[track_pattern_df.l == l]
         # print(track_pattern_df)
@@ -247,29 +261,131 @@ class Score:
         
         
         
+    def processInsertRtree(self,box,l,type_,idx):
+        l = int(l)
+        xl = min(box[XL],box[XH])
+        yl = min(box[YL],box[YH])
+        xh = max(box[XL],box[XH])
+        yh = max(box[YL],box[YH])
+
+        if(type_ == "wire"):
+            xl = xl - (self.layers_width[l]*2000/2)
+            yl = yl - (self.layers_width[l]*2000/2)
+            xh = xh + (self.layers_width[l]*2000/2)
+            yh = yh + (self.layers_width[l]*2000/2)
+
+        self.rtrees[l].insert(idx,(xl, yl, xh, yh))
+
+    # def processShortArea(self,box,l,type_,idx,df):
+    #     l = int(l)
+    #     xl = min(box[XL],box[XH])
+    #     yl = min(box[YL],box[YH])
+    #     xh = max(box[XL],box[XH])
+    #     yh = max(box[YL],box[YH])
+
+    #     if(type_ == "wire"):
+    #         xl = xl - (self.layers_width[l]*2000/2)
+    #         yl = yl - (self.layers_width[l]*2000/2)
+    #         xh = xh + (self.layers_width[l]*2000/2)
+    #         yh = yh + (self.layers_width[l]*2000/2)
+
+    #     res = self.rtrees[l].intersection((xl,yl,xh,yh))
+
+    #     net_tg = df.loc[df.idx == idx]["net_name"]
+
+    #     for i in res:
+    #         new_obj = df.loc[df.idx == idx]
+    #         if new_obj["net_name"] != net_tg:
+
+
+                
+                
 
 
 
         
 
+    def processMinArea(self,box,l):
+        # print(box,l)
         
+        # print(l,self.layers_area[int(l)])
+        # print(self.layers_area[int(l)]*2000)
+        reqArea = (self.layers_area[int(l)])
+        reqWidth = (self.layers_width[int(l)])
         
+        area = getArea(box,reqWidth)
+        print(box,area,reqArea,l)
+        if area < reqArea:
+            print("failed",area,reqArea)
+            return True
+        return False
+
         
+    def getShortAreaTotal(self):
+        pandarallel.initialize()
+        self.rtrees = []
+        shortArea = 0
+
+        # temporary need to be updated
+        self.layers_width=[0.05,0.05,0.05,0.05,0.05,0.07,0.07,0.1,0.1]
+
+        layers_dir=[V,H,V,H,V,H,V,H,V]
+        db = self.db
+        die_df = db["die"]
         
+        # net_df = db[self.type]
+        drnet_df = db["drnet"]  
+        drnet_df["idx"] = range(0,len(drnet_df))
+
+        i = 0
+        for l in range(9):
+            idx = index.Index()
+            self.rtrees.append(idx)
+        # #     rtrees.append(idx)
+        # # #     # drnet_filter = drnet_df.loc[drnet_df.l == l]
+        # # #     # drnet_filter = drnet_filter.reset_index()
+        # # #     # if(len(drnet_df) > 0):
+        # # #         # boxs = drnet_filter.parallel_apply(lambda row: self.processBoxs(row),axis=1)
+
+        # print(drnet_df.index)
+        drnet_df.parallel_apply(lambda row:\
+            self.processInsertRtree([row["xl"],row["yl"],row["xh"],row["yh"]],\
+                row["l"],row["type"],row["idx"])\
+            ,axis=1)
+
+        shortAreas = drnet_df.parallel_apply(lambda row:\
+            self.processShortArea([row["xl"],row["yl"],row["xh"],row["yh"]],\
+                row["l"],row["type"],row["idx"],drnet_df)\
+            ,axis=1)
+
+        shortArea = np.sum(shortAreas)
+        # # for i in range(len(boxs)):
+        #     pass
+
+        return shortArea
+
+    def getMinAreaTotal(self):
+        pandarallel.initialize()
         
+        # layers_dir=[V,H,V,H,V,H,V,H,V]
+        # self.layers_area=[0.041,0.051,0.051,0.051,0.051]
+        self.layers_area=[0.0115,0.014,0.017,0.017,0.017,0.025,0.025,0.052,0.052 ]
+        self.layers_width=[0.05,0.05,0.05,0.05,0.05,0.07,0.07,0.1,0.1]
+        db = self.db
+        die_df = db["die"]
         
-        
-        
-        
-        
-        
-            
-            
-            
-            
-            
-            
-        track_pattern_df = pd.DataFrame(data) 
+        drnet_df = db["drnet"] 
+        # drnet_df = drnet_df.loc[drnet_df.type=="wire"]
+        drnet_df = drnet_df.loc[drnet_df.net_name=="net29885"]
+        drnet_df = drnet_df.loc[drnet_df.type=="wire"]
+
+        print(drnet_df)
+
+        min_areas = drnet_df.parallel_apply(lambda row: self.processMinArea([row["xl"],row["yl"],\
+            row["xh"],row["yh"]],row["l"]),axis=1)
+
+        return sum(min_areas)
+
 
 
     def getWindow(self,window,plt_obj,color,alpha,net_name="-1",l=-1):

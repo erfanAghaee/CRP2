@@ -45,6 +45,7 @@ class Vio:
         # vio_filter = vio_filter.loc[ (vio_df.yl >= window[YL] )& (vio_df.yh <= window[YH])]
         if(l != -1):
             vio_filter = vio_filter.loc[ vio_df.l == l]
+        vio_filter = vio_filter.loc[ vio_df.l != 0]
 
         xls = vio_filter.xl.values
         yls = vio_filter.yl.values

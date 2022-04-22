@@ -84,7 +84,7 @@ void GrRouteGrid::useWirePessimistic(const GrBoxOnLayer& box) {
     auto dir = database.getLayerDir(layerIdx);
     double usage = 1.0 / (box[dir].range() + 1);
     for (int gridline = box[dir].low; gridline <= box[dir].high; gridline++)
-        for (int cp = box[1 - dir].low; cp < box[1 - dir].high; cp++) useWire(layerIdx, gridline, cp, usage);
+        for (int cp = box[1 - dir].low; cp < box[1 - dir].high; cp++) useWire(layerIdx, gridline, cp, usage-0.5);
 }
 
 void GrRouteGrid::useVia(const GrBoxOnLayer& box) {

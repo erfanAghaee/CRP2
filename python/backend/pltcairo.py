@@ -97,10 +97,10 @@ class PltCairo:
 
         
         if self.xh - self.xl < self.yh - self.yl:
-            self.height = 11024#800 
+            self.height = 800#11024#800 
             self.width = round(self.height * (self.xh - self.xl) / (self.yh - self.yl))
         else:
-            self.width = 11024#800 
+            self.width = 800#11024#800 
             self.height = round(self.width * (self.yh - self.yl) / (self.xh -self.xl))
         # self.width = 800
         # self.height = 800

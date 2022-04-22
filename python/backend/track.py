@@ -14,7 +14,7 @@ from backend.pltcairo import *
 from backend.utils import *
 from backend.param import *
 
-class Net:
+class Track:
     def __init__(self,db,type):
         self.db = db
         self.type = type

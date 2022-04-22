@@ -174,7 +174,9 @@ void Router::run() {
     filterNets();
 
     database.logDie();
+    database.logLayers();
     grDatabase.logGCellGrid();
+    // return;
 
     if(!db::setting.refinePlacement){
         vector<int> netsToRoute;
@@ -185,14 +187,16 @@ void Router::run() {
         netsToRoute.clear();
         for(int i = 0; i < db::setting.numRefinePlacement; i++){
             applyPlacement(netsToRoute,i, profile_time, profile_time_str);
-            route(netsToRoute,PATTERNROUTE);
+            // route(netsToRoute,PATTERNROUTE);
+            route(netsToRoute,ASTAR);
             netsToRoute.clear();
+            logAll();
         }//end refinePlacement loop
 
     }//end refinePlacement
 
 
-        // // postprocessing
+    // postprocessing
     if(db::setting.postProcessing){
         if(db::setting.debug){
             log() << "postProcessing..." << std::endl;
@@ -215,9 +219,7 @@ void Router::run() {
     }
 
     
-    // database.logCellLocations(0);
-    // database.logDie();
-    // grDatabase.logGCellGrid();
+ 
 
     // if(!db::setting.refinePlacement){
         

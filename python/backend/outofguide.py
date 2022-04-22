@@ -17,6 +17,7 @@ sys.path.insert(0, import_path)
 from backend.pltcairo import *
 from backend.param import *
 from rtree import index 
+from backend.utils import *
 import copy
 
 
@@ -103,57 +104,57 @@ def bitWiseCompare(A,B):
 
 
 
-def getBoxDifference(A,B):
+# def getBoxDifference(A,B):
     
-    if ((A[XH] <= B[XL]) or (A[XL] >= B[XH]) or (A[YH] <= B[YL]) or (A[YL] >= B[YH])): 
-        # print("no intersection")
-        return [[A[XL],A[YL],A[XH],A[YH]]] # no intersection
-    else:
-        if((A[XL] >= B[XL]) and (A[YL] >= B[YL]) and (A[XH] <= B[XH]) and (A[YH] <= B[YH]) ):
-            return [[]] # within and detailed router is inside the box
+#     if ((A[XH] <= B[XL]) or (A[XL] >= B[XH]) or (A[YH] <= B[YL]) or (A[YL] >= B[YH])): 
+#         # print("no intersection")
+#         return [[A[XL],A[YL],A[XH],A[YH]]] # no intersection
+#     else:
+#         if((A[XL] >= B[XL]) and (A[YL] >= B[YL]) and (A[XH] <= B[XH]) and (A[YH] <= B[YH]) ):
+#             return [[]] # within and detailed router is inside the box
 
-        # 4-direction
-        elif ((A[XL] < B[XL]) and (A[YL] >= B[YL]) and (A[XH] <= B[XH]) and (A[YH] <= B[YH])): # left 
-            return  [[A[XL],A[YL],B[XL],A[YH]]]
-        elif ((A[XL] >= B[XL]) and (A[YL] >= B[YL]) and (A[XH] > B[XH]) and (A[YH] <= B[YH])): # right
-            return  [[B[XH],A[YL],A[XH],A[YH]]]
-        elif ((A[XL] >= B[XL]) and (A[YL] >= B[YL]) and (A[XH] <= B[XH]) and (A[YH] > B[YH])): # top
-            return  [[A[XL],B[YH],A[XH],A[YH]]]
-        elif ((A[XL] >= B[XL]) and (A[YL] < B[YL]) and (A[XH] <= B[XH]) and (A[YH] <= B[YH])): # bottom 
-            return  [[A[XL],A[YL],A[XH],B[YL]]]
+#         # 4-direction
+#         elif ((A[XL] < B[XL]) and (A[YL] >= B[YL]) and (A[XH] <= B[XH]) and (A[YH] <= B[YH])): # left 
+#             return  [[A[XL],A[YL],B[XL],A[YH]]]
+#         elif ((A[XL] >= B[XL]) and (A[YL] >= B[YL]) and (A[XH] > B[XH]) and (A[YH] <= B[YH])): # right
+#             return  [[B[XH],A[YL],A[XH],A[YH]]]
+#         elif ((A[XL] >= B[XL]) and (A[YL] >= B[YL]) and (A[XH] <= B[XH]) and (A[YH] > B[YH])): # top
+#             return  [[A[XL],B[YH],A[XH],A[YH]]]
+#         elif ((A[XL] >= B[XL]) and (A[YL] < B[YL]) and (A[XH] <= B[XH]) and (A[YH] <= B[YH])): # bottom 
+#             return  [[A[XL],A[YL],A[XH],B[YL]]]
 
-        # 2-cross
-        elif ((A[XL] < B[XL]) and (A[YL] >= B[YL]) and (A[XH] > B[XH]) and (A[YH] <= B[YH])): # left-right
-            return  [[A[XL],A[YL],B[XL],A[YH]],[B[XH],A[YL],A[XH],A[YH]]]
-        elif ((A[XL] >= B[XL]) and (A[YL] < B[YL]) and (A[XH] <= B[XH]) and (A[YH] > B[YH])): # top-bottom
-            return  [[A[XL],A[YL],A[XH],B[YL]],[A[XL],B[YH],A[XH],A[YH]]]
-
-
-        # 4-corners
-        elif ((A[XL] < B[XL]) and (A[YL] < B[YL]) and (A[XH] <= B[XH]) and (A[YH] <= B[YH])): # bottom-left
-            return  [[A[XL],A[YL],B[XL],A[YH]],[B[XL],A[YL],A[XH],B[YL]]]
-        elif ((A[XL] >= B[XL]) and (A[YL] < B[YL]) and (A[XH] > B[XH]) and (A[YH] <= B[YH])): # bottom-right
-            return  [[B[XH],A[YL],A[XH],A[YH]],[A[XL],A[YL],B[XH],B[YL]]]
-        elif ((A[XL] < B[XL]) and (A[YL] >= B[YL]) and (A[XH] <= B[XH]) and (A[YH] > B[YH])): # top-left
-            return  [[A[XL],A[YL],B[XL],A[YH]],[B[XL],B[YH],A[XH],A[YH]]]
-        elif ((A[XL] >= B[XL]) and (A[YL] >= B[YL]) and (A[XH] > B[XH]) and (A[YH] > B[YH])): # top-right
-            return  [[B[XH],A[YL],A[XH],A[YH]],[A[XL],B[YH],B[XH],A[YH]]]
+#         # 2-cross
+#         elif ((A[XL] < B[XL]) and (A[YL] >= B[YL]) and (A[XH] > B[XH]) and (A[YH] <= B[YH])): # left-right
+#             return  [[A[XL],A[YL],B[XL],A[YH]],[B[XH],A[YL],A[XH],A[YH]]]
+#         elif ((A[XL] >= B[XL]) and (A[YL] < B[YL]) and (A[XH] <= B[XH]) and (A[YH] > B[YH])): # top-bottom
+#             return  [[A[XL],A[YL],A[XH],B[YL]],[A[XL],B[YH],A[XH],A[YH]]]
 
 
-        # 4-corner crossing
-        elif ((A[XL] < B[XL]) and (A[YL] >= B[YL]) and (A[XH] > B[XH]) and (A[YH] > B[YH])): # top-left-right-corner
-            return  [[A[XL],A[YL],B[XL],A[YH]],[B[XL],B[YH],B[XH],A[YH]],[B[XH],A[YL],A[XH],A[YH]]]
-        elif ((A[XL] < B[XL]) and (A[YL] < B[YL]) and (A[XH] > B[XH]) and (A[YH] <= B[YH])): # bottom-left-right-corner
-            return  [[A[XL],A[YL],B[XL],A[YH]],[B[XL],A[YL],B[XH],B[YL]],[B[XH],A[YL],A[XH],A[YH]]]
-        elif ((A[XL] < B[XL]) and (A[YL] < B[YL]) and (A[XH] <= B[XH]) and (A[YH] > B[YH])): # left-top-bottom-corner
-            return  [[A[XL],A[YL],A[XH],B[YL]],[A[XL],B[YL],B[XL],B[YH]],[A[XL],B[YH],A[XH],A[YH]]]
-        elif ((A[XL] >= B[XL]) and (A[YL] < B[YL]) and (A[XH] > B[XH]) and (A[YH] > B[YH])): # right-top-bottom-corner
-            return  [[A[XL],A[YL],A[XH],B[YL]],[B[XH],B[YL],A[XH],B[YH]],[A[XL],B[YH],A[XH],A[YH]]]
+#         # 4-corners
+#         elif ((A[XL] < B[XL]) and (A[YL] < B[YL]) and (A[XH] <= B[XH]) and (A[YH] <= B[YH])): # bottom-left
+#             return  [[A[XL],A[YL],B[XL],A[YH]],[B[XL],A[YL],A[XH],B[YL]]]
+#         elif ((A[XL] >= B[XL]) and (A[YL] < B[YL]) and (A[XH] > B[XH]) and (A[YH] <= B[YH])): # bottom-right
+#             return  [[B[XH],A[YL],A[XH],A[YH]],[A[XL],A[YL],B[XH],B[YL]]]
+#         elif ((A[XL] < B[XL]) and (A[YL] >= B[YL]) and (A[XH] <= B[XH]) and (A[YH] > B[YH])): # top-left
+#             return  [[A[XL],A[YL],B[XL],A[YH]],[B[XL],B[YH],A[XH],A[YH]]]
+#         elif ((A[XL] >= B[XL]) and (A[YL] >= B[YL]) and (A[XH] > B[XH]) and (A[YH] > B[YH])): # top-right
+#             return  [[B[XH],A[YL],A[XH],A[YH]],[A[XL],B[YH],B[XH],A[YH]]]
 
 
-        # wrapped
-        elif ((A[XL] < B[XL]) and (A[YL] < B[YL]) and (A[XH] > B[XH]) and (A[YH] > B[YH])): # wrap
-            return  [[A[XL],A[YL],A[XH],B[YL]],[B[XH],B[YL],A[XH],B[YH]],[A[XL],B[YH],A[XH],A[YH]],[A[XL],B[YL],B[XL],B[YH]]]
+#         # 4-corner crossing
+#         elif ((A[XL] < B[XL]) and (A[YL] >= B[YL]) and (A[XH] > B[XH]) and (A[YH] > B[YH])): # top-left-right-corner
+#             return  [[A[XL],A[YL],B[XL],A[YH]],[B[XL],B[YH],B[XH],A[YH]],[B[XH],A[YL],A[XH],A[YH]]]
+#         elif ((A[XL] < B[XL]) and (A[YL] < B[YL]) and (A[XH] > B[XH]) and (A[YH] <= B[YH])): # bottom-left-right-corner
+#             return  [[A[XL],A[YL],B[XL],A[YH]],[B[XL],A[YL],B[XH],B[YL]],[B[XH],A[YL],A[XH],A[YH]]]
+#         elif ((A[XL] < B[XL]) and (A[YL] < B[YL]) and (A[XH] <= B[XH]) and (A[YH] > B[YH])): # left-top-bottom-corner
+#             return  [[A[XL],A[YL],A[XH],B[YL]],[A[XL],B[YL],B[XL],B[YH]],[A[XL],B[YH],A[XH],A[YH]]]
+#         elif ((A[XL] >= B[XL]) and (A[YL] < B[YL]) and (A[XH] > B[XH]) and (A[YH] > B[YH])): # right-top-bottom-corner
+#             return  [[A[XL],A[YL],A[XH],B[YL]],[B[XH],B[YL],A[XH],B[YH]],[A[XL],B[YH],A[XH],A[YH]]]
+
+
+#         # wrapped
+#         elif ((A[XL] < B[XL]) and (A[YL] < B[YL]) and (A[XH] > B[XH]) and (A[YH] > B[YH])): # wrap
+#             return  [[A[XL],A[YL],A[XH],B[YL]],[B[XH],B[YL],A[XH],B[YH]],[A[XL],B[YH],A[XH],A[YH]],[A[XL],B[YL],B[XL],B[YH]]]
 
 
 
@@ -204,7 +205,8 @@ def testNointersection(args):
     dr = [[1,5,4,6]]
     gr = [[5,1,15,10]]
 
-    outofguide = getBoxDifference(dr[0],gr[0])
+    # outofguide = getBoxDifference(dr[0],gr[0])
+    outofguide = getBoxIntersection(dr[0],gr[0])
     
     draw(args,dr,gr,outofguide,"noIntersection")
 
@@ -212,7 +214,8 @@ def testWithin(args):
     dr = [[5,5,10,6]]
     gr = [[5,1,15,10]]
 
-    outofguide = getBoxDifference(dr[0],gr[0])
+    # outofguide = getBoxDifference(dr[0],gr[0])
+    outofguide = getBoxIntersection(dr[0],gr[0])
     
     draw(args,dr,gr,outofguide,"within")
    
@@ -220,7 +223,8 @@ def testLeft(args):
     dr = [[3,5,10,6]]
     gr = [[5,1,15,10]]
 
-    outofguide = getBoxDifference(dr[0],gr[0])
+    # outofguide = getBoxDifference(dr[0],gr[0])
+    outofguide = getBoxIntersection(dr[0],gr[0])
     
     draw(args,dr,gr,outofguide,"left")
 
@@ -228,7 +232,8 @@ def testRight(args):
     dr = [[5,5,16,6]]
     gr = [[5,1,15,10]]
 
-    outofguide = getBoxDifference(dr[0],gr[0])
+    # outofguide = getBoxDifference(dr[0],gr[0])
+    outofguide = getBoxIntersection(dr[0],gr[0])
     
     draw(args,dr,gr,outofguide,"right")
 
@@ -236,7 +241,8 @@ def testBottom(args):
     dr = [[5,0,8,6]]
     gr = [[5,1,15,10]]
 
-    outofguide = getBoxDifference(dr[0],gr[0])
+    # outofguide = getBoxDifference(dr[0],gr[0])
+    outofguide = getBoxIntersection(dr[0],gr[0])
     
     draw(args,dr,gr,outofguide,"bottom")
 
@@ -244,7 +250,9 @@ def testTop(args):
     dr = [[5,8,8,12]]
     gr = [[5,1,15,10]]
 
-    outofguide = getBoxDifference(dr[0],gr[0])
+    # outofguide = getBoxDifference(dr[0],gr[0])
+    outofguide = getBoxIntersection(dr[0],gr[0])
+    
     
     draw(args,dr,gr,outofguide,"top")
 
@@ -252,7 +260,9 @@ def testLeftToRight(args):
     dr = [[5,8,8,12]]
     gr = [[5,1,15,10]]
 
-    outofguide = getBoxDifference(dr[0],gr[0])
+    # outofguide = getBoxDifference(dr[0],gr[0])
+    outofguide = getBoxIntersection(dr[0],gr[0])
+    
     
     draw(args,dr,gr,outofguide,"top")
 
@@ -260,14 +270,16 @@ def testLefttoRight(args):
     dr = [[4,8,16,10]]
     gr = [[5,1,15,10]]
 
-    outofguide = getBoxDifference(dr[0],gr[0])
+    # outofguide = getBoxDifference(dr[0],gr[0])
+    outofguide = getBoxIntersection(dr[0],gr[0])
     
     draw(args,dr,gr,outofguide,"leftright")
 def testUptoDown(args):
     dr = [[5,0,8,12]]
     gr = [[5,1,15,10]]
 
-    outofguide = getBoxDifference(dr[0],gr[0])
+    # outofguide = getBoxDifference(dr[0],gr[0])
+    outofguide = getBoxIntersection(dr[0],gr[0])
     
     draw(args,dr,gr,outofguide,"updown")
 
@@ -275,21 +287,24 @@ def testBottomLeft(args):
     dr = [[4,0,8,2]]
     gr = [[5,1,15,10]]
 
-    outofguide = getBoxDifference(dr[0],gr[0])
+    # outofguide = getBoxDifference(dr[0],gr[0])
+    outofguide = getBoxIntersection(dr[0],gr[0])
     
     draw(args,dr,gr,outofguide,"bottomleft")
 def testBottomRight(args):
     dr = [[13,0,16,2]]
     gr = [[5,1,15,10]]
 
-    outofguide = getBoxDifference(dr[0],gr[0])
+    # outofguide = getBoxDifference(dr[0],gr[0])
+    outofguide = getBoxIntersection(dr[0],gr[0])
     
     draw(args,dr,gr,outofguide,"bottomRight")
 def testTopRight(args):
     dr = [[13,9,16,12]]
     gr = [[5,1,15,10]]
 
-    outofguide = getBoxDifference(dr[0],gr[0])
+    # outofguide = getBoxDifference(dr[0],gr[0])
+    outofguide = getBoxIntersection(dr[0],gr[0])
     
     draw(args,dr,gr,outofguide,"topRight")
 
@@ -297,7 +312,8 @@ def testTopLeft(args):
     dr = [[4,9,6,12]]
     gr = [[5,1,15,10]]
 
-    outofguide = getBoxDifference(dr[0],gr[0])
+    # outofguide = getBoxDifference(dr[0],gr[0])
+    outofguide = getBoxIntersection(dr[0],gr[0])
     
     draw(args,dr,gr,outofguide,"topLeft")
 
@@ -305,7 +321,8 @@ def testTopLeftRightCorner(args):
     dr = [[4,9,16,12]]
     gr = [[5,1,15,10]]
 
-    outofguide = getBoxDifference(dr[0],gr[0])
+    # outofguide = getBoxDifference(dr[0],gr[0])
+    outofguide = getBoxIntersection(dr[0],gr[0])
     
     draw(args,dr,gr,outofguide,"topLeftRightCorner")
 
@@ -313,7 +330,8 @@ def testLeftTopBottomCorner(args):
     dr = [[4,0,6,12]]
     gr = [[5,1,15,10]]
 
-    outofguide = getBoxDifference(dr[0],gr[0])
+    # outofguide = getBoxDifference(dr[0],gr[0])
+    outofguide = getBoxIntersection(dr[0],gr[0])
     
     draw(args,dr,gr,outofguide,"leftTopBottomCorner")
 
@@ -321,7 +339,8 @@ def testRightTopBottomCorner(args):
     dr = [[14,0,16,12]]
     gr = [[5,1,15,10]]
 
-    outofguide = getBoxDifference(dr[0],gr[0])
+    # outofguide = getBoxDifference(dr[0],gr[0])
+    outofguide = getBoxIntersection(dr[0],gr[0])
     
     draw(args,dr,gr,outofguide,"rightTopBottomCorner")
 
@@ -329,7 +348,8 @@ def testBottomLeftRightCorner(args):
     dr = [[4,0,16,2]]
     gr = [[5,1,15,10]]
 
-    outofguide = getBoxDifference(dr[0],gr[0])
+    # outofguide = getBoxDifference(dr[0],gr[0])
+    outofguide = getBoxIntersection(dr[0],gr[0])
     
     draw(args,dr,gr,outofguide,"bottomLeftRightCorner")
 
@@ -338,7 +358,8 @@ def testWrap(args):
     dr = [[4,0,16,12]]
     gr = [[5,1,15,10]]
 
-    outofguide = getBoxDifference(dr[0],gr[0])
+    # outofguide = getBoxDifference(dr[0],gr[0])
+    outofguide = getBoxIntersection(dr[0],gr[0])
     
     draw(args,dr,gr,outofguide,"wrap")
 
@@ -419,25 +440,25 @@ def outofguideModuleTest(args):
     # gr= [[5,1,15,10],[3,1,4,10],[3,7,10,8]]
 
     # no intersection
-    # testNointersection(args)
-    # testWithin(args)
-    # testLeft(args)
-    # testRight(args)
-    # testBottom(args)
-    # testTop(args)
-    # testLefttoRight(args)
-    # testUptoDown(args)
-    # testBottomLeft(args)
-    # testBottomRight(args)
-    # testTopRight(args)
-    # testTopLeft(args)
-    # testTopLeftRightCorner(args)
-    # testLeftTopBottomCorner(args)
-    # testRightTopBottomCorner(args)
-    # testBottomLeftRightCorner(args)
-    # testWrap(args)
+    testNointersection(args)
+    testWithin(args)
+    testLeft(args)
+    testRight(args)
+    testBottom(args)
+    testTop(args)
+    testLefttoRight(args)
+    testUptoDown(args)
+    testBottomLeft(args)
+    testBottomRight(args)
+    testTopRight(args)
+    testTopLeft(args)
+    testTopLeftRightCorner(args)
+    testLeftTopBottomCorner(args)
+    testRightTopBottomCorner(args)
+    testBottomLeftRightCorner(args)
+    testWrap(args)
     # testRandomBoxs(args,10)
-    testMultiBlock(args)
+    # testMultiBlock(args)
     pass
 
 

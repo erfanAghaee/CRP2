@@ -86,6 +86,7 @@ public:
     void logPatternRoute(int iter);
     void logAstar(int iter);
     void logAstarCoraseGrid(int iter);
+    void logLayers();
 
     
     
