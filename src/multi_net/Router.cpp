@@ -35,9 +35,7 @@ ostream& operator<<(ostream& os, const MTStat mtStat) {
 Router::Router() {
     routeTable.resize(database.nets.size() + 1);
     readLUT();  // read flute LUT
-
-
-    
+   
     boost::split(filter_routers, db::setting.rrrRouters, boost::is_any_of(","));
     boost::split(filter_routers_applys, db::setting.rrrRoutersApply, boost::is_any_of(","));
     
@@ -162,38 +160,94 @@ Router::Router() {
 
 // }//end runISPD
 
+// void Router::run() {
+//     allNetStatus.resize(database.nets.size(), db::RouteStatus::FAIL_UNPROCESSED);
+//     for (iter = 0; iter < db::setting.rrrIterLimit; iter++) {
+//         log() << std::endl;
+//         log() << "################################################################" << std::endl;
+//         log() << "Start RRR iteration " << iter << std::endl;
+//         log() << std::endl;
+//         db::routeStat.clear();
+//         guideGenStat.reset();
+
+//         vector<int> netsToRoute;
+//         getNetsToRoute(netsToRoute,iter);
+//         if (netsToRoute.empty()) {
+//             if (db::setting.multiNetVerbose >= +db::VerboseLevelT::MIDDLE) {
+//                 log() << "No net is identified for this iteration of RRR." << std::endl;
+//                 log() << std::endl;
+//             }
+//             break;
+//         }
+//         sortNets(netsToRoute);  // Note: only effective when doing mazeroute sequentially
+
+//         updateCost(iter);
+//         grDatabase.statHistCost();
+
+//         if (iter > 0) {
+//             ripup(netsToRoute);
+//             congMap.init(cellWidth, cellHeight);
+//         }
+
+//         if(iter == 0)
+//             routeApprx(netsToRoute,PATTERNROUTE);
+//         else 
+//             routeApprx(netsToRoute,ASTAR);
+
+//         log() << std::endl;
+//         log() << "Finish RRR iteration " << iter << std::endl;
+//         log() << "MEM: cur=" << utils::mem_use::get_current() << "MB, peak=" << utils::mem_use::get_peak() << "MB"
+//               << std::endl;
+//         if (db::setting.multiNetVerbose >= +db::VerboseLevelT::MIDDLE) db::routeStat.print();
+//     }
+//     // postprocessing
+//     for (auto& net : grDatabase.nets) {
+//         GuideGenerator guideGen(net);
+//         guideGen.genPatchGuides();
+//     }
+//     if (db::setting.multiNetVerbose >= +db::VerboseLevelT::MIDDLE) guideGenStat.print();
+
+//     log() << std::endl;
+//     log() << "################################################################" << std::endl;
+//     database.setUnitVioCost(1);  // set the cost back to without discount
+//     log() << "Finish all RRR iterations and PostRoute" << std::endl;
+//     log() << "MEM: cur=" << utils::mem_use::get_current() << "MB, peak=" << utils::mem_use::get_peak() << "MB"
+//           << std::endl;
+
+//     printStat();
+// }
 
 
 void Router::run() {
     allNetStatus.resize(database.nets.size(), db::RouteStatus::FAIL_UNPROCESSED);
-    utils::timer profile_time;
-    std::stringstream profile_time_str;
+    // utils::timer profile_time;
+    // std::stringstream profile_time_str;
     
     
     // it is used to route specific nets
     filterNets();
 
-    database.logDie();
-    database.logLayers();
-    grDatabase.logGCellGrid();
+    // database.logDie();
+    // database.logLayers();
+    // grDatabase.logGCellGrid();
     // return;
 
-    if(!db::setting.refinePlacement){
+    // if(!db::setting.refinePlacement){
         vector<int> netsToRoute;
         ripupReroute(netsToRoute); 
-    }else{
-        vector<int> netsToRoute;
-        ripupReroute(netsToRoute);
-        netsToRoute.clear();
-        for(int i = 0; i < db::setting.numRefinePlacement; i++){
-            applyPlacement(netsToRoute,i, profile_time, profile_time_str);
-            // route(netsToRoute,PATTERNROUTE);
-            route(netsToRoute,ASTAR);
-            netsToRoute.clear();
-            logAll();
-        }//end refinePlacement loop
+    // }else{
+    //     vector<int> netsToRoute;
+    //     ripupReroute(netsToRoute);
+    //     netsToRoute.clear();
+    //     for(int i = 0; i < db::setting.numRefinePlacement; i++){
+    //         applyPlacement(netsToRoute,i, profile_time, profile_time_str);
+    //         // route(netsToRoute,PATTERNROUTE);
+    //         route(netsToRoute,ASTAR);
+    //         netsToRoute.clear();
+    //         logAll();
+    //     }//end refinePlacement loop
 
-    }//end refinePlacement
+    // }//end refinePlacement
 
 
     // postprocessing
@@ -803,12 +857,12 @@ void Router::applyPlacement(vector<int>& netsToRoute,int iter_t,utils::timer& pr
 // }// end applyOnlyRoute
 
 void Router::ripupReroute(vector<int>& netsToRoute){
+    bool debug = false;
+    utils::timer profile_time;
+    std::stringstream profile_time_str;
     
 
     // injectCongestion();
-
-
-
     for (int iter = 0; iter < db::setting.rrrIterLimit; iter++) {        
     // for (int iter = 0; iter < 1; iter++) {        
         std::vector<int> netsToRoute;
@@ -816,37 +870,84 @@ void Router::ripupReroute(vector<int>& netsToRoute){
         routeStateClear();
         getNetsToRoute(netsToRoute,iter);
         sortNets(netsToRoute);  // Note: only effective when doing mazeroute sequentially
-
         updateCost(iter);
         
-        // if (iter > 0 ) {
-            
-            
-        // }
         if(filter_routers[iter] == "patternroute" && filter_routers_applys[iter] =="1"){
             ripup(netsToRoute);
             congMap.init(cellWidth, cellHeight);
             routeApprx(netsToRoute, PATTERNROUTE);
+            
+            updateRouteTable(); 
+            printStat();
+            logAll();
+
+            // if(db::setting.refinePlacement){
+            //     // get all nets with violation after pattern route
+            //     netsToRoute.clear();
+            //     for (auto& net : grDatabase.nets)
+            //         if (grDatabase.hasVio(net)) netsToRoute.push_back(net.dbNet.idx);
+
+            //     if(debug){
+            //         for(auto ii : netsToRoute){
+            //             log() << "net: " << database.nets[ii].getName() << std::endl;
+            //         }
+            //     }
+                
+
+            //     for(int i = 0; i < db::setting.numRefinePlacement; i++){
+            //         printRouteStart("placement",i);
+            //         applyPlacement(netsToRoute,i, profile_time, profile_time_str);
+            //         route(netsToRoute,PATTERNROUTE);
+            //         // route(netsToRoute,ASTAR);
+            //         // netsToRoute.clear();
+                    
+            //         updateRouteTable(); 
+            //         printStat();
+            //         logAll();
+            //     }//end loop
+            // }//end refinePlacement
+
+        
+
         }else if(filter_routers[iter] == "astar" && filter_routers_applys[iter] =="1" ) {
             ripup(netsToRoute);
             congMap.init(cellWidth, cellHeight);
             routeApprx(netsToRoute, ASTAR);
+            updateRouteTable(); 
+            printStat();
+            logAll();
         }
+
+        if(db::setting.refinePlacement && iter == 3){
+            // get all nets with violation after pattern route
+            netsToRoute.clear();
+            for (auto& net : grDatabase.nets)
+                if (grDatabase.hasVio(net)) netsToRoute.push_back(net.dbNet.idx);
+
+            if(debug){
+                for(auto ii : netsToRoute){
+                    log() << "net: " << database.nets[ii].getName() << std::endl;
+                }
+            }
             
-        // if(iter == 0){
-        //     routeApprx(netsToRoute, PATTERNROUTE);
-        //     // routeApprx(netsToRoute, ASTAR);
-        // }else{
-        //     routeApprx(netsToRoute, ASTAR);
-        //     // routeApprx(netsToRoute, PATTERNROUTE);
-        // }
-        
+
+            for(int i = 0; i < db::setting.numRefinePlacement; i++){
+                printRouteStart("placement",i);
+                applyPlacement(netsToRoute,i, profile_time, profile_time_str);
+                // route(netsToRoute,PATTERNROUTE);
+                route(netsToRoute,ASTAR);
+                // netsToRoute.clear();
+                
+                updateRouteTable(); 
+                printStat();
+                logAll();
+            }//end loop
+        }//end refinePlacement
+            
 
         printRouteEnd("routing",iter);
 
-        updateRouteTable(); 
-        printStat();
-        logAll();
+        
 
         // break;       
     }
@@ -985,8 +1086,8 @@ void Router::routeApprx(const vector<int>& netsToRoute, RouterName routerName) {
                 int netIdx = netsToRoute[jobIdx];
                 congMap.update(grDatabase.nets[netIdx]);
                 allNetStatus[netIdx] = router.status;
-                database.astar_stream = database.astar_stream + router.stream_str;
-                database.astar_stream_coarse = database.astar_stream_coarse + router.stream_coarseGrid_str;
+                // database.astar_stream = database.astar_stream + router.stream_str;
+                // database.astar_stream_coarse = database.astar_stream_coarse + router.stream_coarseGrid_str;
             }
         }
         
@@ -1116,13 +1217,13 @@ void Router::sortNets(vector<int>& netsToRoute) {
 void Router::getNetsToRoute(vector<int>& netsToRoute,int iter) {
     if (iter == 0) {
         for (auto& net : grDatabase.nets) {
-            if(filter_nets.size() != 0){
-                if(filter_nets.find(net.dbNet.idx) != filter_nets.end())
-                    netsToRoute.push_back(net.dbNet.idx);   
-            }
-            else{
+            // if(filter_nets.size() != 0){
+            //     if(filter_nets.find(net.dbNet.idx) != filter_nets.end())
+            //         netsToRoute.push_back(net.dbNet.idx);   
+            // }
+            // else{
                 netsToRoute.push_back(net.dbNet.idx);   
-            }
+            // }
         } 
     } else {
         for (auto& net : grDatabase.nets)
@@ -1135,6 +1236,12 @@ void Router::printStat() {
     log() << "----------------------------------------------------------------" << std::endl;
     db::routeStat.print();
     grDatabase.printAllUsageAndVio();
+    double hpwl_total = 0;
+    for(auto& grNet : grDatabase.nets){
+        auto hpwl_tmp = grNet.getHPWL();
+        hpwl_total += hpwl_tmp;
+    }
+    log() << "total HPWL: " << hpwl_total << std::endl;
     log() << "----------------------------------------------------------------" << std::endl;
     log() << std::endl;
 }
@@ -1464,18 +1571,20 @@ void Router::visualiseCircuit(){
 // }//end routeAStarSeq
 
 void Router::logAll(){
-    log() << "log nets/cells/vio/congestion ..." << std::endl;
-    database.logCellLocations(log_iter);
-    database.logFixedMetals(log_iter);
-    grDatabase.logNets(log_iter);
-    grDatabase.logVio(log_iter);
-    grDatabase.logCongestion(log_iter);
-    grDatabase.logCoef(log_iter);
-    database.logPatternRoute(log_iter);
-    database.logAstar(log_iter);
-    database.logAstarCoraseGrid(log_iter);
-    log_iter++;
-    log() << "end log!" << std::endl;
+    if(db::setting.logAll){
+        log() << "log nets/cells/vio/congestion ..." << std::endl;
+        database.logCellLocations(log_iter);
+        database.logFixedMetals(log_iter);
+        grDatabase.logNets(log_iter);
+        grDatabase.logVio(log_iter);
+        grDatabase.logCongestion(log_iter);
+        grDatabase.logCoef(log_iter);
+        database.logPatternRoute(log_iter);
+        database.logAstar(log_iter);
+        database.logAstarCoraseGrid(log_iter);
+        log_iter++;
+        log() << "end log!" << std::endl;
+    }
 }
 
 

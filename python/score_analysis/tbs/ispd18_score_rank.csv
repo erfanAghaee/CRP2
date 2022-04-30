@@ -1,0 +1,101 @@
+benchmark,rank,flow,score,gap
+ispd18_test1,1,PL: Contest; GR: Contest; DR: DRCU,291291,0
+ispd18_test1,2,PL: CRP(10); GR: CRP(10); DR: Triton (path_cost; PR last iteration of GR is applied),299131,7840
+ispd18_test1,3,PL: CRP(1); GR: CRP(1); DR: Triton (path_cost; PR last iteration of GR is applied),299268,7977
+ispd18_test1,4,PL: Contest; GR: CUGR; DR: Triton,299356,8065
+ispd18_test1,5,PL: Contest; GR: Contest; DR: Triton,304904,13613
+ispd18_test1,6,PL: Eh?Placer; GR: CUGR; DR: Triton,309582,18291
+ispd18_test1,7,PL: DreamPlace; GR: CUGR; DR: Triton,309681,18390
+ispd18_test1,8,PL: ILP-Based; GR: ILP-based; DR: Triton,316822,25531
+ispd18_test1,9,PL: CRP(10); GR: CRP(10); DR: Triton (wl_abs_cost; PR first iteration of GR is applied),494493,203202
+ispd18_test1,10,PL: Contest; GR: Contest; DR: LuLuRoute,5761603,5470312
+ispd18_test2,1,PL: Contest; GR: Contest; DR: DRCU,4700933,0
+ispd18_test2,2,PL: Eh?Placer; GR: CUGR; DR: Triton,4743761,42828
+ispd18_test2,3,PL: CRP(1); GR: CRP(1); DR: Triton (path_cost; PR last iteration of GR is applied),4799436,98503
+ispd18_test2,4,PL: Contest; GR: CUGR; DR: Triton,4799653,98720
+ispd18_test2,5,PL: ILP-Based; GR: ILP-based; DR: Triton,4803296,102363
+ispd18_test2,6,PL: CRP(10); GR: CRP(10); DR: Triton (path_cost; PR last iteration of GR is applied),4805116,104183
+ispd18_test2,7,PL: Contest; GR: Contest; DR: Triton,4832011,131078
+ispd18_test2,8,PL: DreamPlace; GR: CUGR; DR: Triton,4862874,161941
+ispd18_test2,9,PL: CRP(10); GR: CRP(10); DR: Triton (wl_abs_cost; PR first iteration of GR is applied),9908277,5207344
+ispd18_test2,10,PL: Contest; GR: Contest; DR: LuLuRoute,82542696,77841763
+ispd18_test3,1,PL: Eh?Placer; GR: CUGR; DR: Triton,5229849,0
+ispd18_test3,2,PL: ILP-Based; GR: ILP-based; DR: Triton,5270054,40205
+ispd18_test3,3,PL: CRP(10); GR: CRP(10); DR: Triton (path_cost; PR last iteration of GR is applied),5277894,48045
+ispd18_test3,4,PL: CRP(1); GR: CRP(1); DR: Triton (path_cost; PR last iteration of GR is applied),5277996,48147
+ispd18_test3,5,PL: Contest; GR: CUGR; DR: Triton,5279470,49621
+ispd18_test3,6,PL: Contest; GR: Contest; DR: DRCU,5298745,68896
+ispd18_test3,7,PL: Contest; GR: Contest; DR: Triton,5299713,69864
+ispd18_test3,8,PL: DreamPlace; GR: CUGR; DR: Triton,5324850,95001
+ispd18_test3,9,PL: CRP(10); GR: CRP(10); DR: Triton (wl_abs_cost; PR first iteration of GR is applied),10891990,5662141
+ispd18_test3,10,PL: Contest; GR: Contest; DR: LuLuRoute,178905476,173675627
+ispd18_test4,1,PL: ILP-Based; GR: ILP-based; DR: Triton,14871507,0
+ispd18_test4,2,PL: Contest; GR: CUGR; DR: Triton,14890247,18740
+ispd18_test4,3,PL: CRP(1); GR: CRP(1); DR: Triton (path_cost; PR last iteration of GR is applied),14895477,23970
+ispd18_test4,4,PL: CRP(10); GR: CRP(10); DR: Triton (path_cost; PR last iteration of GR is applied),14920001,48494
+ispd18_test4,5,PL: Contest; GR: Contest; DR: Triton,15074474,202967
+ispd18_test4,6,PL: DreamPlace; GR: CUGR; DR: Triton,15090783,219276
+ispd18_test4,7,PL: Eh?Placer; GR: CUGR; DR: Triton,15094104,222597
+ispd18_test4,8,PL: Contest; GR: Contest; DR: DRCU,15756404,884897
+ispd18_test4,9,PL: CRP(10); GR: CRP(10); DR: Triton (wl_abs_cost; PR first iteration of GR is applied),29975364,15103857
+ispd18_test4,10,PL: Contest; GR: Contest; DR: LuLuRoute,733474118,718602611
+ispd18_test5,1,PL: CRP(10); GR: CRP(10); DR: Triton (path_cost; PR last iteration of GR is applied),15541039,0
+ispd18_test5,2,PL: CRP(1); GR: CRP(1); DR: Triton (path_cost; PR last iteration of GR is applied),15561892,20853
+ispd18_test5,3,PL: Contest; GR: CUGR; DR: Triton,15570889,29850
+ispd18_test5,4,PL: ILP-Based; GR: ILP-based; DR: Triton,15618446,77407
+ispd18_test5,5,PL: DreamPlace; GR: CUGR; DR: Triton,15860929,319890
+ispd18_test5,6,PL: Eh?Placer; GR: CUGR; DR: Triton,15973244,432205
+ispd18_test5,7,PL: Contest; GR: Contest; DR: Triton,16077964,536925
+ispd18_test5,8,PL: Contest; GR: Contest; DR: DRCU,16366742,825703
+ispd18_test5,9,PL: CRP(10); GR: CRP(10); DR: Triton (wl_abs_cost; PR first iteration of GR is applied),34619841,19078802
+ispd18_test5,10,PL: Contest; GR: Contest; DR: LuLuRoute,735559666,720018627
+ispd18_test6,1,PL: CRP(10); GR: CRP(10); DR: Triton (path_cost; PR last iteration of GR is applied),20487284,0
+ispd18_test6,2,PL: CRP(1); GR: CRP(1); DR: Triton (path_cost; PR last iteration of GR is applied),20536296,49012
+ispd18_test6,3,PL: Contest; GR: CUGR; DR: Triton,20546240,58956
+ispd18_test6,4,PL: ILP-Based; GR: ILP-based; DR: Triton,20676442,189158
+ispd18_test6,5,PL: Contest; GR: Contest; DR: Triton,21352958,865674
+ispd18_test6,6,PL: Contest; GR: Contest; DR: DRCU,21630645,1143361
+ispd18_test6,7,PL: DreamPlace; GR: CUGR; DR: Triton,22310094,1822810
+ispd18_test6,8,PL: CRP(10); GR: CRP(10); DR: Triton (wl_abs_cost; PR first iteration of GR is applied),44131547,23644263
+ispd18_test6,9,PL: Contest; GR: Contest; DR: LuLuRoute,352317181,331829897
+ispd18_test6,10,PL: Eh?Placer; GR: CUGR; DR: Triton,dnf,dnf
+ispd18_test7,1,PL: CRP(10); GR: CRP(10); DR: Triton (path_cost; PR last iteration of GR is applied),36825575,0
+ispd18_test7,2,PL: CRP(1); GR: CRP(1); DR: Triton (path_cost; PR last iteration of GR is applied),36856187,30612
+ispd18_test7,3,PL: Contest; GR: CUGR; DR: Triton,36896992,71417
+ispd18_test7,4,PL: ILP-Based; GR: ILP-based; DR: Triton,37008855,183280
+ispd18_test7,5,PL: DreamPlace; GR: CUGR; DR: Triton,37372992,547417
+ispd18_test7,6,PL: Eh?Placer; GR: CUGR; DR: Triton,37458730,633155
+ispd18_test7,7,PL: Contest; GR: Contest; DR: Triton,38148393,1322818
+ispd18_test7,8,PL: Contest; GR: Contest; DR: DRCU,38412191,1586616
+ispd18_test7,9,PL: CRP(10); GR: CRP(10); DR: Triton (wl_abs_cost; PR first iteration of GR is applied),81587627,44762052
+ispd18_test7,10,PL: Contest; GR: Contest; DR: LuLuRoute,dnf,dnf
+ispd18_test8,1,PL: CRP(10); GR: CRP(10); DR: Triton (path_cost; PR last iteration of GR is applied),37101677,0
+ispd18_test8,2,PL: CRP(1); GR: CRP(1); DR: Triton (path_cost; PR last iteration of GR is applied),37168218,66541
+ispd18_test8,3,PL: Contest; GR: CUGR; DR: Triton,37237799,136122
+ispd18_test8,4,PL: ILP-Based; GR: ILP-based; DR: Triton,37445184,343507
+ispd18_test8,5,PL: DreamPlace; GR: CUGR; DR: Triton,37654538,552861
+ispd18_test8,6,PL: Eh?Placer; GR: CUGR; DR: Triton,37739391,637714
+ispd18_test8,7,PL: Contest; GR: Contest; DR: Triton,38307564,1205887
+ispd18_test8,8,PL: Contest; GR: Contest; DR: DRCU,38602461,1500784
+ispd18_test8,9,PL: CRP(10); GR: CRP(10); DR: Triton (wl_abs_cost; PR first iteration of GR is applied),83449382,46347705
+ispd18_test8,10,PL: Contest; GR: Contest; DR: LuLuRoute,161426598,124324921
+ispd18_test9,1,PL: CRP(10); GR: CRP(10); DR: Triton (path_cost; PR last iteration of GR is applied),31532654,0
+ispd18_test9,2,PL: CRP(1); GR: CRP(1); DR: Triton (path_cost; PR last iteration of GR is applied),31623166,90512
+ispd18_test9,3,PL: Contest; GR: CUGR; DR: Triton,31669491,136837
+ispd18_test9,4,PL: ILP-Based; GR: ILP-based; DR: Triton,31874117,341463
+ispd18_test9,5,PL: DreamPlace; GR: CUGR; DR: Triton,31955520,422866
+ispd18_test9,6,PL: Eh?Placer; GR: CUGR; DR: Triton,32004449,471795
+ispd18_test9,7,PL: Contest; GR: Contest; DR: Triton,32925035,1392381
+ispd18_test9,8,PL: Contest; GR: Contest; DR: DRCU,33129214,1596560
+ispd18_test9,9,PL: CRP(10); GR: CRP(10); DR: Triton (wl_abs_cost; PR first iteration of GR is applied),67291498,35758844
+ispd18_test9,10,PL: Contest; GR: Contest; DR: LuLuRoute,603223377,571690723
+ispd18_test10,1,PL: Contest; GR: CUGR; DR: Triton,39356328,0
+ispd18_test10,2,PL: CRP(1); GR: CRP(1); DR: Triton (path_cost; PR last iteration of GR is applied),39458521,102193
+ispd18_test10,3,PL: Contest; GR: Contest; DR: Triton,40400636,1044308
+ispd18_test10,4,PL: Contest; GR: Contest; DR: DRCU,42704252,3347924
+ispd18_test10,5,PL: DreamPlace; GR: CUGR; DR: Triton,46984139,7627811
+ispd18_test10,6,PL: CRP(10); GR: CRP(10); DR: Triton (wl_abs_cost; PR first iteration of GR is applied),86788795,47432467
+ispd18_test10,7,PL: Contest; GR: Contest; DR: LuLuRoute,973977612,934621284
+ispd18_test10,8,PL: Eh?Placer; GR: CUGR; DR: Triton,dnf,dnf
+ispd18_test10,9,PL: ILP-Based; GR: ILP-based; DR: Triton,dnf,dnf
+ispd18_test10,10,PL: CRP(10); GR: CRP(10); DR: Triton (path_cost; PR last iteration of GR is applied),dnf,dnf

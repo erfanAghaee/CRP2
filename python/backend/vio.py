@@ -27,7 +27,7 @@ class Vio:
         # window = [x*2000 for x in window]
         # self.pltWindow(window)
 
-    def getWindow(self,window,plt_obj,color,alpha,l=-1):
+    def getWindow(self,window,plt_obj,l=-1):
         if not("vio" in self.db):
             return
 
@@ -55,9 +55,11 @@ class Vio:
         ws = [np.abs(xhs[i]-xls[i]) for i in np.arange(len(xls))]
         hs = [np.abs(yhs[i]-yls[i]) for i in np.arange(len(yls))]
 
+        colors =[(0.6,0.1,0.6) for i in range(len(xls))]
+        alphas =[0.8 for i in range(len(xls))]
 
         plt_obj.run(vio_filter.xl.values,vio_filter.yl.values,\
-                    ws,hs,color,alpha)
+                    ws,hs,colors,alphas)
 
         # plt_obj.drawText(txts)
         

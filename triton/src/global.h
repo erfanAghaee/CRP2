@@ -35,6 +35,8 @@
 #include "frDesign.h"
 #include "db/obj/frBlock.h"
 
+
+extern bool logAll;
 extern std::string DEF_FILE;
 extern std::string GUIDE_FILE;
 extern std::string OUTGUIDE_FILE;

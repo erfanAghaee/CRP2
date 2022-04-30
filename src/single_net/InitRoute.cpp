@@ -65,7 +65,8 @@ void InitRoute::runFlute() {
         log() << "Error: degree = 0." << std::endl;
     }
 
-    logRouteNodes();
+    if(db::setting.logAll)
+        logRouteNodes();
 }//end runFlute
 
 
@@ -972,7 +973,8 @@ void InitRoute::buildTopo() {
         log() << "Error: Connectivity check failed" << endl;
     }
 
-    logRoute();
+    if(db::setting.logAll)
+        logRoute();
 }
 
 void InitRoute::plan_fluteOnly() {

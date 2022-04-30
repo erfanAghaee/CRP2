@@ -1703,10 +1703,13 @@ void FlexDR::searchRepair(int iter, int size, int offset, int mazeEndIter,
 
   cout << "number of violations by erfan: " << getDesign()->getTopBlock()->getNumMarkers() << std::endl;
 
-  reportDRC();
-  logNets();
+  if(logAll){
+    reportDRC();
+    logNets();
+  }//end log in each iteration
+  
 
-}
+}//end search repair
 
 void FlexDR::end() {
   vector<unsigned long long> wlen(getTech()->getLayers().size(), 0);
@@ -2369,6 +2372,33 @@ void FlexDR::logNets(){
     iter_nets++;
 
 }//end logNets
+
+
+
+void FlexDR::logCells(){
+  std::stringstream ss;
+  ss << "cell_name,xl,yl,xh,yh" << std::endl;
+
+  
+  for (auto &inst: getDesign()->getTopBlock()->getInsts()) {
+      frBox tmpBox;
+      inst->getBBox(tmpBox);
+
+      ss << inst->getName() 
+            << "," << tmpBox.left()  
+            << "," << tmpBox.bottom()
+            << "," <<  tmpBox.right() 
+            << "," <<  tmpBox.top()  << std::endl;    
+             
+  }
+
+  std::string file_name = benchDir +  benchName+ ".dr.cells."+std::to_string(iter_cells)+".csv";
+  std::ofstream fout(file_name);
+  fout << ss.str();
+  fout.close();
+  iter_cells++;
+
+}//end logCells
 
 void FlexDR::reportDRC() {
   double dbu = design->getTech()->getDBUPerUU();

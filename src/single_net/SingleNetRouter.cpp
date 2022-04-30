@@ -49,6 +49,7 @@ void SingleNetRouter::initRoutePattern(InitRoute& initRouter) {
         status = db::RouteStatus::SUCC_ONE_PIN;
     } else {
         // log() << "start patternRoute ..." << std::endl;
+        // initRouter.patternRouteMT();
         initRouter.patternRouteMT();
         initRouter.buildTopo();
         status = db::RouteStatus::SUCC_NORMAL;

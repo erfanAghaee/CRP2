@@ -32,6 +32,7 @@
 using namespace std;
 using namespace fr;
 
+bool logAll=false;
 string DEF_FILE;
 string GUIDE_FILE;
 string OUTGUIDE_FILE;

@@ -106,6 +106,9 @@ public:
     std::stringstream& profile_time_str;
     bool debug_global;
     std::set<std::string> critical_cells_set;
+
+
+    
     
     
 };

@@ -693,15 +693,15 @@ void Database::logCellLocations(int iter){
     if(debug)log() << "logCellLocations file name: " << file_name << std::endl;
     std::ofstream file(file_name);
     std::stringstream stream;
-    stream << "cell_name,x,y,w,h" << std::endl;
+    stream << "cell_name,xl,yl,xh,yh" << std::endl;
 
     for(auto cell : database.cells){
         auto box = cell.getCellBox();
         stream << cell.getName() 
                << "," << box.lx()
                << "," << box.ly()
-               << "," << box.width()
-               << "," << box.height()
+               << "," << box.hx()
+               << "," << box.hy()
                 << std::endl;
     }
     file << stream.str();

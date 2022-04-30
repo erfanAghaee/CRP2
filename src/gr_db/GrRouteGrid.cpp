@@ -12,8 +12,8 @@ void GrRouteGrid::init() {
     histWireUsageMap.resize(numLayers);
     routedViaMap.resize(numLayers);
 
-    GCellGrid::initV2();
-    // GCellGrid::init();
+    // GCellGrid::initV2();
+    GCellGrid::init();
 
     for (int l = 0; l < numLayers; l++) {
         auto dir = database.getLayerDir(l);
@@ -430,6 +430,9 @@ void GrRouteGrid::printAllUsageAndVio() const {
               << score / totalScore << std::endl;
     }
     log() << "total score = " << totalScore << std::endl;
+
+
+
 }
 
 double GrRouteGrid::getAllWireUsage(const vector<double>& buckets,
@@ -560,43 +563,82 @@ double GrRouteGrid::printAllVio() const {
 
     // Wire violations
     vector<double> shortLen(database.getLayerNum(), 0.0);
+
+
     for (int layerIdx = 0; layerIdx < database.getLayerNum(); ++layerIdx) {
         Dimension dir = database.getLayerDir(layerIdx);
 
         for (int gridline = 0; gridline < getNumGrPoint(dir); gridline++) {
             for (int cp = 0; cp < getNumGrEdge(layerIdx); cp++) {
-                double numWire = getWireUsage(layerIdx, gridline, cp) + getFixedUsage(layerIdx, gridline, cp);
-                DBU dist = (getCoor(cp + 2, 1 - dir) - getCoor(cp, 1 - dir)) / 2;
+                GrEdge edge(layerIdx, gridline, cp);
 
-                double overflow = max(0.0, numWire - getNumTracks(layerIdx, gridline));
+                for (int i = edge.u[1 - dir]; i < edge.v[1 - dir]; i++){
+                    GrEdge tempEdge(layerIdx, gridline, i);
+                    double wireUsage = getWireUsage(tempEdge); 
+                    double fixedUsage = getFixedUsage(tempEdge);
+                    double viaUsage = sqrt((getInCellViaNum(tempEdge.u) + getInCellViaNum(tempEdge.v)) / 2) * db::setting.unitSqrtViaUsage;
+                    double capacity = getWireCapacity(tempEdge);
+                    DBU dist = tempEdge.getGrLen();// (getCoor(cp + 2, 1 - dir) - getCoor(cp, 1 - dir)) / 2;
+                    
+                    double numWire = wireUsage + fixedUsage + viaUsage ;
+                    // double numWire = wireUsage + fixedUsage ;
 
-                // if(overflow>0){
-                //     GrEdge tempEdge(layerIdx,gridline,cp);         
-                //     auto lx = getCoorIntvl(tempEdge.u,X).low/2000.0;//getCoor(tempEdge.lowerGrPoint().x, X)/2000.0;
-                //     auto ly = getCoorIntvl(tempEdge.u,Y).low/2000.0;//getCoor(tempEdge.lowerGrPoint().y, Y)/2000.0;
-                //     auto hx = getCoorIntvl(tempEdge.v,X).high/2000.0;//getCoor(tempEdge.upperGrPoint().x+1, X)/2000.0;
-                //     auto hy = getCoorIntvl(tempEdge.v,Y).high/2000.0;//getCoor(tempEdge.upperGrPoint().y+1, Y)/2000.0;
+                    double overflow = max(0.0, numWire - capacity);
 
-                //     log() << "vio layer: " << layerIdx
-                //           << ", dir: " << dir
-                //           << ", gridline: " << gridline
-                //           << ", cp: " << cp
-                //           << ", wireusage: " << getWireUsage(layerIdx, gridline, cp)
-                //           << ", fixedusage: " << getFixedUsage(layerIdx, gridline, cp)
-                //           << ", tracks: " << getNumTracks(layerIdx, gridline) 
-                //           << ", lx: " << lx 
-                //           << ", ly: " << ly 
-                //           << ", hx: " << hx 
-                //           << ", hy: " << hy 
-                //           << std::endl;
+                    // double wireUsage = getWireUsage(layerIdx, gridline, cp);
+                    // double fixedUsage = getFixedUsage(layerIdx, gridline, cp);
+                    // double numWire = getWireUsage(layerIdx, gridline, cp) + getFixedUsage(layerIdx, gridline, cp);
+                    // GrEdge tempEdgeNew = GrEdge(layerIdx,gridline,cp);
 
+                    // double overflow = max(0.0, numWire - getNumTracks(layerIdx, gridline));
+                    shortLen[layerIdx] += overflow * dist;
 
-                // }
+                }
 
-                shortLen[layerIdx] += overflow * dist;
+                
             }
         }
     }
+
+
+
+    // for (int layerIdx = 0; layerIdx < database.getLayerNum(); ++layerIdx) {
+    //     Dimension dir = database.getLayerDir(layerIdx);
+
+    //     for (int gridline = 0; gridline < getNumGrPoint(dir); gridline++) {
+    //         for (int cp = 0; cp < getNumGrEdge(layerIdx); cp++) {
+    //             double numWire = getWireUsage(layerIdx, gridline, cp) + getFixedUsage(layerIdx, gridline, cp);
+    //             DBU dist = (getCoor(cp + 2, 1 - dir) - getCoor(cp, 1 - dir)) / 2;
+
+    //             double overflow = max(0.0, numWire - getNumTracks(layerIdx, gridline));
+
+    //             // if(overflow>0){
+    //             //     GrEdge tempEdge(layerIdx,gridline,cp);         
+    //             //     auto lx = getCoorIntvl(tempEdge.u,X).low/2000.0;//getCoor(tempEdge.lowerGrPoint().x, X)/2000.0;
+    //             //     auto ly = getCoorIntvl(tempEdge.u,Y).low/2000.0;//getCoor(tempEdge.lowerGrPoint().y, Y)/2000.0;
+    //             //     auto hx = getCoorIntvl(tempEdge.v,X).high/2000.0;//getCoor(tempEdge.upperGrPoint().x+1, X)/2000.0;
+    //             //     auto hy = getCoorIntvl(tempEdge.v,Y).high/2000.0;//getCoor(tempEdge.upperGrPoint().y+1, Y)/2000.0;
+
+    //             //     log() << "vio layer: " << layerIdx
+    //             //           << ", dir: " << dir
+    //             //           << ", gridline: " << gridline
+    //             //           << ", cp: " << cp
+    //             //           << ", wireusage: " << getWireUsage(layerIdx, gridline, cp)
+    //             //           << ", fixedusage: " << getFixedUsage(layerIdx, gridline, cp)
+    //             //           << ", tracks: " << getNumTracks(layerIdx, gridline) 
+    //             //           << ", lx: " << lx 
+    //             //           << ", ly: " << ly 
+    //             //           << ", hx: " << hx 
+    //             //           << ", hy: " << hy 
+    //             //           << std::endl;
+
+
+    //             // }
+
+    //             shortLen[layerIdx] += overflow * dist;
+    //         }
+    //     }
+    // }
 
     log() << "--- Wire-Wire Short Vios ---" << std::endl;
     log() << std::setw(width) << "usage"
@@ -1161,9 +1203,9 @@ double GrRouteGrid::getNumVio(const GrNet& net, bool hasCommit) const {
 
     bool debug = false;
 
-    // if(net.getName() == "net10214"){
-    //     debug = true;
-    // }
+    if(net.getName() == "net3037"){
+        debug = true;
+    }
 
     // log() << "getNumVio net: " << net.getName()
     //       << ", wl: " << net.getWirelength() <<  std::endl;
@@ -1180,19 +1222,20 @@ double GrRouteGrid::getNumVio(const GrNet& net, bool hasCommit) const {
             numVio = numVio + numVioTmp;
 
             // log() << "numVioTmpWireGuide: "  << numVioTmp << std::endl;
-            // if(numVioTmp>0){
-            //     log() << "important " << std::endl;
-            //     log() << net.getName() << ","
-            //         << guide.layerIdx << ","
-            //         << getCoor(guide[X].low, X) << ","
-            //         << getCoor(guide[Y].low, Y) << ","
-            //         << getCoor(guide[X].high + 1, X) << ","
-            //         << getCoor(guide[Y].high + 1, Y) << ", edge: "
-            //         << getCoorIntvl(tempEdge.u,X).low << ","
-            //         << getCoorIntvl(tempEdge.u,Y).low << ","
-            //         << getCoorIntvl(tempEdge.v,X).high << ","
-            //         << getCoorIntvl(tempEdge.v,Y).high << ",vio:"
-            //         << numVioTmp << std::endl;
+            if(numVioTmp>0 && debug){
+                log() << "important " << std::endl;
+                log() << net.getName() << ","
+                    << guide.layerIdx << ","
+                    << getCoor(guide[X].low, X) << ","
+                    << getCoor(guide[Y].low, Y) << ","
+                    << getCoor(guide[X].high + 1, X) << ","
+                    << getCoor(guide[Y].high + 1, Y) << ", edge: "
+                    << getCoorIntvl(tempEdge.u,X).low << ","
+                    << getCoorIntvl(tempEdge.u,Y).low << ","
+                    << getCoorIntvl(tempEdge.v,X).high << ","
+                    << getCoorIntvl(tempEdge.v,Y).high << ",vio:"
+                    << numVioTmp << std::endl;
+            }//end numVioTmp
                 
             //     for(int cp = guide[1 - dir].low; cp < guide[1 - dir].high; cp++){
             //         log() << "l: " << guide.layerIdx

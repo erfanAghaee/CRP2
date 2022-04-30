@@ -97,10 +97,10 @@ class PltCairo:
 
         
         if self.xh - self.xl < self.yh - self.yl:
-            self.height = 800#11024#800 
+            self.height = 11024#800 
             self.width = round(self.height * (self.xh - self.xl) / (self.yh - self.yl))
         else:
-            self.width = 800#11024#800 
+            self.width = 11024#800 
             self.height = round(self.width * (self.yh - self.yl) / (self.xh -self.xl))
         # self.width = 800
         # self.height = 800
@@ -140,16 +140,16 @@ class PltCairo:
             self.ctx.show_text(texts[i])
 
     # x,y coordinations and width and height of boxes
-    def run(self,xs,ys,ws,hs,color=(0,0,0),alpha=0.1):
+    def run(self,xs,ys,ws,hs,colors,alphas):
         self.x= np.array(xs)
         self.y= np.array(ys)
 
         self.node_size_x=np.array(ws)
         self.node_size_y=np.array(hs)
        
-        self.draw(color,alpha)
+        self.draw(colors,alphas)
 
-    def draw(self,color,alpha):
+    def draw(self,colors,alphas):
             # self.ctx.set_font_size(16)
         # self.ctx.select_font_face("monospace", cairo.FONT_SLANT_NORMAL,
         #                         cairo.FONT_WEIGHT_NORMAL)
@@ -171,8 +171,9 @@ class PltCairo:
         # self.ctx.set_line_width(self.line_width *5)
         # self.ctx.set_source_rgba(0, 0, 0.8, alpha=0.5)  # Solid color
         # self.ctx.set_source_rgba(color[0], color[0], color[1], alpha=0.5)  # Solid color
-        self.ctx.set_source_rgba(color[X], color[Y], color[Z],alpha=alpha)  # Solid color
+        
         for i in range(len(self.x)):
+            self.ctx.set_source_rgba(colors[i][X], colors[i][Y], colors[i][Z],alpha=alphas[i])  # Solid color
             self.ctx.rectangle(self.node_xl[i], self.node_yl[i], \
                             self.node_xh[i] - self.node_xl[i],
                             self.node_yh[i] -

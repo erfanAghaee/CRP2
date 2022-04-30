@@ -22,9 +22,24 @@ def getDB(args,iter_gr,iter_dr):
     try:
         db["cell"] = pd.read_csv(args.dir + "cells/" + args.bench + ".cell." \
             +str(iter_gr)+".csv", \
-            dtype={"x":'float64',"y":'float64',"w":'float64',"h":"float64"})
+            dtype={"xl":'float64',"yl":'float64',"xh":'float64',"yh":"float64"})
     except:
         print("No cell input!")
+
+    try:
+        db["cellcandidate"] = pd.read_csv(args.dir + "placement/" + args.bench + ".cells.candidates." \
+            +str(iter_gr)+".csv", \
+            dtype={"xl":'float64',"yl":'float64',"xh":'float64',"yh":"float64","cost":"float64"})
+    except:
+        print("No cell candidate input!")
+    
+    try:
+        db["cellmoved"] = pd.read_csv(args.dir + "placement/" + args.bench + ".cells.moved." \
+            +str(iter_gr)+".csv", \
+            dtype={"xl":'float64',"yl":'float64',"xh":'float64',"yh":"float64",\
+                "newXl":'float64',"newYl":'float64',"newXh":'float64',"newYh":"float64"})
+    except:
+        print("No cell moved input!")
 
     try:
         db["die"] = pd.read_csv(args.dir + "misc/" + args.bench + ".die.csv",\

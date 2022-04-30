@@ -20,7 +20,7 @@ void Placer::runMTISPD(std::vector<int>& netsToRoute,int cellWidth, int cellHeig
 }//end runMTISPD
 
 void Placer::runMT(std::vector<int>& netsToRoute,int cellWidth, int cellHeight){
-
+    bool log_debug = false;
     // return;
     congMap.init(cellWidth, cellHeight);
     // profile_time_str << "congMap_" << std::to_string(iter) << "," << std::to_string(profile_time.getTimer()) << std::endl;
@@ -38,6 +38,10 @@ void Placer::runMT(std::vector<int>& netsToRoute,int cellWidth, int cellHeight){
     if(db::setting.debug){
         log() << "end init cells and update median of each!" << std::endl;
     }
+    if(log_debug)
+        logCellsFeature();
+
+
     // profile_time_str << "initCellsUpdateFeatures_" << std::to_string(iter) << "," << std::to_string(profile_time.getTimer()) << std::endl;
     profile_time_str << "initCellsUpdateFeatures" << "," << std::to_string(profile_time.getTimer()) << std::endl;
 
@@ -48,6 +52,8 @@ void Placer::runMT(std::vector<int>& netsToRoute,int cellWidth, int cellHeight){
     if(db::setting.debug){
         log() << "end selectCriticalCells..." << std::endl;
     }
+    if(log_debug)
+        logCellsCritical();
     // profile_time_str << "selectCriticalCells_" << std::to_string(iter) << "," << std::to_string(profile_time.getTimer()) << std::endl;
     profile_time_str << "selectCriticalCells"<< "," << std::to_string(profile_time.getTimer()) << std::endl;
     
@@ -71,6 +77,9 @@ void Placer::runMT(std::vector<int>& netsToRoute,int cellWidth, int cellHeight){
             log() << "end calcCellsCostMT..." << std::endl;
         }
     }
+
+    if(log_debug)
+        logCellsCandidates();
     // profile_time_str << "calcCellsCostMT_" << std::to_string(iter) << "," << std::to_string(profile_time.getTimer()) << std::endl;
     profile_time_str << "calcCellsCostMT"<< "," << std::to_string(profile_time.getTimer()) << std::endl;
     if(db::setting.debug){
@@ -86,7 +95,8 @@ void Placer::runMT(std::vector<int>& netsToRoute,int cellWidth, int cellHeight){
     // log() << "logRefinePlacement..." << std::endl;
     // logRefinePlacement();
     // log() << "end logRefinePlacement..." << std::endl;
-
+    if(log_debug)
+        logCellsMoved();
     if(db::setting.debug){
         log() << "refinePlacement..." << std::endl;
     }
@@ -350,10 +360,10 @@ void Placer::initCellsUpdateFeatures(){
     }//end for
 
 
-    bool log_features = false;
+    // bool log_features = false;
 
-    if(log_features)
-        logCellsFeature();
+    // if(log_features)
+    //     logCellsFeature();
 
 
 }//end initCells
@@ -2177,22 +2187,24 @@ void Placer::logCellLocations(){
 
 void Placer::logCellsFeature(){
     bool debug = false;
-    std::string file_name = db::setting.outputFile+ ".cell_"+std::to_string(iter) + ".features.csv";
+    std::string file_name = db::setting.directory +  
+        db::setting.benchmarkName+ ".cells.features."+std::to_string(iter) + ".csv";
+    
     if(debug)log() << "logCellLocations file name: " << file_name << std::endl;
     std::ofstream file(file_name);
     std::stringstream stream;
-    stream << "cell_name,x,y,w,h,\
-    med_cell_x,med_cell_y,med_pin_x,med_pin_y,\
-    wl,congestion,deg_nets,deg_cells,\
-    is_suspected,max_edge_cost" << std::endl;
+    // medCx -> median cell x
+    // medPx -> median pin x
+    // cong -> congestion
+    stream << "cell_name,xl,yl,xh,yh,medCx,medCy,medPx,medPy,wl,cong,deg_nets,deg_cells,suspected,maxEdgeCost"<< std::endl;
 
     for(auto cell : cells){
         auto box = cell.getCellBox();
         stream << cell.getName() 
             << "," << box.lx()
             << "," << box.ly()
-            << "," << box.width()
-            << "," << box.height()
+            << "," << box.hx()
+            << "," << box.hy()
             << "," << cell.feature.median_x_y_cell.first
             << "," << cell.feature.median_x_y_cell.second
             << "," << cell.feature.median_x_y_pin.first
@@ -2212,14 +2224,35 @@ void Placer::logCellsFeature(){
 
 void Placer::logCellsCritical(){
     bool debug = false;
-    std::string file_name = db::setting.outputFile+ ".cell_"+std::to_string(iter) + ".critical.csv";
+    std::string file_name = db::setting.directory +  
+        db::setting.benchmarkName+ ".cells.critical."+std::to_string(iter) + ".csv";
+    
     if(debug)log() << "logCellLocations file name: " << file_name << std::endl;
     std::ofstream file(file_name);
     std::stringstream stream;
-    stream << "cell_name" << std::endl;
+    // medCx -> median cell x
+    // medPx -> median pin x
+    // cong -> congestion
+    stream << "cell_name,xl,yl,xh,yh,medCx,medCy,medPx,medPy,wl,cong,deg_nets,deg_cells,suspected,maxEdgeCost"<< std::endl;
 
-    for(auto cell_name : critical_cells_set){
-        stream << cell_name << std::endl;
+    for(auto cell_idx : critical_cells){
+        auto cell = database.cells[cell_idx];
+        auto box = cell.getCellBox();
+        stream << cell.getName() 
+            << "," << box.lx()
+            << "," << box.ly()
+            << "," << box.hx()
+            << "," << box.hy()
+            << "," << cell.feature.median_x_y_cell.first
+            << "," << cell.feature.median_x_y_cell.second
+            << "," << cell.feature.median_x_y_pin.first
+            << "," << cell.feature.median_x_y_pin.second
+            << "," << cell.feature.wl
+            << "," << cell.feature.congestion
+            << "," << cell.feature.degree_connected_nets
+            << "," << cell.feature.degree_connected_cells
+            << "," << cell.feature.is_suspected_cell
+            << "," << cell.feature.max_edge_cost << std::endl;
     }
     file << stream.str();
     file.close();
@@ -2227,27 +2260,68 @@ void Placer::logCellsCritical(){
 
 void Placer::logCellsCandidates(){
     bool debug = false;
-    std::string file_name = db::setting.outputFile+ ".cell_"+std::to_string(iter) + ".candidates.csv";
+    std::string file_name = db::setting.directory +  
+        db::setting.benchmarkName+ ".cells.candidates."+std::to_string(iter) + ".csv";
+    
     if(debug)log() << "logCellLocations file name: " << file_name << std::endl;
     std::ofstream file(file_name);
     std::stringstream stream;
-    stream << "cell_name,num_candidates,candidates" << std::endl;
-    // candidate (lx,ly, cost)
+    // medCx -> median cell x
+    // medPx -> median pin x
+    // cong -> congestion
+    stream << "cell_name,xl,yl,xh,yh,type,cost"<< std::endl;
+
     for(auto cell : cells){
-        stream << cell.getName()
-               << "," << cell.placement_candidates.size()
-               << ",|" ;
         for(auto pl_cad : cell.placement_candidates){
-            stream << pl_cad.first.lx()/2000.0
-                   << " " << pl_cad.first.ly()/2000.0
-                   << " " << pl_cad.second << "|";
-        }
-        stream << std::endl;
-                // << std::endl;
-    }
+            auto box = pl_cad.first;
+            stream << cell.getName() 
+                << "," << box.lx()
+                << "," << box.ly()
+                << "," << box.hx()
+                << "," << box.hy()
+                << "," << pl_cad.second << std::endl;
+        }//end for 
+    }//end for    
+
     file << stream.str();
     file.close();
 }//end logCellsCandidates
+
+void Placer::logCellsMoved(){
+    bool debug = false;
+    std::string file_name = db::setting.directory +  
+        db::setting.benchmarkName+ ".cells.moved."+std::to_string(iter) + ".csv";
+    
+    if(debug)log() << "logCellLocations file name: " << file_name << std::endl;
+    std::ofstream file(file_name);
+    std::stringstream stream;
+    // medCx -> median cell x
+    // medPx -> median pin x
+    // cong -> congestion
+    stream << "cell_name,xl,yl,xh,yh,newXl,newYl,newXh,newYh"<< std::endl;
+
+    for(auto cell_box_pair : cellsToMove){
+        auto cell = database.cells[cell_box_pair.first];
+        auto oldBox = cell.getCellBox();
+        auto newBox = cell_box_pair.second;
+       
+        stream << cell.getName() 
+            << "," << oldBox.lx()
+            << "," << oldBox.ly()
+            << "," << oldBox.hx()
+            << "," << oldBox.hy()
+            << "," << newBox.lx()
+            << "," << newBox.ly()
+            << "," << newBox.hx()
+            << "," << newBox.hy()
+            << std::endl;
+       
+    }//end for    
+
+    file << stream.str();
+    file.close();
+
+}//end logCellsMoved
 
 
 

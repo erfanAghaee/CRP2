@@ -19,7 +19,7 @@ class Net:
         self.db = db
         self.type = type
 
-    def getWindow(self,window,plt_obj,color,alpha,net_name="-1",l=-1):
+    def getWindow(self,window,plt_obj,net_name="-1",l=-1):
         if not(self.type in self.db):
             return
             
@@ -33,6 +33,7 @@ class Net:
         # net_filter = net_filter.loc[net_filter.apply(lambda row: getIntervals(row.yl,row.yh,window[YL],window[YH]),axis=1)]
         
 
+        
         net_filter = net_df.loc[ (net_df.xl >= window[XL] )& (net_df.xh <= window[XH])]
         net_filter = net_filter.loc[ (net_df.yl >= window[YL] )& (net_df.yh <= window[YH])]
        
@@ -57,8 +58,15 @@ class Net:
         ws = [np.abs(xhs[i]-xls[i]+w) for i in np.arange(len(xls))]
         hs = [np.abs(yhs[i]-yls[i]+w) for i in np.arange(len(yls))]
 
-
-        plt_obj.run(net_filter.xl.values,net_filter.yl.values,\
-                    ws,hs,color,alpha)
+        if(self.type == "net"):
+            colors =[(0,1,0) for i in range(len(xls))]
+            alphas =[0.5 for i in range(len(xls))]
+            plt_obj.run(net_filter.xl.values,net_filter.yl.values,\
+                        ws,hs,colors,alphas)
+        elif(self.type =="drnet"):
+            colors =[(0,0,1) for i in range(len(xls))]
+            alphas =[1 for i in range(len(xls))]
+            plt_obj.run(net_filter.xl.values,net_filter.yl.values,\
+                        ws,hs,colors,alphas)
 
         

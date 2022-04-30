@@ -27,7 +27,7 @@ class FixedMetals:
         # window = [x*2000 for x in window]
         # self.pltWindow(window)
 
-    def getWindow(self,window,plt_obj,color,alpha,l=-1):
+    def getWindow(self,window,plt_obj,l=-1):
         if not("fixedMetals" in self.db):
             return
 
@@ -63,9 +63,12 @@ class FixedMetals:
         ws = [np.abs(xhs[i]-xls[i]) for i in np.arange(len(xls))]
         hs = [np.abs(yhs[i]-yls[i]) for i in np.arange(len(yls))]
 
+        colors =[(0,0,0) for i in range(len(xls))]
+        alphas =[1 for i in range(len(xls))]
+
 
         plt_obj.run(xls,yls,\
-                    ws,hs,color,alpha)
+                    ws,hs,colors,alphas)
 
         # plt_obj.drawText(txts)
         

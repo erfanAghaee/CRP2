@@ -153,7 +153,7 @@ void GrDatabase::logVio(int iter) {
                     double viaUsage = sqrt((getInCellViaNum(tempEdge.u) + getInCellViaNum(tempEdge.v)) / 2) * db::setting.unitSqrtViaUsage;
                     double capacity = getWireCapacity(tempEdge);
                     
-                    double numWire = wireUsage + fixedUsage + viaUsage ;
+                    double numWire = wireUsage + fixedUsage + viaUsage;
                     // double numWire = wireUsage + fixedUsage ;
 
                     double overflow = max(0.0, numWire - capacity);

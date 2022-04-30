@@ -19,6 +19,8 @@ layer_colors = {
     7:(0.9,0.5,0.9) # pink
 }
 
+# track # brown
+
 
 subfigure_label = {
     0:"(A)",

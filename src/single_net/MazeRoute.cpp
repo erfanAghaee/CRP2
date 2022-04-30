@@ -39,9 +39,9 @@ db::RouteStatus MazeRoute::run() {
 db::RouteStatus MazeRoute::route(int startPin) {
     bool debug = false;
 
-    if(grNet.getName() == "net1237"){
-        debug = true;
-    }
+    // if(grNet.getName() == "net1237"){
+    //     debug = true;
+    // }
 
     // define std::priority_queue
     auto solComp = [](const std::shared_ptr<Solution> &lhs, const std::shared_ptr<Solution> &rhs) {

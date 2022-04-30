@@ -28,7 +28,7 @@ class CongestionEdge:
         # window = [x*2000 for x in window]
         # self.pltWindow(window)
 
-    def getWindow(self,window,plt_obj,color,alpha,l=-1):
+    def getWindow(self,window,plt_obj,l=-1,text=False):
         if not("congestion" in self.db):
             return
 
@@ -61,24 +61,25 @@ class CongestionEdge:
         txts_viaUsage = congestion_filter.viaUsage.values
         txts_numTracks = congestion_filter.numTracks.values
         txts = []
-
-        for i in np.arange(len(txts_wireUsage)):
-            # txt = "w:{},f:{}\nv:{},t:{}\nr:{}".format(txts_wireUsage[i],\
-            #     txts_fixedUsage[i],\
-            #     txts_viaUsage[i],\
-            #     txts_numTracks[i])
-            txt = "{:.2f}".format(txts_wireUsage[i]+txts_fixedUsage[i]+txts_viaUsage[i]-txts_numTracks[i])
-            # txt0 = "{:.1f}".format(txts_wireUsage[i])
-            # txt1 = "{:.1f}".format(txts_fixedUsage[i])
-            
-            # txt2 = "{:.1f}".format(txts_viaUsage[i])
-            # txt3 = "{:.1f}".format(txts_numTracks[i])
-            # txt = txt3
-            # txt = txt0 + "|"+txt1 + "|"+txt2 + "|"+txt3 
-            # # txt =txt1 +"|"+txt3 
-            # print("txt0:",txt0)
+        
+        if(text):
+            for i in np.arange(len(txts_wireUsage)):
+                # txt = "w:{},f:{}\nv:{},t:{}\nr:{}".format(txts_wireUsage[i],\
+                #     txts_fixedUsage[i],\
+                #     txts_viaUsage[i],\
+                #     txts_numTracks[i])
+                # txt = "{:.2f}".format(txts_wireUsage[i]+txts_fixedUsage[i]+txts_viaUsage[i]-txts_numTracks[i])
+                # txt = "{:.1f}".format(txts_wireUsage[i])
+                txt = "{:.1f}".format(txts_fixedUsage[i])
                 
-            txts.append(txt)
+                # txt2 = "{:.1f}".format(txts_viaUsage[i])
+                # txt3 = "{:.1f}".format(txts_numTracks[i])
+                # txt = txt3
+                # txt = txt0 + "|"+txt1 + "|"+txt2 + "|"+txt3 
+                # # txt =txt1 +"|"+txt3 
+                # print("txt0:",txt0)
+                    
+                txts.append(txt)
         
         # txts = [str(s) for s in np.arange(len(txts_wireUsage))]
 
@@ -93,11 +94,15 @@ class CongestionEdge:
         ws = [np.abs(xhs[i]-xls[i]) for i in np.arange(len(xls))]
         hs = [np.abs(yhs[i]-yls[i]) for i in np.arange(len(yls))]
 
+        colors =[(i,0,0) for i in congestion_filter.wireUsage.values]
+        alphas =[0.1 for i in range(len(xls))]
+
 
         plt_obj.run(xls,yls,\
-                    ws,hs,color,alpha)
+                    ws,hs,colors,alphas)
 
-        plt_obj.drawText(txts,color=(1,1,1),font=64)
+        if(text):
+            plt_obj.drawText(txts,color=(1,1,1),font=10)
         
     def getStatistics(self,window):
         if not("congestion" in self.db):

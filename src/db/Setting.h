@@ -9,6 +9,7 @@ BETTER_ENUM(VerboseLevelT, int, LOW = 0, MIDDLE = 1, HIGH = 2);
 // global setting
 class Setting {
 public:
+    bool logAll=false;
     // basic
     std::string directory="./";
     std::string lookuptbs_dir="./..";

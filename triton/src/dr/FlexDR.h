@@ -103,6 +103,7 @@ namespace fr {
     std::vector<int>                   numViols;
     int iter_drc=0;
     int iter_nets=0;
+    int iter_cells=0;
 
     // others
     void init();
@@ -204,7 +205,9 @@ namespace fr {
 
     // utility
     void reportDRC();
+  public:
     void logNets();
+    void logCells();
   };
 
   class FlexDRWorker;

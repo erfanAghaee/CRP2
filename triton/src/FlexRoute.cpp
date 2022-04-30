@@ -115,14 +115,22 @@ int FlexRoute::main() {
     std::cout<<"DR_CRPFixedNetHelper: " << DR_CRPFixedNetHelper << std::endl;
     std::cout<<"defFixedNets: " << defFixedNets << std::endl;
   }
+
+  bool debug = false;
+  if(debug){
+    FlexDR dr(getDesign());
+    dr.logNets();
+    dr.logCells();
+  }else{
+    prep();
+    ta();
+    // if(DR_CRPFixedNetHelper != "1" ){
+    dr();
+    // }
+    
+    endFR();
+  }
   
-  prep();
-  ta();
-  // if(DR_CRPFixedNetHelper != "1" ){
-  dr();
-  // }
-  
-  endFR();
 
   return 0;
 }

@@ -209,6 +209,9 @@ void runISPD18Flow(const boost::program_options::variables_map& vm) {
     if (vm.count("rrrRoutersApply")) {
         db::setting.rrrRoutersApply = vm.at("rrrRoutersApply").as<std::string>();
     }
+    if (vm.count("logAll")) {
+        db::setting.logAll = vm.at("logAll").as<bool>();
+    }
     
 
 
@@ -369,6 +372,7 @@ int main(int argc, char* argv[]) {
                 ("lookuptbs_dir", value<std::string>())    
                 ("rrrRouters", value<std::string>())    
                 ("rrrRoutersApply", value<std::string>())    
+                ("logAll", value<bool>())
                 ;
         // clang-format on
         variables_map vm;

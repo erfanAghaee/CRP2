@@ -451,21 +451,21 @@ void Cell::calcCostPlacementCandidate(utils::BoxT<DBU>& box){
         //--------------------------------------------
         // if(!isSameBox){
 
-        if(database.policy_set.find("hybridCostEstimation") == database.policy_set.end()){
-            if(net.numOfPins() > 5){
+        // if(database.policy_set.find("hybridCostEstimation") == database.policy_set.end()){
+        //     if(net.numOfPins() > 5){
                 calcFluteRouting3DCost(net.idx,pinAccessBoxes,cell_boxs,cost_eq);
-            }else{
-                calcHPWLCost(cell_boxs,cost_eq);
-            }
-        }else{
-            if(database.policy_set.find("calcFluteRouting3DCost") == database.policy_set.end()){
-                calcFluteRouting3DCost(net.idx,pinAccessBoxes,cell_boxs,cost_eq);
-            }
-            if(database.policy_set.find("calcHPWLCost") == database.policy_set.end()){
-                calcHPWLCost(cell_boxs,cost_eq);
-            }
+        //     }else{
+        //         calcHPWLCost(cell_boxs,cost_eq);
+        //     }
+        // }else{
+        //     if(database.policy_set.find("calcFluteRouting3DCost") == database.policy_set.end()){
+        //         calcFluteRouting3DCost(net.idx,pinAccessBoxes,cell_boxs,cost_eq);
+        //     }
+        //     if(database.policy_set.find("calcHPWLCost") == database.policy_set.end()){
+        //         calcHPWLCost(cell_boxs,cost_eq);
+        //     }
 
-        }
+        // }
 
         if(debug){
             log() << "cost_eq: " << cost_eq.getCost() << std::endl;

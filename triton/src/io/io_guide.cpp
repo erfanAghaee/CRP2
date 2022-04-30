@@ -594,7 +594,10 @@ void io::Parser::genGuides(frNet *net, vector<frRect> &rects) {
   genGuides_initPin2GCellMap(net, pin2GCellMap);
 
   bool retry = false;
+  // bool debug = true;
   while(1) {
+    // if(debug)
+    //   std::cout << "net_guide_split: " << net->getName() << std::endl;
     genGuides_split(rects, intvs, gCell2PinMap, pin2GCellMap, retry); //split on LU intersecting guides and pins
 
     // filter pin2GCellMap with aps   

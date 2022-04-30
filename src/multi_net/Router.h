@@ -13,7 +13,7 @@ public:
 
     void printCongMap(std::string log_name);
 private:
-    // int iter;
+    int iter;
     
     vector<db::RouteStatus> allNetStatus;
     vector<vector<int>> routeTable;
