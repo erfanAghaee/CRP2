@@ -934,8 +934,8 @@ void Router::ripupReroute(vector<int>& netsToRoute){
             for(int i = 0; i < db::setting.numRefinePlacement; i++){
                 printRouteStart("placement",i);
                 applyPlacement(netsToRoute,i, profile_time, profile_time_str);
-                // route(netsToRoute,PATTERNROUTE);
-                route(netsToRoute,ASTAR);
+                route(netsToRoute,PATTERNROUTE);
+                // route(netsToRoute,ASTAR);
                 // netsToRoute.clear();
                 
                 updateRouteTable(); 
