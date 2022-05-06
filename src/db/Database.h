@@ -34,6 +34,7 @@ public:
     std::unordered_map<std::string,int> cellsToIdx;
 
     void init();
+    void initBlockagesRTree();
     void initRsynService();
     void clear() { RouteGrid::clear(); }
 
@@ -45,6 +46,7 @@ public:
 
     //using for placement
     RTree cell_rtree;
+    RTree blockage_rtree;
     RTree empty_rtree;
     RTree row_rtree;
     std::vector<Rsyn::PhysicalRow> rowsRsyn;
@@ -67,6 +69,7 @@ public:
     void initSites();
     void initIllegalPlacementBoxs();
     void getNetCells(int net_idx,std::vector<int>& cells_idx);
+    std::vector<utils::BoxT<DBU>> queryBlockageRTree(utils::BoxT<DBU>& box,DBU eps);
 
     void getIntersectedSites(utils::BoxT<DBU>& box,std::vector<int>& sites);
     void getIntersectedRows(utils::BoxT<DBU>& box,std::vector<int>& rows);
@@ -107,6 +110,8 @@ public:
     std::stringstream ss_legalizer;
     std::vector<utils::BoxT<DBU>> illegal_placement_boxs;
     int origin_offset_die;
+
+    DBU libDBU;
     
 
 

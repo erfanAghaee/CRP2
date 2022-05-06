@@ -51,7 +51,7 @@ class Cell:
 
         if(self.type == "cell"):
             colors =[(0,0,1) for i in range(len(xls))]
-            alphas =[1 for i in range(len(xls))]
+            alphas =[0.1 for i in range(len(xls))]
 
             plt_obj.run(xls,yls,\
                         ws,hs,colors,alphas)

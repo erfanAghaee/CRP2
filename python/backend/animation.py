@@ -317,3 +317,167 @@ def mainCongestion(args):
 
        
         
+def debugCUGRISPD2019Test5(args):
+    # specific_net = "net60637"
+    specific_net = "net29885"
+    cell_name = "inst8879"
+
+    # iteration of gr
+    for l in np.arange(6):
+        for iter_gr in np.arange(4):
+
+            if(iter_gr != 0):
+                continue
+            
+            db = getDB(args,iter_gr=iter_gr,iter_dr=0)
+
+            
+                
+
+            
+
+            die_df = db["die"]
+            fixedMetals_obj = FixedMetals(db)
+            cell_obj = Cell(db,"cell")
+            
+            gcell_obj = GCell(db)
+            net_obj = Net(db,"net")
+            vio_obj = Vio(db)
+            gcell_obj = GCell(db)
+            
+            congestion_obj = CongestionEdge(db)
+            # patternroute_obj = PatternRoute(db,"patternroute")
+            # score_obj = Score(db,"score")
+               
+
+
+            window = [
+                    die_df["die_xl"].values[0]
+                , die_df["die_yl"].values[0]
+                , die_df["die_xh"].values[0]
+                , die_df["die_yh"].values[0]
+            ]
+
+
+            plt_obj = PltCairo()
+            surface = plt_obj.init(window)
+
+            cell_obj.getWindow(window,plt_obj,text=False)
+            # gcell_obj.getWindow(window,plt_obj)
+
+            # 
+                    
+                    
+            
+                    # vio_obj.getWindow(window,plt_obj,l=l)
+            fixedMetals_obj.getWindow(window,plt_obj,l=l)
+            net_obj.getWindow(window,plt_obj,l=l)
+                    # drc_obj.getWindow(window,plt_obj,l=l)
+                    # # # net_DRGuide_obj.getWindow(window,plt_obj,(0.8,0.1,0.1),0.8,net_name=specific_net)
+                    # drnet_obj.getWindow(window,plt_obj,l=l)
+                    # congestion_obj.getWindow(window,plt_obj,l=l,text=True)
+                    # patternroute_obj.getWindow(window,plt_obj,(0,1,0),0.5,net_name=specific_net,l=l)
+                    # gcell_obj.getWindow(window,plt_obj,(1,0,0),0.001)
+                    # score_obj.getWindow(window,plt_obj,(1,0,0),1,net_name=specific_net,l=l)
+                    
+                
+
+            surface.write_to_png(args.dir+ "imgs/" + cell_name  
+                +".gr."+str(iter_gr)
+                +".dr."+str(0)
+                +".l."+str(l)+".png")
+
+
+    # print how net connects
+    surface = plt_obj.init(window)
+    cell_obj.getWindow(window,plt_obj,text=False)
+    fixedMetals_obj.getWindow(window,plt_obj)
+    net_obj.getWindow(window,plt_obj)
+    surface.write_to_png(args.dir+ "imgs/" +"net.png")
+            # break
+
+            #     break
+            # break
+    # OFGW = score_obj.getOutOfGuideTotal("wire")
+    # OFGV = score_obj.getOutOfGuideTotal("via")
+    
+    # www = score_obj.getWrongWayWiring()
+
+    # oftw = score_obj.getOffTrackTotal("wire")
+    # oftv = score_obj.getOffTrackTotal("via")
+
+    # short = score_obj.getShortAreaTotal()
+    # minArea = score_obj.getMinAreaTotal()
+
+    # it is correctly calculated 
+    # wl,vias = score_obj.getWirelengthViasTotal()    
+    # print("wl(wirelength):",wl)
+    # print("vias:",vias)
+
+
+    # print("OFGW(Out of guide wirelength):",OFGW)
+    # print("OFGV(Out of guide Vias):",OFGV)
+    # print("WWW (Wrong Way Wiring):",www)
+    # print("oftw(off track wiring):",oftw)
+    # print("oftv(off track via insertion):",oftv)
+    # print("shortArea: ",short)
+    # print("# MinArea: ",minArea)
+
+
+def drawBenchmarks(args):
+    # specific_net = "net60637"
+    specific_net = "net29885"
+    cell_name = "inst8879"
+
+    # iteration of gr
+    
+    
+            
+    db = getDB(args,iter_gr=0,iter_dr=0)
+
+    die_df = db["die"]
+    fixedMetals_obj = FixedMetals(db)
+    cell_obj = Cell(db,"cell")
+    
+    gcell_obj = GCell(db)
+    net_obj = Net(db,"net")
+    vio_obj = Vio(db)
+    
+    congestion_obj = CongestionEdge(db)
+    # patternroute_obj = PatternRoute(db,"patternroute")
+    # score_obj = Score(db,"score")
+        
+
+
+    window = [
+            die_df["die_xl"].values[0]
+        , die_df["die_yl"].values[0]
+        , die_df["die_xh"].values[0]
+        , die_df["die_yh"].values[0]
+    ]
+
+
+    plt_obj = PltCairo()
+    surface = plt_obj.init(window)
+
+    cell_obj.getWindow(window,plt_obj,text=False)
+            
+            
+    
+            # vio_obj.getWindow(window,plt_obj,l=l)
+    fixedMetals_obj.getWindow(window,plt_obj)
+    # net_obj.getWindow(window,plt_obj,l=l)
+            # drc_obj.getWindow(window,plt_obj,l=l)
+            # # # net_DRGuide_obj.getWindow(window,plt_obj,(0.8,0.1,0.1),0.8,net_name=specific_net)
+            # drnet_obj.getWindow(window,plt_obj,l=l)
+            # congestion_obj.getWindow(window,plt_obj,l=l,text=True)
+            # patternroute_obj.getWindow(window,plt_obj,(0,1,0),0.5,net_name=specific_net,l=l)
+            # gcell_obj.getWindow(window,plt_obj,(1,0,0),0.001)
+            # score_obj.getWindow(window,plt_obj,(1,0,0),1,net_name=specific_net,l=l)
+                    
+                
+
+    surface.write_to_png(args.dir+ "imgs/" + cell_name  
+        +".gr."+str(0)
+        +".dr."+str(0)
+        +".l."+str(0)+".png")

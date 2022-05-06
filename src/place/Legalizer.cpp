@@ -253,10 +253,10 @@ bool Legalizer::getLegalizeBox(utils::BoxT<DBU>& new_box, utils::BoxT<DBU>& lega
     // auto dbu_row_max = database.getDBURow(database.rows_num);
 
     // log() << "database.sites_num: " << database.sites_num
-    //       << ", dbu_site_max: " << double(dbu_site_max)/2000.0
-    //       << ", dbu_site_min: " << double(dbu_site_min)/2000.0
-    //       << ", dbu_row_min: " << double(dbu_row_min)/2000.0
-    //       << ", dbu_row_max: " << double(dbu_row_max)/2000.0
+    //       << ", dbu_site_max: " << double(dbu_site_max)/database.libDBU
+    //       << ", dbu_site_min: " << double(dbu_site_min)/database.libDBU
+    //       << ", dbu_row_min: " << double(dbu_row_min)/database.libDBU
+    //       << ", dbu_row_max: " << double(dbu_row_max)/database.libDBU
     //       << ", database.rows_num: " << database.rows_num;
      
 
@@ -1877,8 +1877,8 @@ void Legalizer::getLegalizerILPCostCubeV3(std::vector<cellWrap>& weights
                 int site_dbu = database.getDBUSite(site_idx);
 
                 if(debug)
-                    log() << "row_um: " <<  row_dbu/2000.0
-                        << "site_um: " <<  site_dbu/2000.0 << std::endl;
+                    log() << "row_um: " <<  row_dbu/database.libDBU
+                        << "site_um: " <<  site_dbu/database.libDBU << std::endl;
 
                 ss_blockage << std::to_string(r)
                             << "," << std::to_string(s)
@@ -2084,8 +2084,8 @@ void Legalizer::getLegalizerILPCostCubeV2(std::vector<double>& weights
             int row_dbu  = database.getDBURow(row_idx);
             int site_dbu = database.getDBUSite(site_idx);
 
-            log() << "row_um: " <<  row_dbu/2000.0
-                  << "site_um: " <<  site_dbu/2000.0 << std::endl;
+            log() << "row_um: " <<  row_dbu/database.libDBU
+                  << "site_um: " <<  site_dbu/database.libDBU << std::endl;
 
             ss_blockage << std::to_string(r)
                         << "," << std::to_string(s)
@@ -2682,8 +2682,8 @@ void Legalizer::getLegalizerSolutionILPSolverV2(
                 int cell_idx = weights[i].idx; 
                 int new_row  = legalize_rows[weights[i].r];
                 int new_site = legalize_sites[weights[i].s];
-                auto row_dbu = database.getDBURow(new_row)/2000.0;
-                auto site_dbu = database.getDBUSite(new_site)/2000.0;
+                auto row_dbu = database.getDBURow(new_row)/database.libDBU;
+                auto site_dbu = database.getDBUSite(new_site)/database.libDBU;
 
 
 
@@ -2909,8 +2909,8 @@ void Legalizer::getLegalizerSolutionILPSolver(
             int cell_idx = std::get<0>(weigthToCellRowSite[i]);
             int new_row  = std::get<1>(weigthToCellRowSite[i]) + row_offset_;
             int new_site = std::get<2>(weigthToCellRowSite[i]) + site_offset_;
-            auto row_dbu = database.getDBURow(new_row)/2000.0;
-            auto site_dbu = database.getDBUSite(new_site)/2000.0;
+            auto row_dbu = database.getDBURow(new_row)/database.libDBU;
+            auto site_dbu = database.getDBUSite(new_site)/database.libDBU;
 
             // log() << "cell_idx: " << cell_idx
             //       << "new_row: " << new_row

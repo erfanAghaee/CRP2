@@ -659,7 +659,7 @@ Tree flute(int d, DTYPE x[], DTYPE y[], int acc)
                 ys[i] = ptp[i]->y;
                 s[i] = ptp[i]->o;
             }
-        }
+        }       
 
         t = flutes(d, xs, ys, s, acc);
 

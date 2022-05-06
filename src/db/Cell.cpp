@@ -914,8 +914,8 @@ void Cell::addAlignmentCandidates(std::vector<utils::BoxT<DBU>>& placement_candi
             if(new_cell_site_lx < 0 || new_cell_site_hx > database.sites_num-1) continue;
             // log() << "new_cell_site_lx: " << new_cell_site_lx << std::endl;
             auto new_cell_xmin = getDBUSite(new_cell_site_lx);
-            // log() << "new_cell_xmin: " << new_cell_xmin/2000.0 << std::endl;
-            // log() << "new_cell_xmax: " << (new_cell_xmin+cell_width_movable)/2000.0 << std::endl;
+            // log() << "new_cell_xmin: " << new_cell_xmin/database.libDBU << std::endl;
+            // log() << "new_cell_xmax: " << (new_cell_xmin+cell_width_movable)/database.libDBU << std::endl;
             
             placement_candidates_alignment.emplace_back(new_cell_xmin, cell_ly_movable , 
                                                         new_cell_xmin+cell_width_movable, cell_hy_movable);
@@ -937,7 +937,7 @@ void Cell::addAlignmentCandidates(std::vector<utils::BoxT<DBU>>& placement_candi
         // log() << "max_step: " << max_step << std::endl;
         // log() << "pin_bd: " << pin_bd << std::endl;
         // log() << "cur_pin_box: " << cur_pin_box << std::endl;
-        // log() << "cur_lx_cell: " << cur_lx_cell/2000.0 << std::endl;
+        // log() << "cur_lx_cell: " << cur_lx_cell/database.libDBU << std::endl;
 
         // auto lx_pin = pin_bd.lx();
         // auto ly_pin = pin_bd.ly();
@@ -955,9 +955,9 @@ void Cell::addAlignmentCandidates(std::vector<utils::BoxT<DBU>>& placement_candi
         //             // log() << "rowBox_fixCell_neigh: " << rowBox_fixCell_neigh << std::endl;
         //             DBU step = lx_pin;
         //             for(int j = 0 ; j <= max_step; j++){
-        //                 log() << "lx_pin: " << lx_pin/2000.0 << std::endl;
+        //                 log() << "lx_pin: " << lx_pin/database.libDBU << std::endl;
         //                 step = lx_pin + j*step_size;
-        //                 log() << "step: " << step/2000.0 << std::endl;
+        //                 log() << "step: " << step/database.libDBU << std::endl;
         //                 DBU disp = 0;
         //                 DBU xmin = 0;
         //                 if(lx_pin <= cur_pin_box.lx()) {
@@ -979,8 +979,8 @@ void Cell::addAlignmentCandidates(std::vector<utils::BoxT<DBU>>& placement_candi
         //                         xmin = dieBound.getUpper().x-cell_width;
         //                     }
         //                 }
-        //                 log() << "disp: " << disp/2000.0 << std::endl;
-        //                 log() << "xmin: " << xmin/2000.0 << std::endl;
+        //                 log() << "disp: " << disp/database.libDBU << std::endl;
+        //                 log() << "xmin: " << xmin/database.libDBU << std::endl;
                         
         //                 placement_candidates_alignment.emplace_back(xmin, rowBox_fixCell_neigh.ly() , 
         //                                                     xmin+cell_width, rowBox_fixCell_neigh.hy());
@@ -1091,8 +1091,8 @@ void Cell::addManualCellCandidates(){
     Rsyn::PhysicalLibraryCell phLibCell = rsynService.physicalDesign.getPhysicalLibraryCell(cellRsyn);
     int cell_width = phLibCell.getWidth();
     bool manual = true;
-    DBU new_x = 41.8*2000;
-    DBU new_y = 41.04*2000;
+    DBU new_x = 41.8*database.libDBU;
+    DBU new_y = 41.04*database.libDBU;
 
     if(manual){
         if(getName() == "inst4382"){
@@ -1157,7 +1157,7 @@ void Cell::addMedianCellCandidates(){
     int cell_height = phLibCell.getHeight();
     
 
-    // log() << "median_x: " << double(median_x)/2000.0 << ", median_y: " << double(median_y)/2000.0 << std::endl;
+    // log() << "median_x: " << double(median_x)/database.libDBU << ", median_y: " << double(median_y)/database.libDBU << std::endl;
     auto rows = getRowsNear(median_x,median_y);
     
 
@@ -1171,7 +1171,7 @@ void Cell::addMedianCellCandidates(){
         // log() << "row: " << row_box << std::endl;
         // for(auto site : sites){
         //     log() << "site: " << site 
-        //           << ", dbu: " <<double(getDBUSite(site))/2000.0 << std::endl;
+        //           << ", dbu: " <<double(getDBUSite(site))/database.libDBU << std::endl;
         // }
         
         placement_candidates_median.emplace_back(median_x, row_box.ly() , median_x+cell_width, row_box.hy());
@@ -1259,10 +1259,10 @@ void Cell::addGCellBasedCandidates(){
     
     utils::BoxT<DBU> legalize_box(grDatabase.getCoor(ext_grBox_lx, X),grDatabase.getCoor(ext_grBox_ly, Y),
                                  grDatabase.getCoor(ext_grBox_hx, X),grDatabase.getCoor(ext_grBox_hy, Y));
-    log() << "getCoor(grBox_lx, X): "<< double(grDatabase.getCoor(ext_grBox_lx, X))/2000.0 << std::endl;
-    log() << "getCoor(grBox_ly, Y): "<< double(grDatabase.getCoor(ext_grBox_ly, Y))/2000.0 << std::endl;
-    log() << "getCoor(grBox_hx, X): "<< double(grDatabase.getCoor(ext_grBox_hx, X))/2000.0 << std::endl;
-    log() << "getCoor(grBox_hy, Y): "<< double(grDatabase.getCoor(ext_grBox_hy, Y))/2000.0 << std::endl;  
+    log() << "getCoor(grBox_lx, X): "<< double(grDatabase.getCoor(ext_grBox_lx, X))/database.libDBU << std::endl;
+    log() << "getCoor(grBox_ly, Y): "<< double(grDatabase.getCoor(ext_grBox_ly, Y))/database.libDBU << std::endl;
+    log() << "getCoor(grBox_hx, X): "<< double(grDatabase.getCoor(ext_grBox_hx, X))/database.libDBU << std::endl;
+    log() << "getCoor(grBox_hy, Y): "<< double(grDatabase.getCoor(ext_grBox_hy, Y))/database.libDBU << std::endl;  
     // legalize(cell_init_position,new_box);
 
     
@@ -1341,7 +1341,7 @@ void Cell::addMedianCellCandidatesSiteBased(){
     median_x = getDBUSite(median_x_site_step);
     median_y = getDBUSite(median_y_site_step);
 
-    // log() << "median_x: " << double(median_x)/2000.0 << ", median_y: " << double(median_y)/2000.0 << std::endl;
+    // log() << "median_x: " << double(median_x)/database.libDBU << ", median_y: " << double(median_y)/database.libDBU << std::endl;
     auto rows = getRowsNear(median_x,median_y);
 
     std::vector<utils::BoxT<DBU>> placement_candidates_median;
@@ -1641,8 +1641,8 @@ void Cell::getDistOptPoint(){
     auto median_x = x_positions[x_positions.size()/2];
     std::nth_element(y_positions.begin(), y_positions.begin() + y_positions.size()/2, y_positions.end());
     auto median_y = y_positions[y_positions.size()/2];
-    // log() << "median_x: " << median_x/2000 
-    //       << ", median_y: " << median_y/2000  << std::endl;
+    // log() << "median_x: " << median_x/database.libDBU 
+    //       << ", median_y: " << median_y/database.libDBU  << std::endl;
 
     cost =  std::abs(median_x - rsynInstance.getBounds().getLower().x)+
             std::abs(median_y - rsynInstance.getBounds().getLower().y);
@@ -1742,8 +1742,8 @@ void Cell::getDistOptPointV2(){
         auto median_x = x_positions[x_positions.size()/2];
         std::nth_element(y_positions.begin(), y_positions.begin() + y_positions.size()/2, y_positions.end());
         auto median_y = y_positions[y_positions.size()/2];
-        // log() << "median_x: " << median_x/2000 
-        //       << ", median_y: " << median_y/2000  << std::endl;
+        // log() << "median_x: " << median_x/database.libDBU 
+        //       << ", median_y: " << median_y/database.libDBU  << std::endl;
 
         med_xs.push_back(median_x);
         med_ys.push_back(median_y);
@@ -1819,8 +1819,8 @@ void Cell::updateMedianCell(){
         //     log() << "y: " << y << std::endl;
 
         // for(int i = 0; i < x_positions.size() ; i++){
-        //     log() << "x: " << double(x_positions[i])/2000.0
-        //           << ", y: " << double(y_positions[i])/2000.0 << std::endl;
+        //     log() << "x: " << double(x_positions[i])/database.libDBU
+        //           << ", y: " << double(y_positions[i])/database.libDBU << std::endl;
         // }
 
 
@@ -1828,8 +1828,8 @@ void Cell::updateMedianCell(){
         auto median_x = x_positions[x_positions.size()/2];
         std::nth_element(y_positions.begin(), y_positions.begin() + y_positions.size()/2, y_positions.end());
         auto median_y = y_positions[y_positions.size()/2];
-        // log() << "median_x: " << double(median_x)/2000.0
-        //       << ", median_y: " << double(median_y)/2000.0  << std::endl;
+        // log() << "median_x: " << double(median_x)/database.libDBU
+        //       << ", median_y: " << double(median_y)/database.libDBU  << std::endl;
 
         med_xs.push_back(median_x);
         med_ys.push_back(median_y);
@@ -1938,11 +1938,11 @@ void Cell::updateMedianPin(){
             auto min_x_acs = *std::min_element(x_acs.begin(),x_acs.end());
             auto min_y_acs = *std::min_element(y_acs.begin(),y_acs.end());
 
-            // log() << "median_acBoxs: [x: " << double(median_acBoxs.first)/2000.0
-            //       << ", y: " << double(median_acBoxs.second)/2000.0 << " ]" << std::endl;
+            // log() << "median_acBoxs: [x: " << double(median_acBoxs.first)/database.libDBU
+            //       << ", y: " << double(median_acBoxs.second)/database.libDBU << " ]" << std::endl;
 
-            // log() << "min_x_acs: " << double(min_x_acs)/2000.0
-            //       << ", min_y_acs: " << double(min_y_acs)/2000.0 << std::endl;
+            // log() << "min_x_acs: " << double(min_x_acs)/database.libDBU
+            //       << ", min_y_acs: " << double(min_y_acs)/database.libDBU << std::endl;
 
             // for(auto acBox : pinAccessBoxes){
             x_positions.push_back(min_x_acs);
@@ -1958,8 +1958,8 @@ void Cell::updateMedianPin(){
         }
 
         // for(int i = 0; i < x_positions.size() ; i++){
-        //     log() << "x: " << double(x_positions[i])/2000.0
-        //           << ", y: " << double(y_positions[i])/2000.0 << std::endl;
+        //     log() << "x: " << double(x_positions[i])/database.libDBU
+        //           << ", y: " << double(y_positions[i])/database.libDBU << std::endl;
         // }
 
 
@@ -1968,8 +1968,8 @@ void Cell::updateMedianPin(){
         auto median_x = x_positions[x_positions.size()/2];
         std::nth_element(y_positions.begin(), y_positions.begin() + y_positions.size()/2, y_positions.end());
         auto median_y = y_positions[y_positions.size()/2];
-        // log() << "median_x: " << double(median_x)/2000.0
-        //       << ", median_y: " << double(median_y)/2000.0  << std::endl;
+        // log() << "median_x: " << double(median_x)/database.libDBU
+        //       << ", median_y: " << double(median_y)/database.libDBU  << std::endl;
 
         med_xs.push_back(median_x);
         med_ys.push_back(median_y);
@@ -1988,8 +1988,8 @@ void Cell::updateMedianPin(){
     double avg_y = accumulate( med_ys.begin(), med_ys.end(), 0.0) / len_y; 
     median_x_y_pin = std::make_pair(avg_x,avg_y);
 
-    // log() << "median_x_y_pin: [x: " << double(median_x_y_pin.first)/2000.0
-    //     << ", y: " << double(median_x_y_pin.second)/2000.0 << " ]" << std::endl;
+    // log() << "median_x_y_pin: [x: " << double(median_x_y_pin.first)/database.libDBU
+    //     << ", y: " << double(median_x_y_pin.second)/database.libDBU << " ]" << std::endl;
 
     
 }//end updateMedianCell

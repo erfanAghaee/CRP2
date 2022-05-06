@@ -9,8 +9,8 @@ void InitRoute::runFlute() {
 
     // get net center
     // float net_ctrz = 0;
-    float net_ctrx = 0;
-    float net_ctry = 0;
+    net_ctrx = 0;
+    net_ctry = 0;
 
     auto net_ctr_pair = getNetCenter();
     net_ctrx = net_ctr_pair.first;
@@ -22,7 +22,7 @@ void InitRoute::runFlute() {
 
 
     // location to pins
-    unordered_map<tuple<int, int>, vector<int>, hash_tuple> loc2Pins;
+    // unordered_map<tuple<int, int>, vector<int>, hash_tuple> loc2Pins;
     getLoc2Pins(loc2Pins,pinCenters);
 
     // flute
@@ -259,7 +259,56 @@ void InitRoute::constructRouteNodes(Tree& flutetree
     , int degree
     , unordered_map<tuple<int, int>, vector<int>, hash_tuple>& loc2Pins
     , int node_cnt){
-     unordered_map<tuple<int, int>, int, hash_tuple> loc2Node;  // location -> RouteNode index
+
+    if(!db::setting.escapeRouteBlockage){
+        unordered_map<tuple<int, int>, int, hash_tuple> loc2Node;  // location -> RouteNode index
+        for (int i = 0; i < degree * 2 - 2; i++) {
+            Branch& branch1 = flutetree.branch[i];
+            Branch& branch2 = flutetree.branch[branch1.n];
+            tuple<int, int> fluteEdge[2];
+            fluteEdge[0] = make_tuple(branch1.x, branch1.y);
+            fluteEdge[1] = make_tuple(branch2.x, branch2.y);
+            // create route nodes
+            for (int j = 0; j < 2; j++) {
+                tuple<int, int>& nodeLoc = fluteEdge[j];
+                if (loc2Node.find(nodeLoc) == loc2Node.end()) {
+                    RouteNode node(fluteEdge[j]);
+                    // pin info
+                    if (loc2Pins.find(nodeLoc) != loc2Pins.end()) {
+                        node.pinIdxs = loc2Pins[nodeLoc];
+                        for (int pIdx : node.pinIdxs) {
+                            int layerIdx = grNet.pinAccessBoxes[pIdx][0].layerIdx;
+                            node.pinLayers.emplace_back(layerIdx);
+                        }
+                    }
+                    node.idx = node_cnt;
+                    routeNodes[node_cnt++] = node;
+
+                    loc2Node[nodeLoc] = routeNodes.size() - 1;
+                    
+                }
+            }
+            // add connectivity info
+            if (fluteEdge[0] != fluteEdge[1]) {
+                int nodeIdx1 = loc2Node[fluteEdge[0]];
+                int nodeIdx2 = loc2Node[fluteEdge[1]];
+                routeNodes[nodeIdx1].toConnect.insert(nodeIdx2);
+                routeNodes[nodeIdx2].toConnect.insert(nodeIdx1);
+            }
+        }
+    }else{
+        // post processing 2d routing to avoid blockage collision
+        routeNodePostProcessing(flutetree,degree,loc2Pins,node_cnt);
+    }
+
+}//end constructRouteNodes
+
+void InitRoute::routeNodePostProcessing(Tree& flutetree
+                            , int degree
+                            , unordered_map<tuple<int, int>, vector<int>, hash_tuple>& loc2Pins
+                            , int node_cnt){
+
+    unordered_map<tuple<int, int>, int, hash_tuple> loc2Node;  // location -> RouteNode index
     for (int i = 0; i < degree * 2 - 2; i++) {
         Branch& branch1 = flutetree.branch[i];
         Branch& branch2 = flutetree.branch[branch1.n];
@@ -282,6 +331,11 @@ void InitRoute::constructRouteNodes(Tree& flutetree
                 node.idx = node_cnt;
                 routeNodes[node_cnt++] = node;
                 loc2Node[nodeLoc] = routeNodes.size() - 1;
+
+                log() << "node: " << node.idx 
+                          << ", x: " << node.x
+                          << ", y: " << node.y
+                          << std::endl;
             }
         }
         // add connectivity info
@@ -290,10 +344,14 @@ void InitRoute::constructRouteNodes(Tree& flutetree
             int nodeIdx2 = loc2Node[fluteEdge[1]];
             routeNodes[nodeIdx1].toConnect.insert(nodeIdx2);
             routeNodes[nodeIdx2].toConnect.insert(nodeIdx1);
+
+            log() << "nodeIdx1: " << nodeIdx1
+                  << ", connect: " << nodeIdx2 << std::endl;
         }
     }
+    
 
-}//end constructRouteNodes
+}//end routeNodePostProcessing
 
 void InitRoute::patternRouteMT() {
     bool debug = false;
@@ -1338,7 +1396,443 @@ void InitRoute::edge_shift2d(std::map<int, RouteNode>& cur_routeNodes) {
     //     log() << "edge from: " << e_tmp.from << " -> " << e_tmp.to << std::endl;
     // }
     grNet.dbNet.net_timer += net_timer.getTimer();
+}//end edgeShift_2d
+
+void InitRoute::edge_shift2d_blockage(std::map<int, RouteNode>& cur_routeNodes) {
+    utils::timer net_timer;
+    // log() << "endge_shift2d ..." << std::endl;
+    // log() << "cur_routeNodes size: " << cur_routeNodes.size() << std::endl;
+    if (cur_routeNodes.size() == 1) return;
+    vector<RouteEdge> edgeset;
+    map<pair<int, int>, set<int>> loc_nodes;  // will be used to merge overlapping nodes
+    int s = cur_routeNodes.begin()->first;
+    queue<int> tmp_q;
+    tmp_q.push(s);
+    set<int> vis;
+    // log() << "grNet: " << grNet.getName()  << std::endl;
+
+    while (tmp_q.empty() == false) {
+        int u = tmp_q.front();
+        tmp_q.pop();
+        vis.insert(u);
+
+        
+        RouteNode& node = cur_routeNodes[u];
+        loc_nodes[make_pair(node.x, node.y)].insert(u);
+
+        // log() << "u: " << u << ", node.x: " << node.x << ", node.y: " << node.y << std::endl;
+
+        for (int nIdx : node.toConnect) {
+            if (vis.find(nIdx) != vis.end()) continue;
+            RouteEdge edge;
+            edge.from = nIdx;
+            edge.to = u;
+            edgeset.emplace_back(edge);
+            removeUsage2D(node, cur_routeNodes[nIdx], 1);  // Remove this net
+            tmp_q.push(nIdx);
+        }
+    }
+
+    // log() << "init edge set: " << std::endl;
+    // for(auto e_tmp : edgeset){
+    //     log() << "edge from: " << e_tmp.from << " -> " << e_tmp.to << std::endl;
+    // }
+
+
+    auto getStraightCost = [&](int dir, int gridline, utils::IntervalT<int> range) {
+        double cost = 0;
+        for (int cp = range.low; cp < range.high; cp++) {
+            cost += grDatabase.getCost2D(dir, gridline, cp);
+        }
+        return cost;
+    };
+
+    std::function<double(int, int, int, int)> getCost =
+        [&](int x1, int y1, int x2, int y2) {  // GR point (x1,y1) -> (x2,y2)
+            double ret = 0;
+            int layer_dir_count = 0;
+            if (x1 == x2 || y1 == y2) {  // straight line
+                int dir = (x1 == x2 ? X : Y);
+                if (dir == X) {
+                    utils::IntervalT<int> Range(min(y1, y2), max(y1, y2));
+                    ret = getStraightCost(X, x1, Range);
+                } else {
+                    utils::IntervalT<int> Range(min(x1, x2), max(x1, x2));
+                    ret = getStraightCost(Y, y1, Range);
+                }
+            } else {  // choose the L with lower cost
+                int x3 = x1;
+                int y3 = y2;
+                int x4 = x2;
+                int y4 = y1;
+                ret = min(getCost(x1, y1, x3, y3) + getCost(x2, y2, x3, y3),
+                          getCost(x1, y1, x4, y4) + getCost(x2, y2, x4, y4));
+            }
+            return ret;
+        };
+
+    auto getEdgeBox = [&](RouteEdge& edge, utils::BoxT<DBU>& edge_box){
+        auto& fromNode = cur_routeNodes[edge.from];
+        auto& toNode = cur_routeNodes[edge.to];
+        auto fromP1 = gr::GrPoint({0,fromNode.x,fromNode.y});
+        auto toP2 = gr::GrPoint({0,toNode.x,toNode.y});
+        log() << "("<< fromNode.x << "," << fromNode.y <<")"
+                << "->" 
+                << "("<< toNode.x << "," << toNode.y <<")"
+                << std::endl;
+        log() << "or" << std::endl;
+
+        std::vector<DBU> xs;
+        std::vector<DBU> ys;
+
+        auto xl_fromP1 = grDatabase.getCoorIntvl(fromP1,X).low;
+        auto yl_fromP1 = grDatabase.getCoorIntvl(fromP1,Y).low;
+        auto xh_fromP1 = grDatabase.getCoorIntvl(fromP1,X).high;
+        auto yh_fromP1 = grDatabase.getCoorIntvl(fromP1,Y).high;
+
+        auto xl_toP2 = grDatabase.getCoorIntvl(toP2,X).low;
+        auto yl_toP2 = grDatabase.getCoorIntvl(toP2,Y).low;
+        auto xh_toP2 = grDatabase.getCoorIntvl(toP2,X).high;
+        auto yh_toP2 = grDatabase.getCoorIntvl(toP2,Y).high;
+
+        log() << "xl_fromP1: " << xl_fromP1/database.libDBU << ","
+                << "yl_fromP1: " << yl_fromP1/database.libDBU << ","
+                << "xh_fromP1: " << xh_fromP1/database.libDBU << ","
+                << "yh_fromP1: " << yh_fromP1/database.libDBU << std::endl;
+
+        log() << "xl_toP2: " << xl_toP2/database.libDBU << ","
+                << "yl_toP2: " << yl_toP2/database.libDBU << ","
+                << "xh_toP2: " << xh_toP2/database.libDBU << ","
+                << "yh_toP2: " << yh_toP2/database.libDBU << std::endl;
+
+        xs.push_back(xl_fromP1);
+        xs.push_back(xh_fromP1);
+        xs.push_back(xl_toP2);
+        xs.push_back(xh_toP2);
+
+        ys.push_back(yl_fromP1);
+        ys.push_back(yh_fromP1);
+        ys.push_back(yl_toP2);
+        ys.push_back(yh_toP2);
+
+        edge_box.Set(
+            *std::min_element(xs.begin(),xs.end()),
+            *std::min_element(ys.begin(),ys.end()),
+            *std::max_element(xs.begin(),xs.end()),
+            *std::max_element(ys.begin(),ys.end())
+        );
+
+        // log() << "edge_box: " << edge_box << std::endl;
+    };
+
+    auto shiftEdge = [&](bool& shifted) {
+        int find_edge = -1;
+        int dir = -1;
+        bool extendSafeRange = false;
+
+        bool debug = true;
+
+        if(debug){
+            int eps = 10;
+            log() << "edgeSet: " << std::endl;
+            for (int i = 0; i < edgeset.size(); i++) {
+                auto& edge = edgeset[i];
+                auto& fromNode = cur_routeNodes[edge.from];
+                auto& toNode = cur_routeNodes[edge.to];
+
+                utils::BoxT<DBU> edge_box;                
+                getEdgeBox(edge,edge_box);
+                log() << "edge_box: " << edge_box << std::endl;
+                auto results = database.queryBlockageRTree(edge_box,eps);
+                log() << "query results: " << std::endl;
+                if(results.size() > 0){
+                    // get direction
+                    dir = (fromNode.x == toNode.x ? X : Y);
+
+                    // get neighbours
+                    vector<int> fromNeighbor;  // the two neighbors of fromNode
+                    vector<int> toNeighbor;    // the two neighbors of toNode
+                    for (auto& nei : fromNode.toConnect) {
+                        if (nei != edge.to) {
+                            fromNeighbor.push_back(nei);
+                        }
+                    }
+                    for (auto& nei : toNode.toConnect) {
+                        if (nei != edge.from) {
+                            toNeighbor.push_back(nei);
+                        }
+                    }
+                    
+                }
+                // for(auto res : results){
+                //     log() << "block: " << res << std::endl;
+
+                // }
+            }//end for 
+        }//end debug 
+
+        for (int i = 0; i < edgeset.size(); i++) {
+            auto& edge = edgeset[i];
+            auto& fromNode = cur_routeNodes[edge.from];
+            auto& toNode = cur_routeNodes[edge.to];
+            if (fromNode.pinIdxs.size() == 0 && toNode.pinIdxs.size() == 0 && fromNode.degree() == 3 &&
+                toNode.degree() == 3) {  // two steiner points encountered,require the degree to be 3
+                if (fromNode.x == toNode.x || fromNode.y == toNode.y) {  // vertical or horizontal
+                    dir = (fromNode.x == toNode.x ? X : Y);
+                    vector<int> fromNeighbor;  // the two neighbors of fromNode
+                    vector<int> toNeighbor;    // the two neighbors of toNode
+                    for (auto& nei : fromNode.toConnect) {
+                        if (nei != edge.to) {
+                            fromNeighbor.push_back(nei);
+                        }
+                    }
+                    for (auto& nei : toNode.toConnect) {
+                        if (nei != edge.from) {
+                            toNeighbor.push_back(nei);
+                        }
+                    }
+                    assert(fromNeighbor.size() == 2);
+                    assert(toNeighbor.size() == 2);
+                    if (dir == X) {  // vertical edge
+
+                        if (cur_routeNodes[fromNeighbor[0]].x > cur_routeNodes[fromNeighbor[1]].x) {
+                            swap(fromNeighbor[0], fromNeighbor[1]);
+                        }
+                        if (cur_routeNodes[toNeighbor[0]].x > cur_routeNodes[toNeighbor[1]].x) {
+                            swap(toNeighbor[0], toNeighbor[1]);
+                        }
+
+                        utils::IntervalT<int> r1(cur_routeNodes[fromNeighbor[0]].x, cur_routeNodes[fromNeighbor[1]].x);
+                        utils::IntervalT<int> r2(cur_routeNodes[toNeighbor[0]].x, cur_routeNodes[toNeighbor[1]].x);
+                        utils::IntervalT<int> safeRange = r1.IntersectWith(r2);
+                        if (!safeRange.IsStrictValid()) {
+                            continue;
+                        }
+                        utils::IntervalT<int> yRange(min(fromNode.y, toNode.y), max(fromNode.y, toNode.y));
+
+                        int best_x = -1;
+                        double best_cost = std::numeric_limits<double>::infinity();
+
+                        for (int cur_x = safeRange.low; cur_x <= safeRange.high; cur_x++) {
+                            // try each candidate and choose the one with smallest cost
+                            double cur_cost = getStraightCost(X, cur_x, yRange);
+                            cur_cost += getCost(cur_x,
+                                                fromNode.y,
+                                                cur_routeNodes[fromNeighbor[0]].x,
+                                                cur_routeNodes[fromNeighbor[0]].y) +
+                                        getCost(cur_x,
+                                                fromNode.y,
+                                                cur_routeNodes[fromNeighbor[1]].x,
+                                                cur_routeNodes[fromNeighbor[1]].y);
+                            cur_cost +=
+                                getCost(
+                                    cur_x, toNode.y, cur_routeNodes[toNeighbor[0]].x, cur_routeNodes[toNeighbor[0]].y) +
+                                getCost(
+                                    cur_x, toNode.y, cur_routeNodes[toNeighbor[1]].x, cur_routeNodes[toNeighbor[1]].y);
+                            if (cur_cost < best_cost) {
+                                best_cost = cur_cost;
+                                best_x = cur_x;
+                            }
+                        }
+                        if (best_x != -1 && fromNode.x != best_x) {  // need to move, update the topology and locations
+
+                            loc_nodes[make_pair(fromNode.x, fromNode.y)].erase(fromNode.idx);
+                            loc_nodes[make_pair(toNode.x, toNode.y)].erase(toNode.idx);
+                            fromNode.x = best_x;
+                            toNode.x = best_x;
+                            loc_nodes[make_pair(fromNode.x, fromNode.y)].insert(fromNode.idx);
+                            loc_nodes[make_pair(toNode.x, toNode.y)].insert(toNode.idx);
+                            shifted = true;
+                            break;
+                        } else {  // check next candidate
+                            continue;
+                        }
+                    } else {
+                        if (cur_routeNodes[fromNeighbor[0]].y > cur_routeNodes[fromNeighbor[1]].y) {
+                            swap(fromNeighbor[0], fromNeighbor[1]);
+                        }
+                        if (cur_routeNodes[toNeighbor[0]].y > cur_routeNodes[toNeighbor[1]].y) {
+                            swap(toNeighbor[0], toNeighbor[1]);
+                        }
+                        utils::IntervalT<int> r1(cur_routeNodes[fromNeighbor[0]].y, cur_routeNodes[fromNeighbor[1]].y);
+                        utils::IntervalT<int> r2(cur_routeNodes[toNeighbor[0]].y, cur_routeNodes[toNeighbor[1]].y);
+                        utils::IntervalT<int> safeRange = r1.IntersectWith(r2);
+                        if (!safeRange.IsStrictValid()) {
+                            continue;
+                        }
+                        utils::IntervalT<int> xRange(min(fromNode.x, toNode.x), max(fromNode.x, toNode.x));
+                        int best_y = -1;
+                        double best_cost = std::numeric_limits<double>::infinity();
+
+                        for (int cur_y = safeRange.low; cur_y <= safeRange.high; cur_y++) {
+                            // try each candidate and choose the one with smallest cost
+                            double cur_cost = getStraightCost(Y, cur_y, xRange);
+                            cur_cost += getCost(fromNode.x,
+                                                cur_y,
+                                                cur_routeNodes[fromNeighbor[0]].x,
+                                                cur_routeNodes[fromNeighbor[0]].y) +
+                                        getCost(fromNode.x,
+                                                cur_y,
+                                                cur_routeNodes[fromNeighbor[1]].x,
+                                                cur_routeNodes[fromNeighbor[1]].y);
+                            cur_cost +=
+                                getCost(
+                                    toNode.x, cur_y, cur_routeNodes[toNeighbor[0]].x, cur_routeNodes[toNeighbor[0]].y) +
+                                getCost(
+                                    toNode.x, cur_y, cur_routeNodes[toNeighbor[1]].x, cur_routeNodes[toNeighbor[1]].y);
+                            if (cur_cost < best_cost) {
+                                best_cost = cur_cost;
+                                best_y = cur_y;
+                            }
+                        }
+                        if (best_y != -1 && fromNode.y != best_y) {  // need to move, update the topology and locations
+                            loc_nodes[make_pair(fromNode.x, fromNode.y)].erase(fromNode.idx);
+                            loc_nodes[make_pair(toNode.x, toNode.y)].erase(toNode.idx);
+                            fromNode.y = best_y;
+                            toNode.y = best_y;
+                            loc_nodes[make_pair(fromNode.x, fromNode.y)].insert(fromNode.idx);
+                            loc_nodes[make_pair(toNode.x, toNode.y)].insert(toNode.idx);
+                            shifted = true;
+                            break;
+                        } else {  // check next candidate
+                            continue;
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    auto mergeNode = [&]() {
+        while (1) {
+            bool found_to_merge = false;
+            pair<int, int> merge_loc;
+            for (auto it = loc_nodes.begin(); it != loc_nodes.end(); it++) {
+                if (it->second.size() > 1) {
+                    found_to_merge = true;
+                    merge_loc = it->first;
+                    break;
+                }
+            }
+            if (found_to_merge) {
+                set<int>& nodeset = loc_nodes[merge_loc];
+                int to_idx = -1;
+                int from_idx = -1;
+                assert(nodeset.size() == 2);  // only possibility: 1 steiner point + (another steiner point/pin point)
+                int two_steiner = -1;
+
+                for (auto idx : nodeset) {
+                    assert(idx != -1);
+                    if (cur_routeNodes[idx].pinIdxs.size() > 0) {
+                        two_steiner = idx;
+                    }
+                }
+                if (two_steiner != -1) {
+                    to_idx = two_steiner;
+                } else {
+                    to_idx = *nodeset.begin();
+                }
+                for (auto idx : nodeset) {
+                    if (idx != to_idx) {
+                        from_idx = idx;
+                        break;
+                    }
+                }
+
+                assert(to_idx != -1);
+                assert(from_idx != -1);
+                nodeset.erase(from_idx);
+
+                auto& fromNode = cur_routeNodes[from_idx];
+                auto& toNode = cur_routeNodes[to_idx];
+                if (toNode.toConnect.find(from_idx) != toNode.toConnect.end()) {  // two nodes are connected
+                    int del_edge = -1;
+                    for (int i = 0; i < edgeset.size(); i++) {
+                        if (edgeset[i].from == from_idx || edgeset[i].from == to_idx) {
+                            if (edgeset[i].to == from_idx || edgeset[i].to == to_idx) {
+                                del_edge = i;
+                                break;
+                            }
+                        }
+                    }
+                    edgeset.erase(edgeset.begin() + del_edge);
+                    toNode.toConnect.erase(from_idx);
+                }
+                for (int j = 0; j < edgeset.size(); j++) {
+                    if (edgeset[j].from == from_idx) {
+                        edgeset[j].from = to_idx;
+                        cur_routeNodes[edgeset[j].to].toConnect.erase(from_idx);
+                        cur_routeNodes[edgeset[j].to].toConnect.insert(to_idx);
+                        toNode.toConnect.insert(edgeset[j].to);
+                    } else if (edgeset[j].to == from_idx) {
+                        edgeset[j].to = to_idx;
+                        cur_routeNodes[edgeset[j].from].toConnect.erase(from_idx);
+                        cur_routeNodes[edgeset[j].from].toConnect.insert(to_idx);
+                        toNode.toConnect.insert(edgeset[j].from);
+                    }
+                }
+
+                cur_routeNodes.erase(from_idx);  // remove node
+                // remove redundant edge
+                set<int> toDelete;
+                for (int i = 0; i < edgeset.size(); i++) {
+                    for (int j = i + 1; j < edgeset.size(); j++) {
+                        if (edgeset[i].from == edgeset[j].from || edgeset[i].from == edgeset[j].to) {
+                            if (edgeset[i].to == edgeset[j].from || edgeset[i].to == edgeset[j].to) toDelete.insert(i);
+                        }
+                    }
+                }
+                for (auto idx : toDelete) {
+                    edgeset.erase(edgeset.begin() + idx);
+                }
+            } else {
+                break;
+            }
+        }
+    };
+    grDatabase.tot_edge += edgeset.size();
+    int while_limit = 10000;  // prevent possible(nearly impossible) infinite loop
+    int tmp_cnt = 0;
+    while (tmp_cnt < while_limit) {
+        bool edgeshift = false;
+        // log() << "before edgeshift: " << edgeshift 
+        //       << ", edgeset.size: " << edgeset.size() << std::endl;
+        shiftEdge(edgeshift);
+        // log() << "after edgeshift: " << edgeshift 
+        //       << ", edgeset.size: " << edgeset.size() << std::endl;
+        if (edgeshift == false) break;
+        mergeNode();
+        // log() << "after mergeNode: edgeset size: " << edgeset.size() << std::endl;
+        tmp_cnt += 1;
+    }
+    if (tmp_cnt == while_limit) log() << "More Shifting is actually needed" << std::endl;
+    grDatabase.edge_shifted += tmp_cnt;
+
+    s = cur_routeNodes.begin()->first;
+    queue<int> tmp_q_add;
+    tmp_q_add.push(s);
+    vis.clear();
+    while (tmp_q_add.empty() == false) {
+        int u = tmp_q_add.front();
+        tmp_q_add.pop();
+        vis.insert(u);
+        RouteNode& node = cur_routeNodes[u];
+        for (int nIdx : node.toConnect) {
+            if (vis.find(nIdx) != vis.end()) continue;
+            addUsage2D(node, cur_routeNodes[nIdx], 1);  // update the usage
+            tmp_q_add.push(nIdx);
+        }
+    }
+
+    // log() << "end edge set: " << std::endl;
+    // for(auto e_tmp : edgeset){
+    //     log() << "edge from: " << e_tmp.from << " -> " << e_tmp.to << std::endl;
+    // }
+    grNet.dbNet.net_timer += net_timer.getTimer();
 }
+
+
+
 
 void InitRoute::getRoutingOrder() {
 

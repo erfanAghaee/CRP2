@@ -723,10 +723,10 @@ void Placer::refinePlacement(std::vector<int>& netsToRoute){
         }
         if(log_moved){
             ss  << cell.getName() 
-                << "," << cell.rsynInstance.getBounds().getLower().x/2000.0
-                << "," << cell.rsynInstance.getBounds().getLower().y/2000.0
-                << "," << box.lx()/2000.0
-                << "," << box.ly()/2000.0 << std::endl;
+                << "," << cell.rsynInstance.getBounds().getLower().x/database.libDBU
+                << "," << cell.rsynInstance.getBounds().getLower().y/database.libDBU
+                << "," << box.lx()/database.libDBU
+                << "," << box.ly()/database.libDBU << std::endl;
         }
 
 
@@ -1646,8 +1646,8 @@ void Placer::ILPSolver(std::vector<double>& weights
             
 
             auto new_pos = cell_box_pair.second;
-            double x_u = new_pos.lx()/2000.0;
-            double y_u = new_pos.ly()/2000.0;
+            double x_u = new_pos.lx()/database.libDBU;
+            double y_u = new_pos.ly()/database.libDBU;
             std::stringstream stream_x;
             std::stringstream stream_y;
             std::stringstream stream;

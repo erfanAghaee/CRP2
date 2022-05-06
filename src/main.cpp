@@ -212,6 +212,10 @@ void runISPD18Flow(const boost::program_options::variables_map& vm) {
     if (vm.count("logAll")) {
         db::setting.logAll = vm.at("logAll").as<bool>();
     }
+    if (vm.count("escapeRouteBlockage")) {
+        db::setting.escapeRouteBlockage = vm.at("escapeRouteBlockage").as<bool>();
+    }
+    
     
 
 
@@ -373,6 +377,7 @@ int main(int argc, char* argv[]) {
                 ("rrrRouters", value<std::string>())    
                 ("rrrRoutersApply", value<std::string>())    
                 ("logAll", value<bool>())
+                ("escapeRouteBlockage", value<bool>())
                 ;
         // clang-format on
         variables_map vm;

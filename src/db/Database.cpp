@@ -22,7 +22,7 @@ void Database::initPolicy(){
         
 }
 void Database::initIllegalPlacementBoxs(){
-     const Rsyn::Session session;
+    const Rsyn::Session session;
     const Rsyn::PhysicalDesign& physicalDesign =
         static_cast<Rsyn::PhysicalService*>(session.getService("rsyn.physical"))->getPhysicalDesign();
     const DBU libDBU = physicalDesign.getDatabaseUnits(Rsyn::LIBRARY_DBU);
@@ -52,12 +52,18 @@ void Database::initIllegalPlacementBoxs(){
 }//initIllegalPlacementBoxs
 
 void Database::init() {
+    const Rsyn::Session session;
+    const Rsyn::PhysicalDesign& physicalDesign =
+        static_cast<Rsyn::PhysicalService*>(session.getService("rsyn.physical"))->getPhysicalDesign();
+    libDBU = physicalDesign.getDatabaseUnits(Rsyn::LIBRARY_DBU);
     // init lookup tabels
     if(db::setting.refinePlacement){
         lookup_tb.run(db::setting.benchmarkName);
         initIllegalPlacementBoxs();
         origin_offset_die = lookup_tb.origin_offset_die;
     }
+
+    initBlockagesRTree();
       
     // return;
 
@@ -469,8 +475,8 @@ void Database::markPinAndObsOccupancy() {
                             box[1 - dim].Set(pos[1 - dim] - width / 2, pos[1 - dim] + width / 2);
                             if(debug){
                                 // if(box.layerIdx==3){
-                                    log() << "pt.ClsPos.x : " << pt.clsPos.x/2000.0 
-                                          << ", y: " << pt.clsPos.y/2000.0 << std::endl;
+                                    log() << "pt.ClsPos.x : " << pt.clsPos.x/libDBU
+                                          << ", y: " << pt.clsPos.y/libDBU << std::endl;
                                     log() << "specialNet: " << box << std::endl;
                                 // }
                             }
@@ -833,6 +839,52 @@ void Database::logLayers(){
     file.close();
 
 }//end logLayers
+
+void Database::initBlockagesRTree(){
+    int i =0;
+    for (Rsyn::Instance instance : rsynService.module.allInstances()) {
+        if(instance.isFixed() && (instance.getType() == Rsyn::CELL)){
+            log() << "name: " << instance.asCell().getName() 
+                  << ", type: " << instance.getType() << std::endl;
+
+            boostBox box(boostPoint(instance.getBounds().getLower().x,
+                                    instance.getBounds().getLower().y),
+                         boostPoint(instance.getBounds().getUpper().x,
+                                    instance.getBounds().getUpper().y));
+
+            blockage_rtree.insert({box, i});
+            i++;
+
+        }//end if 
+    }  // end for
+}//end initBlockageRTree
+
+std::vector<utils::BoxT<DBU>> Database::queryBlockageRTree(utils::BoxT<DBU>& box, DBU eps){
+    boostBox rtreeQueryBox(
+    boostPoint(box.lx()+eps,
+                box.ly()+eps),
+    boostPoint(box.hx()-eps,
+                box.hy()-eps));
+    vector<std::pair<boostBox, int>> queryResults;
+    std::vector<utils::BoxT<DBU>> results;
+        
+    blockage_rtree.query(bgi::intersects(rtreeQueryBox), std::back_inserter(queryResults));
+    
+    for (const auto& queryResult : queryResults) {
+        const auto& b = queryResult.first;
+        
+        
+        auto box = utils::BoxT<DBU>(bg::get<bg::min_corner, 0>(b),
+                                    bg::get<bg::min_corner, 1>(b),
+                                    bg::get<bg::max_corner, 0>(b),
+                                    bg::get<bg::max_corner, 1>(b));
+        
+        results.push_back(box);
+    }//end for
+
+
+    return results;
+}//end queryBlockageRTree
 
 void Database::writeDEF(const std::string& filename){
     DEFControlParser defParser;

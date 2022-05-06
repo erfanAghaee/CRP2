@@ -51,7 +51,7 @@ public:
     RouteNode() : x(-1), y(-1) {}
     RouteNode(int nx, int ny) : x(nx), y(ny) {}
     RouteNode(std::tuple<int, int> loc) : x(std::get<0>(loc)), y(std::get<1>(loc)) {}
-
+    
 
     
 
@@ -134,6 +134,8 @@ public:
 
     void plan_fluteOnly();
     void edge_shift2d(std::map<int, RouteNode> &routeNodes);
+    // try to avoid blockage
+    void edge_shift2d_blockage(std::map<int, RouteNode> &routeNodes);
     void getRoutingOrder();
     void addUsage2D(RouteNode &u, RouteNode &v, double usage = 1);
     void removeUsage2D(RouteNode &u, RouteNode &v, double usage = 1);
@@ -146,6 +148,9 @@ public:
     // stream for debugging
     std::stringstream stream;
     std::stringstream stream_time;
+    unordered_map<tuple<int, int>, vector<int>, hash_tuple> loc2Pins;
+    float net_ctrx;
+    float net_ctry;
     
 
 private:
@@ -165,6 +170,12 @@ private:
                             , int degree
                             , unordered_map<tuple<int, int>, vector<int>, hash_tuple>& loc2Pins
                             , int node_cnt);
+    void routeNodePostProcessing(Tree& flutetree
+                            , int degree
+                            , unordered_map<tuple<int, int>, vector<int>, hash_tuple>& loc2Pins
+                            , int node_cnt);
+
+    
     void getLoc2Pins( unordered_map<tuple<int, int>, vector<int>, hash_tuple>& loc2Pins
                     , vector<tuple<int, int>>& pinCenters
                     );

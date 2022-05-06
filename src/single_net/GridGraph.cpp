@@ -217,10 +217,10 @@ void GuideGridGraphBuilder::run(const vector<vector<gr::PointOnLayer>> &mergedPi
     if(debug){
         
         for (const auto& guide : guides) {
-            log() << "lx: " << grDatabase.getCoor(guide[X].low, X)/2000.0 << ", "
-                  << "ly: " << grDatabase.getCoor(guide[Y].low, Y)/2000.0 << ", "
-                  << "hx: " << grDatabase.getCoor(guide[X].high + 1, X)/2000.0 << ", "
-                  << "hy: " << grDatabase.getCoor(guide[Y].high + 1, Y)/2000.0 << ", "
+            log() << "lx: " << grDatabase.getCoor(guide[X].low, X)/database.libDBU << ", "
+                  << "ly: " << grDatabase.getCoor(guide[Y].low, Y)/database.libDBU << ", "
+                  << "hx: " << grDatabase.getCoor(guide[X].high + 1, X)/database.libDBU << ", "
+                  << "hy: " << grDatabase.getCoor(guide[Y].high + 1, Y)/database.libDBU << ", "
                   << "l: " << database.getLayer(guide.layerIdx).name << std::endl;
         }
     }
@@ -235,10 +235,10 @@ void GuideGridGraphBuilder::run(const vector<vector<gr::PointOnLayer>> &mergedPi
     if(debug){
         log() << "slice guiides ..." << std::endl;
         for (const auto& guide : guides) {
-            log() << "lx: " << grDatabase.getCoor(guide[X].low, X)/2000.0 << ", "
-                  << "ly: " << grDatabase.getCoor(guide[Y].low, Y)/2000.0 << ", "
-                  << "hx: " << grDatabase.getCoor(guide[X].high + 1, X)/2000.0 << ", "
-                  << "hy: " << grDatabase.getCoor(guide[Y].high + 1, Y)/2000.0 << ", "
+            log() << "lx: " << grDatabase.getCoor(guide[X].low, X)/database.libDBU << ", "
+                  << "ly: " << grDatabase.getCoor(guide[Y].low, Y)/database.libDBU << ", "
+                  << "hx: " << grDatabase.getCoor(guide[X].high + 1, X)/database.libDBU << ", "
+                  << "hy: " << grDatabase.getCoor(guide[Y].high + 1, Y)/database.libDBU << ", "
                   << "l: " << database.getLayer(guide.layerIdx).name << std::endl;
         }
     }
@@ -268,10 +268,10 @@ void GuideGridGraphBuilder::run(const vector<vector<gr::PointOnLayer>> &mergedPi
                         log() << "l: " << box.layerIdx
                               << ", gridline: " << gridline
                               << ", cp: " << cp << ", "
-                              << "lx: " << grDatabase.getCoor(box[X].low, X)/2000.0 << ", "
-                              << "ly: " << grDatabase.getCoor(box[Y].low, Y)/2000.0 << ", "
-                              << "hx: " << grDatabase.getCoor(box[X].high + 1, X)/2000.0 << ", "
-                              << "hy: " << grDatabase.getCoor(box[Y].high + 1, Y)/2000.0 << ", "
+                              << "lx: " << grDatabase.getCoor(box[X].low, X)/database.libDBU << ", "
+                              << "ly: " << grDatabase.getCoor(box[Y].low, Y)/database.libDBU << ", "
+                              << "hx: " << grDatabase.getCoor(box[X].high + 1, X)/database.libDBU << ", "
+                              << "hy: " << grDatabase.getCoor(box[Y].high + 1, Y)/database.libDBU << ", "
                               << "l: " << database.getLayer(box.layerIdx).name 
                               << std::endl;
                             
@@ -283,10 +283,10 @@ void GuideGridGraphBuilder::run(const vector<vector<gr::PointOnLayer>> &mergedPi
                         log() << "l: " << box.layerIdx
                               << ", gridline: " << cp
                               << ", cp: " << gridline << ", "
-                              << "lx: " << grDatabase.getCoor(box[X].low, X)/2000.0 << ", "
-                              << "ly: " << grDatabase.getCoor(box[Y].low, Y)/2000.0 << ", "
-                              << "hx: " << grDatabase.getCoor(box[X].high + 1, X)/2000.0 << ", "
-                              << "hy: " << grDatabase.getCoor(box[Y].high + 1, Y)/2000.0 << ", "
+                              << "lx: " << grDatabase.getCoor(box[X].low, X)/database.libDBU << ", "
+                              << "ly: " << grDatabase.getCoor(box[Y].low, Y)/database.libDBU << ", "
+                              << "hx: " << grDatabase.getCoor(box[X].high + 1, X)/database.libDBU << ", "
+                              << "hy: " << grDatabase.getCoor(box[Y].high + 1, Y)/database.libDBU << ", "
                               << "l: " << database.getLayer(box.layerIdx).name 
                               << std::endl;
                             

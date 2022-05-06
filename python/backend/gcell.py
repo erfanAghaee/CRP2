@@ -26,7 +26,7 @@ class GCell:
         window = [x*2000 for x in window]
         self.pltWindow(window)
 
-    def getWindow(self,window,plt_obj,color,alpha):
+    def getWindow(self,window,plt_obj):
         if not("gcell" in self.db):
             return
 
@@ -51,10 +51,13 @@ class GCell:
         txts = [ "("+str(xs_txt[i]) +","+ str(ys_txt[i]) + ")" \
             for i in np.arange(len(cell_filter.gcellX.values))]
 
-        plt_obj.run(cell_filter.x.values,cell_filter.y.values,\
-                    cell_filter.w.values,cell_filter.h.values,color,alpha)
+        colors =[(0,1,0) for i in range(len(cell_filter.x.values))]
+        alphas =[0.5 for i in range(len(cell_filter.x.values))]
 
-        plt_obj.drawText(txts,font=72,up=True)
+        plt_obj.run(cell_filter.x.values,cell_filter.y.values,\
+                    cell_filter.w.values,cell_filter.h.values,colors,alphas)
+
+        # plt_obj.drawText(txts,font=72,up=True)
         
         # return surface
 

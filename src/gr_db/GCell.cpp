@@ -83,7 +83,7 @@ void GCellGrid::initV2() {
     grid[0].push_back(database.dieRegion[X].low);
     grid[1].push_back(database.dieRegion[Y].low);
 
-    if (physicalDesign.allPhysicalGCell().empty()) {
+    // if (physicalDesign.allPhysicalGCell().empty()) {
         for (unsigned direction = 0; direction != 2; ++direction) {
              const int lo = database.dieRegion[direction].low-database.origin_offset_die;//+2120
              const int hi = database.dieRegion[direction].high+db::setting.gcellSize;
@@ -103,18 +103,18 @@ void GCellGrid::initV2() {
                  
              }
          }
-    } else {
-        for (const Rsyn::PhysicalGCell &rsynGCell : physicalDesign.allPhysicalGCell()) {
-            const int location = rsynGCell.getLocation();
-            const int step = rsynGCell.getStep();
-            const int numStep = rsynGCell.getNumTracks();
-            const Dimension direction = rsynGCell.getDirection() == Rsyn::PhysicalGCellDirection::VERTICAL ? X : Y;
+    // } else {
+    //     for (const Rsyn::PhysicalGCell &rsynGCell : physicalDesign.allPhysicalGCell()) {
+    //         const int location = rsynGCell.getLocation();
+    //         const int step = rsynGCell.getStep();
+    //         const int numStep = rsynGCell.getNumTracks();
+    //         const Dimension direction = rsynGCell.getDirection() == Rsyn::PhysicalGCellDirection::VERTICAL ? X : Y;
 
-            for (int i = 1; i < numStep; ++i) {
-                grid[direction].push_back(location + step * i);
-            }
-        }
-    }
+    //         for (int i = 1; i < numStep; ++i) {
+    //             grid[direction].push_back(location + step * i);
+    //         }
+    //     }
+    // }
 
     for (unsigned direction = 0; direction != 2; ++direction) {
         sort(grid[direction].begin(), grid[direction].end());
@@ -214,14 +214,14 @@ void GCellGrid::printGrid() const {
     for(int i = 0; i < grid[X].size(); i++){
         log() << "i: " << i 
               << ", gridx: "  << grid[X][i] 
-              << ", coord: " << getX(i)/2000.0 << std::endl;
+              << ", coord: " << getX(i)/database.libDBU << std::endl;
     }
 
     log() << "gridY" << std::endl;
     for(int i = 0; i < grid[Y].size(); i++){
         log() << "j: " << i 
               << ", gridy: "  << grid[Y][i] 
-              << ", coord: " << getY(i)/2000.0 << std::endl;
+              << ", coord: " << getY(i)/database.libDBU << std::endl;
     }
 }
 

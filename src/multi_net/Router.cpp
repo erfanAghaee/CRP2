@@ -222,14 +222,14 @@ void Router::run() {
     allNetStatus.resize(database.nets.size(), db::RouteStatus::FAIL_UNPROCESSED);
     // utils::timer profile_time;
     // std::stringstream profile_time_str;
+    // logAll();
+    // return;
     
     
     // it is used to route specific nets
     filterNets();
 
-    // database.logDie();
-    // database.logLayers();
-    // grDatabase.logGCellGrid();
+
     // return;
 
     // if(!db::setting.refinePlacement){
@@ -575,10 +575,10 @@ void Router::run() {
 
 //             //         DBUxy violation_pt((lx+hx)/2.0,(ly+hy)/2.0);
 
-//             //         log() << "lx: "   << double(lx)/2000.0
-//             //                 << ", ly: " << double(ly)/2000.0
-//             //                 << ", hx: " << double(hx)/2000.0
-//             //                 << ", hy: " << double(hy)/2000.0 << std::endl;           
+//             //         log() << "lx: "   << double(lx)/database.libDBU
+//             //                 << ", ly: " << double(ly)/database.libDBU
+//             //                 << ", hx: " << double(hx)/database.libDBU
+//             //                 << ", hy: " << double(hy)/database.libDBU << std::endl;           
 
 //             //         // log() << "edge: " << edge <<", dir: " << dir << std::endl;
 //             //     }
@@ -691,10 +691,10 @@ void Router::run() {
 //                 << ", grBox_hx: "  << grBox_hx
 //                 << ", grBox_hy: "  << grBox_hy << std::endl;
 
-//             log() << "getCoor(grBox_lx, X): "<< double(grDatabase.getCoor(grBox_lx, X))/2000.0 << std::endl;
-//             log() << "getCoor(grBox_ly, Y): "<< double(grDatabase.getCoor(grBox_ly, Y))/2000.0 << std::endl;
-//             log() << "getCoor(grBox_hx, X): "<< double(grDatabase.getCoor(grBox_hx+1, X))/2000.0 << std::endl;
-//             log() << "getCoor(grBox_hy, Y): "<< double(grDatabase.getCoor(grBox_hy+1, Y))/2000.0 << std::endl;  
+//             log() << "getCoor(grBox_lx, X): "<< double(grDatabase.getCoor(grBox_lx, X))/database.libDBU << std::endl;
+//             log() << "getCoor(grBox_ly, Y): "<< double(grDatabase.getCoor(grBox_ly, Y))/database.libDBU << std::endl;
+//             log() << "getCoor(grBox_hx, X): "<< double(grDatabase.getCoor(grBox_hx+1, X))/database.libDBU << std::endl;
+//             log() << "getCoor(grBox_hy, Y): "<< double(grDatabase.getCoor(grBox_hy+1, Y))/database.libDBU << std::endl;  
 
 //             utils::BoxT<DBU> penalty_box(grDatabase.getCoor(grBox_lx, X)
 //                                 , grDatabase.getCoor(grBox_ly, Y)
@@ -1124,8 +1124,14 @@ void Router::fluteAllAndRoute(const vector<int>& netsToRoute) {
 
     for (int i = 0; i < db::setting.edgeShiftingIter; i++) {
         grDatabase.edge_shifted = 0;
-        for (auto& router : initRouters)
-            if (router.grNet.needToRoute()) router.edge_shift2d(router.getRouteNodes());
+        for (auto& router : initRouters){
+            if(db::setting.escapeRouteBlockage){
+                if (router.grNet.needToRoute()) router.edge_shift2d_blockage(router.getRouteNodes());
+            }else{
+                if (router.grNet.needToRoute()) router.edge_shift2d(router.getRouteNodes());
+            }
+        }
+            
         if(db::setting.debug){
             log() << "Total Number of edges in Iter " << i << " : " << grDatabase.tot_edge
                 << ". Edge Shifted: " << grDatabase.edge_shifted << "("
@@ -1215,20 +1221,20 @@ void Router::sortNets(vector<int>& netsToRoute) {
 }
 
 void Router::getNetsToRoute(vector<int>& netsToRoute,int iter) {
-    if (iter == 0) {
+    // if (iter == 0) {
         for (auto& net : grDatabase.nets) {
-            // if(filter_nets.size() != 0){
-            //     if(filter_nets.find(net.dbNet.idx) != filter_nets.end())
-            //         netsToRoute.push_back(net.dbNet.idx);   
-            // }
-            // else{
+            if(filter_nets.size() != 0){
+                if(filter_nets.find(net.dbNet.idx) != filter_nets.end())
+                    netsToRoute.push_back(net.dbNet.idx);   
+            }
+            else{
                 netsToRoute.push_back(net.dbNet.idx);   
-            // }
+            }
         } 
-    } else {
-        for (auto& net : grDatabase.nets)
-            if (grDatabase.hasVio(net)) netsToRoute.push_back(net.dbNet.idx);
-    }
+    // } else {
+    //     for (auto& net : grDatabase.nets)
+    //         if (grDatabase.hasVio(net)) netsToRoute.push_back(net.dbNet.idx);
+    // }
 }//end getNetsToRoute
 
 void Router::printStat() {
@@ -1487,16 +1493,16 @@ void Router::gridMapReport(){
                 //       << ", cp: " << cp
                 //       << ", e.lGrP: " << tempEdge.lowerGrPoint()
                 //       << ", e.uGrP: " << tempEdge.upperGrPoint()
-                //       << ", e.lx: " << grDatabase.getCoor(tempEdge.lowerGrPoint().x, X)/2000.0
-                //       << ", e.ly: " << grDatabase.getCoor(tempEdge.lowerGrPoint().y, Y)/2000.0
-                //       << ", e.hx: " << grDatabase.getCoor(tempEdge.upperGrPoint().x+1, X)/2000.0
-                //       << ", e.hy: " << grDatabase.getCoor(tempEdge.upperGrPoint().y+1, Y)/2000.0
+                //       << ", e.lx: " << grDatabase.getCoor(tempEdge.lowerGrPoint().x, X)/database.libDBU
+                //       << ", e.ly: " << grDatabase.getCoor(tempEdge.lowerGrPoint().y, Y)/database.libDBU
+                //       << ", e.hx: " << grDatabase.getCoor(tempEdge.upperGrPoint().x+1, X)/database.libDBU
+                //       << ", e.hy: " << grDatabase.getCoor(tempEdge.upperGrPoint().y+1, Y)/database.libDBU
                 //       << std::endl;
 
-                auto elx = grDatabase.getCoor(tempEdge.lowerGrPoint().x, X)/2000.0;
-                auto ely = grDatabase.getCoor(tempEdge.lowerGrPoint().y, Y)/2000.0;
-                auto ehx = grDatabase.getCoor(tempEdge.upperGrPoint().x+1, X)/2000.0;
-                auto ehy = grDatabase.getCoor(tempEdge.upperGrPoint().y+1, Y)/2000.0;
+                auto elx = grDatabase.getCoor(tempEdge.lowerGrPoint().x, X)/database.libDBU;
+                auto ely = grDatabase.getCoor(tempEdge.lowerGrPoint().y, Y)/database.libDBU;
+                auto ehx = grDatabase.getCoor(tempEdge.upperGrPoint().x+1, X)/database.libDBU;
+                auto ehy = grDatabase.getCoor(tempEdge.upperGrPoint().y+1, Y)/database.libDBU;
 
 
                 ss << std::to_string(layerIdx)
@@ -1573,11 +1579,17 @@ void Router::visualiseCircuit(){
 void Router::logAll(){
     if(db::setting.logAll){
         log() << "log nets/cells/vio/congestion ..." << std::endl;
+        if(log_iter == 0){
+            database.logDie();
+            database.logLayers();
+            grDatabase.logGCellGrid();
+        }
+        
         database.logCellLocations(log_iter);
         database.logFixedMetals(log_iter);
         grDatabase.logNets(log_iter);
         grDatabase.logVio(log_iter);
-        grDatabase.logCongestion(log_iter);
+        // grDatabase.logCongestion(log_iter);
         grDatabase.logCoef(log_iter);
         database.logPatternRoute(log_iter);
         database.logAstar(log_iter);

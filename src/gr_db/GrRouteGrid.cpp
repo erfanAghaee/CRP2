@@ -12,8 +12,8 @@ void GrRouteGrid::init() {
     histWireUsageMap.resize(numLayers);
     routedViaMap.resize(numLayers);
 
-    // GCellGrid::initV2();
-    GCellGrid::init();
+    GCellGrid::initV2();
+    // GCellGrid::init();
 
     for (int l = 0; l < numLayers; l++) {
         auto dir = database.getLayerDir(l);
@@ -614,10 +614,10 @@ double GrRouteGrid::printAllVio() const {
 
     //             // if(overflow>0){
     //             //     GrEdge tempEdge(layerIdx,gridline,cp);         
-    //             //     auto lx = getCoorIntvl(tempEdge.u,X).low/2000.0;//getCoor(tempEdge.lowerGrPoint().x, X)/2000.0;
-    //             //     auto ly = getCoorIntvl(tempEdge.u,Y).low/2000.0;//getCoor(tempEdge.lowerGrPoint().y, Y)/2000.0;
-    //             //     auto hx = getCoorIntvl(tempEdge.v,X).high/2000.0;//getCoor(tempEdge.upperGrPoint().x+1, X)/2000.0;
-    //             //     auto hy = getCoorIntvl(tempEdge.v,Y).high/2000.0;//getCoor(tempEdge.upperGrPoint().y+1, Y)/2000.0;
+    //             //     auto lx = getCoorIntvl(tempEdge.u,X).low/database.libDBU;//getCoor(tempEdge.lowerGrPoint().x, X)/database.libDBU;
+    //             //     auto ly = getCoorIntvl(tempEdge.u,Y).low/database.libDBU;//getCoor(tempEdge.lowerGrPoint().y, Y)/database.libDBU;
+    //             //     auto hx = getCoorIntvl(tempEdge.v,X).high/database.libDBU;//getCoor(tempEdge.upperGrPoint().x+1, X)/database.libDBU;
+    //             //     auto hy = getCoorIntvl(tempEdge.v,Y).high/database.libDBU;//getCoor(tempEdge.upperGrPoint().y+1, Y)/database.libDBU;
 
     //             //     log() << "vio layer: " << layerIdx
     //             //           << ", dir: " << dir
