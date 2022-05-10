@@ -128,6 +128,7 @@ public:
 
     DBU getHPWL(){return feature_.hpwl_;}
 
+    RouteType routeType;
 private:
     void initPinAccessBoxes(const GCellGrid& gcellGrid);
     void updatePinAccessBoxes(const GCellGrid& gcellGrid);

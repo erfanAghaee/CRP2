@@ -99,7 +99,7 @@ def mainAnimation(args):
 
 
                     window = [
-                            die_df["die_xl"].values[0]
+                          die_df["die_xl"].values[0]
                         , die_df["die_yl"].values[0]
                         , die_df["die_xh"].values[0]
                         , die_df["die_yh"].values[0]
@@ -422,7 +422,72 @@ def debugCUGRISPD2019Test5(args):
     # print("oftv(off track via insertion):",oftv)
     # print("shortArea: ",short)
     # print("# MinArea: ",minArea)
+def debugGCELL(args):
+    # specific_net = "net60637"
+    specific_net ="n_5371"
+    # specific_net =  "n_5371"
+    cell_name = "inst8879"
 
+
+    # iteration of gr
+    print(args.dir,args.bench)
+    
+            
+    db = getDB(args,iter_gr=4,iter_dr=0)
+
+            
+                
+
+            
+
+    die_df = db["die"]
+    fixedMetals_obj = FixedMetals(db)
+    cell_obj = Cell(db,"cell")
+    net_obj = Net(db,"net")
+    net_DRGuide_obj = Net(db,"netDRGuide")
+            
+    gcell_obj = GCell(db)
+
+    # window = [
+    #     112*1000,
+    #     900*1000,
+    #     125*1000,
+    #     908*1000
+    # ]
+
+    window = [
+            die_df["die_xl"].values[0]-6000
+        , die_df["die_yl"].values[0]-6000
+        , die_df["die_xh"].values[0]+6000
+        , die_df["die_yh"].values[0]+6000
+    ]
+
+
+    plt_obj = PltCairo()
+    surface = plt_obj.init(window)
+    
+
+    cell_obj.getWindow(window,plt_obj,text=False)
+    fixedMetals_obj.getWindow(window,plt_obj)
+    # gcell_obj.getWindow(window,plt_obj,l=0)
+    # net_obj.getWindow(window,plt_obj,net_name=specific_net)
+    # net_DRGuide_obj.getWindow(window,plt_obj,net_name=specific_net)
+    
+            
+                    # drc_obj.getWindow(window,plt_obj,l=l)
+                    # # # net_DRGuide_obj.getWindow(window,plt_obj,(0.8,0.1,0.1),0.8,net_name=specific_net)
+                    # drnet_obj.getWindow(window,plt_obj,l=l)
+                    # congestion_obj.getWindow(window,plt_obj,l=l,text=True)
+                    # patternroute_obj.getWindow(window,plt_obj,(0,1,0),0.5,net_name=specific_net,l=l)
+                    # gcell_obj.getWindow(window,plt_obj,(1,0,0),0.001)
+                    # score_obj.getWindow(window,plt_obj,(1,0,0),1,net_name=specific_net,l=l)
+                    
+                
+
+    surface.write_to_png(args.dir+ "imgs/GCELL.png")
+
+
+    
 
 def drawBenchmarks(args):
     # specific_net = "net60637"

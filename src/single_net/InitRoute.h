@@ -125,6 +125,7 @@ public:
         grNet.gridTopo.clear();
         debug = false;
         relax = relax_m;
+        routeType = SIMPLE;
         // if(grNet.getName() == "net1233") debug = false;
     }
 
@@ -136,6 +137,7 @@ public:
     void edge_shift2d(std::map<int, RouteNode> &routeNodes);
     // try to avoid blockage
     void edge_shift2d_blockage(std::map<int, RouteNode> &routeNodes);
+    void extractFeature(std::map<int, RouteNode> &routeNodes);
     void getRoutingOrder();
     void addUsage2D(RouteNode &u, RouteNode &v, double usage = 1);
     void removeUsage2D(RouteNode &u, RouteNode &v, double usage = 1);
@@ -151,6 +153,8 @@ public:
     unordered_map<tuple<int, int>, vector<int>, hash_tuple> loc2Pins;
     float net_ctrx;
     float net_ctry;
+
+    RouteType routeType;
     
 
 private:

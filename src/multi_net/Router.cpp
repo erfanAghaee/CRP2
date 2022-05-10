@@ -220,34 +220,68 @@ Router::Router() {
 
 void Router::run() {
     allNetStatus.resize(database.nets.size(), db::RouteStatus::FAIL_UNPROCESSED);
-    // utils::timer profile_time;
-    // std::stringstream profile_time_str;
+    utils::timer profile_time;
+    std::stringstream profile_time_str;
     // logAll();
     // return;
+    
     
     
     // it is used to route specific nets
     filterNets();
 
+    vector<int> netsToRoute;
+    getNetsToRoute(netsToRoute,0);
+    netFeatureExtraction2D(netsToRoute);
+    
 
     // return;
 
-    // if(!db::setting.refinePlacement){
+    if(!db::setting.refinePlacement){
+        
+    // ripupRerouteCUGR(netsToRoute); 
+        ripupRerouteCRP(netsToRoute); 
+    
+    }else{
         vector<int> netsToRoute;
-        ripupReroute(netsToRoute); 
-    // }else{
-    //     vector<int> netsToRoute;
-    //     ripupReroute(netsToRoute);
-    //     netsToRoute.clear();
-    //     for(int i = 0; i < db::setting.numRefinePlacement; i++){
-    //         applyPlacement(netsToRoute,i, profile_time, profile_time_str);
-    //         // route(netsToRoute,PATTERNROUTE);
-    //         route(netsToRoute,ASTAR);
-    //         netsToRoute.clear();
-    //         logAll();
-    //     }//end refinePlacement loop
+        vector<int> netsToRouteByPatternRoute;
+        vector<int> netsToRouteByAStar;
+        // ripupReroute(netsToRoute);
+        ripupRerouteCRP(netsToRoute); 
+        netsToRoute.clear();
+        for(int i = 0; i < db::setting.numRefinePlacement; i++){
+            applyPlacement(netsToRoute,i, profile_time, profile_time_str);
+            // route(netsToRoute,PATTERNROUTE);
+            // route(netsToRoute,ASTAR);
 
-    // }//end refinePlacement
+            // need to select right router 
+            classifyNets(netsToRoute, netsToRouteByPatternRoute, netsToRouteByAStar );
+        
+            // if(filter_routers[iter] == "patternroute" && filter_routers_applys[iter] =="1"){
+            // route by patternRoute
+            ripup(netsToRoute);
+            congMap.init(cellWidth, cellHeight);
+            routeApprx(netsToRouteByPatternRoute, PATTERNROUTE);
+        
+            updateRouteTable(); 
+            printStat();
+            logAll();        
+
+        // }
+            // if(filter_routers[iter] == "astar" && filter_routers_applys[iter] =="1" ) {
+            // route by Astar
+            // ripup(netsToRouteByAStar);
+            congMap.init(cellWidth, cellHeight);
+            routeApprx(netsToRouteByAStar, ASTAR);
+            updateRouteTable(); 
+            printStat();
+            logAll();
+
+            netsToRoute.clear();
+            logAll();
+        }//end refinePlacement loop
+
+    }//end refinePlacement
 
 
     // postprocessing
@@ -271,6 +305,8 @@ void Router::run() {
             log() << "end postProcessing..." << std::endl;
         }
     }
+
+    logAll();
 
     
  
@@ -856,7 +892,7 @@ void Router::applyPlacement(vector<int>& netsToRoute,int iter_t,utils::timer& pr
 //     }
 // }// end applyOnlyRoute
 
-void Router::ripupReroute(vector<int>& netsToRoute){
+void Router::ripupRerouteCUGR(vector<int>& netsToRoute){
     bool debug = false;
     utils::timer profile_time;
     std::stringstream profile_time_str;
@@ -952,6 +988,113 @@ void Router::ripupReroute(vector<int>& netsToRoute){
         // break;       
     }
 }// end applyOnlyRoute
+
+
+
+
+void Router::ripupRerouteCRP(vector<int>& netsToRoute){
+    bool debug = false;
+    utils::timer profile_time;
+    std::stringstream profile_time_str;
+    
+
+    // injectCongestion();
+    for (int iter = 0; iter < db::setting.rrrIterLimit; iter++) {        
+    // for (int iter = 0; iter < 1; iter++) {        
+        std::vector<int> netsToRoute;
+        std::vector<int> netsToRouteByPatternRoute;
+        std::vector<int> netsToRouteByAStar;
+
+        printRouteStart("routing",iter);
+        routeStateClear();
+        getNetsToRoute(netsToRoute,iter);
+        // sortNets(netsToRoute);  // Note: only effective when doing mazeroute sequentially
+        updateCost(iter);
+
+        classifyNets(netsToRoute, netsToRouteByPatternRoute, netsToRouteByAStar );
+        
+        // if(filter_routers[iter] == "patternroute" && filter_routers_applys[iter] =="1"){
+        // route by patternRoute
+        ripup(netsToRoute);
+        congMap.init(cellWidth, cellHeight);
+        routeApprx(netsToRouteByPatternRoute, PATTERNROUTE);
+        
+        updateRouteTable(); 
+        printStat();
+        logAll();        
+
+        // }
+        // if(filter_routers[iter] == "astar" && filter_routers_applys[iter] =="1" ) {
+        // route by Astar
+        ripup(netsToRouteByAStar);
+        congMap.init(cellWidth, cellHeight);
+        routeApprx(netsToRouteByAStar, ASTAR);
+        updateRouteTable(); 
+        printStat();
+        logAll();
+        // }
+
+       
+            
+
+        printRouteEnd("routing",iter);
+
+        
+
+        break;       
+    }
+    // return;
+
+
+
+    for (int iter = 1; iter < db::setting.rrrIterLimit; iter++) {        
+    // for (int iter = 0; iter < 1; iter++) {        
+        std::vector<int> netsToRoute;
+
+        printRouteStart("routing",iter);
+        routeStateClear();
+        getNetsToRoute(netsToRoute,iter);
+        sortNets(netsToRoute);  // Note: only effective when doing mazeroute sequentially
+        updateCost(iter);
+
+        // classifyNets(netsToRoute, netsToRouteByPatternRoute, netsToRouteByAStar );
+        
+        // if(filter_routers[iter] == "patternroute" && filter_routers_applys[iter] =="1"){
+        // route by patternRoute
+        // ripup(netsToRoute);
+        // congMap.init(cellWidth, cellHeight);
+        // routeApprx(netsToRouteByPatternRoute, PATTERNROUTE);
+        
+        // updateRouteTable(); 
+        // printStat();
+        // logAll();        
+
+        // }
+        // if(filter_routers[iter] == "astar" && filter_routers_applys[iter] =="1" ) {
+        // route by Astar
+        ripup(netsToRoute);
+        congMap.init(cellWidth, cellHeight);
+        routeApprx(netsToRoute, ASTAR);
+        updateRouteTable(); 
+        printStat();
+        logAll();
+    }
+
+       
+            
+
+    //     printRouteEnd("routing",iter);
+
+        
+
+         
+    // }
+
+}// end applyOnlyRoute
+
+
+
+
 
 void Router::route(const vector<int>& netsToRoute, RouterName routerName){
     log() << "route ..." << std::endl;
@@ -1220,8 +1363,23 @@ void Router::sortNets(vector<int>& netsToRoute) {
     });
 }
 
+
+void Router::classifyNets(vector<int>& netsToRoute, vector<int>& netsToRouteByPatternRoute, vector<int>& netsToRouteByAStar ) {
+    for(auto idx : netsToRoute){
+        if(grDatabase.nets[idx].routeType == SIMPLE){
+            netsToRouteByPatternRoute.push_back(idx);
+        }else if(grDatabase.nets[idx].routeType == COMPLEX){
+            netsToRouteByAStar.push_back(idx);
+        }
+    }
+
+    sortNets(netsToRouteByPatternRoute);
+    sortNets(netsToRouteByAStar);
+
+}//end classifyNets
+
 void Router::getNetsToRoute(vector<int>& netsToRoute,int iter) {
-    // if (iter == 0) {
+    if (iter == 0) {
         for (auto& net : grDatabase.nets) {
             if(filter_nets.size() != 0){
                 if(filter_nets.find(net.dbNet.idx) != filter_nets.end())
@@ -1231,10 +1389,10 @@ void Router::getNetsToRoute(vector<int>& netsToRoute,int iter) {
                 netsToRoute.push_back(net.dbNet.idx);   
             }
         } 
-    // } else {
-    //     for (auto& net : grDatabase.nets)
-    //         if (grDatabase.hasVio(net)) netsToRoute.push_back(net.dbNet.idx);
-    // }
+    } else {
+        for (auto& net : grDatabase.nets)
+            if (grDatabase.hasVio(net)) netsToRoute.push_back(net.dbNet.idx);
+    }
 }//end getNetsToRoute
 
 void Router::printStat() {
@@ -1654,3 +1812,44 @@ void Router::injectCongestion(){
     
 
 }//end fakeViolationGenerator
+
+
+void Router::netFeatureExtraction2D(vector<int>& netsToRoute){
+    vector<SingleNetRouter> routers;
+    vector<InitRoute> initRouters;
+    routers.reserve(netsToRoute.size());
+    initRouters.reserve(netsToRoute.size());
+
+    grDatabase.init2DMaps(grDatabase);
+
+    for (auto id : netsToRoute) routers.emplace_back(grDatabase.nets[id]);
+    for (auto id : netsToRoute) initRouters.emplace_back(grDatabase.nets[id]);
+    
+
+    runJobsMT(initRouters.size(), [&](int i) { initRouters[i].plan_fluteOnly(); });
+    runJobsMT(initRouters.size(), [&](int i) { initRouters[i].extractFeature(initRouters[i].getRouteNodes()); });
+           
+    
+    
+    int i = 0; 
+    int j = 0;
+    for(auto& router: initRouters){
+        if(router.routeType==SIMPLE){
+            i++;
+            router.grNet.routeType = SIMPLE;
+        }else if(router.routeType==COMPLEX){
+            j++;
+            router.grNet.routeType = COMPLEX;
+        }
+    }
+    log() << "Total: " << netsToRoute.size() 
+          << ", SIMPLE: " << i 
+          << ", COMPLEX: " << j 
+          << std::endl;
+
+
+    
+    
+            
+
+}//end netFeatureExtraction2D

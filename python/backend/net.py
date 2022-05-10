@@ -29,6 +29,8 @@ class Net:
         net_df = db[self.type]
         args = db["args"]
 
+        
+
         # net_filter = net_df.loc[net_df.apply(lambda row: getIntervals(row.xl,row.xh,window[XL],window[XH]),axis=1)]
         # net_filter = net_filter.loc[net_filter.apply(lambda row: getIntervals(row.yl,row.yh,window[YL],window[YH]),axis=1)]
         
@@ -43,7 +45,7 @@ class Net:
         if (l != -1):
             net_filter = net_filter.loc[net_filter.l == l]
 
-
+        
 
         xls = net_filter.xl.values
         yls = net_filter.yl.values
@@ -68,5 +70,11 @@ class Net:
             alphas =[1 for i in range(len(xls))]
             plt_obj.run(net_filter.xl.values,net_filter.yl.values,\
                         ws,hs,colors,alphas)
+        elif(self.type =="netDRGuide"):
+            colors =[(1,0,0) for i in range(len(xls))]
+            alphas =[0.5 for i in range(len(xls))]
+            plt_obj.run(net_filter.xl.values,net_filter.yl.values,\
+                        ws,hs,colors,alphas)
+
 
         

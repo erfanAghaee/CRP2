@@ -34,7 +34,7 @@ void GCellGrid::init() {
             const int step = rsynGCell.getStep();
             const int numStep = rsynGCell.getNumTracks();
             const Dimension direction = rsynGCell.getDirection() == Rsyn::PhysicalGCellDirection::VERTICAL ? X : Y;
-
+            log() << "step: " << step << std::endl;
             for (int i = 1; i < numStep; ++i) {
                 grid[direction].push_back(location + step * i);
             }

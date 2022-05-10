@@ -31,63 +31,196 @@ void GuideGenerator::genConnGuides() {
 }
 
 void GuideGenerator::patchPinRegions() {
+
+    bool debug = false;
+    if(grNet.getName() == "n_5371"){
+        debug = true;
+    }
+
     double patchThresh = 2.0;
     // bool patchPinRegionsMode=true;// 0 is default mode and 1 is advanced mode
     // check if the region allows patching
     auto needPatch = [&](gr::GrPoint point) { return grDatabase.getCellResource(point) < patchThresh; };
     // get surrounding gcells of a point (normally 3 x 3, but will be different at boudary)
+    // auto getSurrounding = [&](gr::GrPoint point) {
+    //     gr::GrBoxOnLayer box;
+    //     box.layerIdx = point.layerIdx;
+    //     box.x.low = max(point.x - 1, 0);
+    //     box.y.low = max(point.y - 1, 0);
+    //     box.x.high = min(point.x + 1, grDatabase.getNumGrPoint(X) - 1);
+    //     box.y.high = min(point.y + 1, grDatabase.getNumGrPoint(Y) - 1);
+
+    //     return box;
+    // };
+    
     auto getSurrounding = [&](gr::GrPoint point) {
         gr::GrBoxOnLayer box;
+        
+        // bool isCrossBlock=false;
         box.layerIdx = point.layerIdx;
-        box.x.low = max(point.x - 1, 0);
-        box.y.low = max(point.y - 1, 0);
-        box.x.high = min(point.x + 1, grDatabase.getNumGrPoint(X) - 1);
-        box.y.high = min(point.y + 1, grDatabase.getNumGrPoint(Y) - 1);
+        box.x.low = max(point.x -1, 0);
+        box.y.low = max(point.y -1, 0);
+        box.x.high = min(point.x+1, grDatabase.getNumGrPoint(X) - 1);
+        box.y.high = min(point.y+1, grDatabase.getNumGrPoint(Y) - 1);
+
+
+        // log() << "box: " << box << std::endl;
+        // for(int i = box.x.low; i < box.x.high; i++){
+        //     for(int j = box.y.low; j < box.y.high; j++){
+        //         log() << "i: " << i << ", j: " << j << std::endl;
+        //         auto xl = grDatabase.getCoor(i , X);
+        //         auto yl = grDatabase.getCoor(j , Y);
+        //         auto xh = grDatabase.getCoor(i+1 , X);
+        //         auto yh = grDatabase.getCoor(j+1 , Y);
+        //         gr::GrBoxOnLayer box_noblockage(xl,yl,xh,yh);
+        //         auto results = database.queryBlockageRTree(box_noblockage,eps);
+        //         if(results.size() > 0){
+        //             isCrossBlock=true;
+        //             break;
+        //         }
+
+
+        //     }//end loop j
+        // }//end loop i
+
+        // if(isCrossBlock){
+        //     box.x.low = max(point.x - 1 , 0);
+        //     box.y.low = max(point.y - 1, 0);
+        //     box.x.high = min(point.x + 1, grDatabase.getNumGrPoint(X) - 1);
+        //     box.y.high = min(point.y + 1, grDatabase.getNumGrPoint(Y) - 1);
+        // }else{
+        //     box.x.low = max(point.x - 1 , 0);
+        //     box.y.low = max(point.y - 1, 0);
+        //     box.x.high = min(point.x + 1, grDatabase.getNumGrPoint(X) - 1);
+        //     box.y.high = min(point.y + 1, grDatabase.getNumGrPoint(Y) - 1);
+        // }
+
+        
+
+        // auto xl = grDatabase.getCoor(box.x.low , X);
+        // auto yl = grDatabase.getCoor(box.y.low , Y);
+        // auto xh = grDatabase.getCoor(box.x.high , X);
+        // auto yh = grDatabase.getCoor(box.y.high , Y);
+        // auto xl = grDatabase.getCoor(guide[Y].low, Y);
+        // auto xl = grDatabase.getCoor(guide[X].high + 1, X);
+        // auto xl = grDatabase.getCoor(guide[Y].high + 1, Y);
+
         return box;
     };
 
-    if(!db::setting.patchPinRegionsMode){
-        for (auto &pbxs : grNet.pinAccessBoxes) {
+    // check if pin access point is in upper layers 
+    // avoid generating patch. This is designed to solve
+    // not meet guide in detailed routing is ispd19_test5
+    auto checkValidPatching = [&](gr::GrNet& grNet) {
+        // bool isValid = true;
+        for (auto &pbxs : grNet.pinAccessBoxes){
             for (auto &pbx : pbxs) {
-                bool patched = false;
-                // patch upper two layers
-                if (pbx.layerIdx < database.getLayerNum() - 2) {
-                    guideGenStat.pinRegionPatchCand++;
-                    auto bxPlus1 = gr::GrPoint(pbx.layerIdx + 1, pbx.x, pbx.y);
-                    auto bxPlus2 = gr::GrPoint(pbx.layerIdx + 2, pbx.x, pbx.y);
-                    if (needPatch(bxPlus1) || needPatch(bxPlus2)) {
-                        patched = true;
-                        guideGenStat.pinRegionPatchNum++;
-                        grNet.patchRouteGuides.emplace_back(getSurrounding(bxPlus1));
-                        grNet.patchRouteGuides.emplace_back(getSurrounding(bxPlus2));
-                    } else {
-                        grNet.patchRouteGuides.emplace_back(gr::GrBoxOnLayer(bxPlus1.layerIdx, {pbx.x}, {pbx.y}));
-                        grNet.patchRouteGuides.emplace_back(gr::GrBoxOnLayer(bxPlus2.layerIdx, {pbx.x}, {pbx.y}));
-                    }
+                if(pbx.layerIdx >= 1){
+                    return false;
                 }
-                // patch lower two layers
-                if (pbx.layerIdx > 1) {
-                    guideGenStat.pinRegionPatchCand++;
-                    auto bxMinus1 = gr::GrPoint(pbx.layerIdx - 1, pbx.x, pbx.y);
-                    auto bxMinus2 = gr::GrPoint(pbx.layerIdx - 2, pbx.x, pbx.y);
-                    if (needPatch(bxMinus1) || needPatch(bxMinus2)) {
-                        patched = true;
-                        guideGenStat.pinRegionPatchNum++;
-                        grNet.patchRouteGuides.emplace_back(getSurrounding(bxMinus1));
-                        grNet.patchRouteGuides.emplace_back(getSurrounding(bxMinus2));
-                    } else {
-                        grNet.patchRouteGuides.emplace_back(gr::GrBoxOnLayer(bxMinus1.layerIdx, {pbx.x}, {pbx.y}));
-                        grNet.patchRouteGuides.emplace_back(gr::GrBoxOnLayer(bxMinus2.layerIdx, {pbx.x}, {pbx.y}));
+            }//end loop 
+        }//end loop
+        return true;
+    };
+
+    if(!db::setting.patchPinRegionsMode){
+        bool isValidPatch = true;
+        isValidPatch = checkValidPatching(grNet);
+        if(isValidPatch){
+            for (auto &pbxs : grNet.pinAccessBoxes) {
+                for (auto &pbx : pbxs) {
+                    bool patched = false;
+                    // // check if pbx is covered inside blockage
+                    // auto boxTmpGR = gr::GrBoxOnLayer(pbx.layerIdx, {pbx.x}, {pbx.y});
+                    // auto xl = grDatabase.getCoor(boxTmpGR[X].low, X);
+                    // auto yl = grDatabase.getCoor(boxTmpGR[Y].low, Y);
+                    // auto xh = grDatabase.getCoor(boxTmpGR[X].high+1, X);
+                    // auto yh = grDatabase.getCoor(boxTmpGR[Y].high+1, Y);
+                    // utils::BoxT<DBU> boxTmp(xl,yl,xh,yh); 
+                    // if(debug){
+                    //     log() << "pbx: " << pbx << std::endl;
+                    //     log() << "accesspt: " << boxTmp << std::endl;
+                    // }
+                    // DBU eps = 10;
+                    // auto results = database.queryBlockageRTree(boxTmp,eps);
+                    // bool isInsideBlockage = false;
+                    // for(auto result : results){
+                    //     if(debug){
+                    //         log() << "res: " << result << std::endl;
+                    //     }
+                        
+                    //     if(boxTmp.isInside(result)){
+                    //         if(debug){
+                    //             log() << "is inside"<< std::endl;
+                    //         }
+                    //         isInsideBlockage = true;
+                    //         break;
+                            
+                    //     }
+                    // }
+                    // if(isInsideBlockage || (pbx.layerIdx >= 1)){
+                    //     continue;
+                    // }
+                    
+
+
+
+
+                    // patch upper two layers
+                    if (pbx.layerIdx < database.getLayerNum() - 2) {
+                        guideGenStat.pinRegionPatchCand++;
+                        auto bxPlus1 = gr::GrPoint(pbx.layerIdx + 1, pbx.x, pbx.y);
+                        auto bxPlus2 = gr::GrPoint(pbx.layerIdx + 2, pbx.x, pbx.y);
+                        if (needPatch(bxPlus1) || needPatch(bxPlus2)) {
+                            patched = true;
+                            guideGenStat.pinRegionPatchNum++;
+                            grNet.patchRouteGuides.emplace_back(getSurrounding(bxPlus1));
+                            grNet.patchRouteGuides.emplace_back(getSurrounding(bxPlus2));
+                        } else {
+                            grNet.patchRouteGuides.emplace_back(gr::GrBoxOnLayer(bxPlus1.layerIdx, {pbx.x}, {pbx.y}));
+                            grNet.patchRouteGuides.emplace_back(gr::GrBoxOnLayer(bxPlus2.layerIdx, {pbx.x}, {pbx.y}));
+                        }
                     }
-                }
-                // patch original layer
-                if (patched) {
-                    grNet.patchRouteGuides.emplace_back(getSurrounding(pbx));
-                } else {
-                    grNet.patchRouteGuides.emplace_back(gr::GrBoxOnLayer(pbx.layerIdx, {pbx.x}, {pbx.y}));
+                    // patch lower two layers
+                    if (pbx.layerIdx > 1) {
+                        guideGenStat.pinRegionPatchCand++;
+                        auto bxMinus1 = gr::GrPoint(pbx.layerIdx - 1, pbx.x, pbx.y);
+                        auto bxMinus2 = gr::GrPoint(pbx.layerIdx - 2, pbx.x, pbx.y);
+                        if (needPatch(bxMinus1) || needPatch(bxMinus2)) {
+                            patched = true;
+                            guideGenStat.pinRegionPatchNum++;
+                            grNet.patchRouteGuides.emplace_back(getSurrounding(bxMinus1));
+                            grNet.patchRouteGuides.emplace_back(getSurrounding(bxMinus2));
+                            if(debug){
+                                log() << "surronding bxMinus1: " << getSurrounding(bxMinus1) << std::endl;
+                                log() << "surronding bxMinus2: " << getSurrounding(bxMinus2) << std::endl;
+                            }
+                        } else {
+                            grNet.patchRouteGuides.emplace_back(gr::GrBoxOnLayer(bxMinus1.layerIdx, {pbx.x}, {pbx.y}));
+                            grNet.patchRouteGuides.emplace_back(gr::GrBoxOnLayer(bxMinus2.layerIdx, {pbx.x}, {pbx.y}));
+
+                            if(debug){
+                                log() << "bxMinus1: " << gr::GrBoxOnLayer(bxMinus1.layerIdx, {pbx.x}, {pbx.y}) << std::endl;
+                                log() << "bxMinus2: " << gr::GrBoxOnLayer(bxMinus2.layerIdx, {pbx.x}, {pbx.y}) << std::endl;
+                            }
+                        }
+                    }
+                    // patch original layer
+                    if (patched) {
+                        grNet.patchRouteGuides.emplace_back(getSurrounding(pbx));
+                        if(debug){
+                                log() << "getSurrounding(pbx): " << getSurrounding(pbx) << std::endl;
+                            }
+                    } else {
+                        grNet.patchRouteGuides.emplace_back(gr::GrBoxOnLayer(pbx.layerIdx, {pbx.x}, {pbx.y}));
+                        if(debug){
+                            log() << "pbx: " << gr::GrBoxOnLayer(pbx.layerIdx, {pbx.x}, {pbx.y}) << std::endl;
+                        }
+                    }
                 }
             }
-        }
+        }//end if isValidPatch
+        
     }else{// advancded mode covering all layers
         
         for (auto &pbxs : grNet.pinAccessBoxes) {

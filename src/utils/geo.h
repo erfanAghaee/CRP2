@@ -291,6 +291,16 @@ public:
         y.ShiftBy(rhs.y);
     }
 
+    bool isInside(BoxT& rhs){
+        if( (x.low  > rhs.x.low) &&
+            (x.high < rhs.x.high) &&
+            (y.low  > rhs.y.low) &&
+            (y.high < rhs.y.high)   ){
+            return true;
+        }
+        return false;
+    }
+
     bool operator==(const BoxT& rhs) const { return (x == rhs.x) && (y == rhs.y); }
     bool operator!=(const BoxT& rhs) const { return !(*this == rhs); }
 

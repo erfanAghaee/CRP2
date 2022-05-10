@@ -47,9 +47,9 @@ void RouteGrid::init() {
         //       << "unitShortVioCostRaw * layers[i].width / m2Pitch / m2Pitch / unitWireCostRaw: " << unitShortVioCostRaw * layers[i].width / m2Pitch / m2Pitch / unitWireCostRaw << std::endl;
 
         // old version 
-        // unitShortVioCost[i] = unitShortVioCostRaw * layers[i].width / m2Pitch / m2Pitch / unitWireCostRaw ;
+        unitShortVioCost[i] = unitShortVioCostRaw * layers[i].width / m2Pitch / m2Pitch / unitWireCostRaw ;
         // new version
-        unitShortVioCost[i] = unitShortVioCostRaw * layers[i].width / layers[i].pitch / layers[i].pitch / unitWireCostRaw ;
+        // unitShortVioCost[i] = unitShortVioCostRaw * layers[i].width / layers[i].pitch / layers[i].pitch / unitWireCostRaw ;
     }
 
     // log() << "unitShortVioCost layers..." << std::endl;

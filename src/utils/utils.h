@@ -7,3 +7,5 @@
 
 
 enum RouterName { PATTERNROUTE=0,ASTAR=1};
+
+enum RouteType { SIMPLE=0,COMPLEX=1};

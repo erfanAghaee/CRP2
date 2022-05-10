@@ -2050,3 +2050,102 @@ void InitRoute::logRoute(){
 }//end logRouteNodes
 
 std::map<int, RouteNode>& InitRoute::getRouteNodes() { return routeNodes; }
+
+
+
+
+void InitRoute::extractFeature(std::map<int, RouteNode>& cur_routeNodes) {
+    utils::timer net_timer;
+    // log() << "endge_shift2d ..." << std::endl;
+    // log() << "cur_routeNodes size: " << cur_routeNodes.size() << std::endl;
+    if (cur_routeNodes.size() == 1) return;
+    vector<RouteEdge> edgeset;
+    map<pair<int, int>, set<int>> loc_nodes;  // will be used to merge overlapping nodes
+    int s = cur_routeNodes.begin()->first;
+    queue<int> tmp_q;
+    tmp_q.push(s);
+    set<int> vis;
+
+    while (tmp_q.empty() == false) {
+        int u = tmp_q.front();
+        tmp_q.pop();
+        vis.insert(u);
+
+        
+        RouteNode& node = cur_routeNodes[u];
+        loc_nodes[make_pair(node.x, node.y)].insert(u);
+
+        // log() << "u: " << u << ", node.x: " << node.x << ", node.y: " << node.y << std::endl;
+
+        for (int nIdx : node.toConnect) {
+            if (vis.find(nIdx) != vis.end()) continue;
+            RouteEdge edge;
+            edge.from = nIdx;
+            edge.to = u;
+            edgeset.emplace_back(edge);
+            tmp_q.push(nIdx);
+        }
+    }
+    
+
+    auto getEdgeBox = [&](RouteEdge& edge, utils::BoxT<DBU>& edge_box){
+        auto& fromNode = cur_routeNodes[edge.from];
+        auto& toNode = cur_routeNodes[edge.to];
+        auto fromP1 = gr::GrPoint({0,fromNode.x,fromNode.y});
+        auto toP2 = gr::GrPoint({0,toNode.x,toNode.y});
+
+        std::vector<DBU> xs;
+        std::vector<DBU> ys;
+
+        auto xl_fromP1 = grDatabase.getCoorIntvl(fromP1,X).low;
+        auto yl_fromP1 = grDatabase.getCoorIntvl(fromP1,Y).low;
+        auto xh_fromP1 = grDatabase.getCoorIntvl(fromP1,X).high;
+        auto yh_fromP1 = grDatabase.getCoorIntvl(fromP1,Y).high;
+
+        auto xl_toP2 = grDatabase.getCoorIntvl(toP2,X).low;
+        auto yl_toP2 = grDatabase.getCoorIntvl(toP2,Y).low;
+        auto xh_toP2 = grDatabase.getCoorIntvl(toP2,X).high;
+        auto yh_toP2 = grDatabase.getCoorIntvl(toP2,Y).high;
+
+        xs.push_back(xl_fromP1);
+        xs.push_back(xh_fromP1);
+        xs.push_back(xl_toP2);
+        xs.push_back(xh_toP2);
+
+        ys.push_back(yl_fromP1);
+        ys.push_back(yh_fromP1);
+        ys.push_back(yl_toP2);
+        ys.push_back(yh_toP2);
+
+        edge_box.Set(
+            *std::min_element(xs.begin(),xs.end()),
+            *std::min_element(ys.begin(),ys.end()),
+            *std::max_element(xs.begin(),xs.end()),
+            *std::max_element(ys.begin(),ys.end())
+        );
+
+        // log() << "edge_box: " << edge_box << std::endl;
+    };
+
+
+    int eps = 10;
+    
+    for (int i = 0; i < edgeset.size(); i++) {
+        auto& edge = edgeset[i];
+        auto& fromNode = cur_routeNodes[edge.from];
+        auto& toNode = cur_routeNodes[edge.to];
+
+        utils::BoxT<DBU> edge_box;                
+        getEdgeBox(edge,edge_box);
+        
+        auto results = database.queryBlockageRTree(edge_box,eps);
+        
+        if(results.size() > 0){
+            routeType = COMPLEX;
+            return;
+        }
+    }
+
+    routeType = SIMPLE;
+   
+}// end extractFeature

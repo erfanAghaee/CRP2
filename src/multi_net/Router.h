@@ -23,6 +23,7 @@ private:
 
     void getNetsToRoute(vector<int>& netsToRoute,int iter);
     void sortNets(vector<int>& netsToRoute);
+    void classifyNets(vector<int>& netsToRoute, vector<int>& netsToRouteByPatternRoute, vector<int>& netsToRouteByAStar );
     vector<vector<int>> getBatches(vector<SingleNetRouter>& routers, const vector<int>& netsToRoute);
 
     void routeApprx(const vector<int>& netsToRoute, RouterName routeName);
@@ -37,7 +38,8 @@ private:
     // void updateCostInit();
     void updateRouteTable();
 
-    void ripupReroute(vector<int>& netsToRoute);
+    void ripupRerouteCUGR(vector<int>& netsToRoute);
+    void ripupRerouteCRP(vector<int>& netsToRoute);
     void route(const vector<int>& netsToRoute, RouterName routeName);
     // void applyOnlyRoutePlacement(vector<int>& netsToRoute);
     void applyPlacement(vector<int>& netsToRoute,int iter_t,utils::timer& profile_time,std::stringstream& profile_time_str);
@@ -55,6 +57,7 @@ private:
     void logRouteTable(std::string name);
     void logReport(std::stringstream& ss,int iter_router,int iter_refine_placement);
     void logNetsToRoute(vector<int>& netsToRoute);
+    void netFeatureExtraction2D(vector<int>& netsToRoute);
 
     void gridMapReport();
 

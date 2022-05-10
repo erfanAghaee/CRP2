@@ -26,7 +26,7 @@ class GCell:
         window = [x*2000 for x in window]
         self.pltWindow(window)
 
-    def getWindow(self,window,plt_obj):
+    def getWindow(self,window,plt_obj,l=-1):
         if not("gcell" in self.db):
             return
 
@@ -44,6 +44,8 @@ class GCell:
         cell_filter = cell_df.loc[ (cell_df.x >= window[XL] )& (cell_df.x <= window[XH])]
         
         cell_filter = cell_filter.loc[ (cell_df.y >= window[YL] )& (cell_df.y <= window[YH])]
+        if(l!= -1):
+            cell_filter = cell_filter.loc[cell_filter.l == l]
 
         xs_txt = cell_filter.gcellX.values
         ys_txt = cell_filter.gcellY.values
@@ -51,8 +53,8 @@ class GCell:
         txts = [ "("+str(xs_txt[i]) +","+ str(ys_txt[i]) + ")" \
             for i in np.arange(len(cell_filter.gcellX.values))]
 
-        colors =[(0,1,0) for i in range(len(cell_filter.x.values))]
-        alphas =[0.5 for i in range(len(cell_filter.x.values))]
+        colors =[(1,0,0) for i in range(len(cell_filter.x.values))]
+        alphas =[0.09 for i in range(len(cell_filter.x.values))]
 
         plt_obj.run(cell_filter.x.values,cell_filter.y.values,\
                     cell_filter.w.values,cell_filter.h.values,colors,alphas)

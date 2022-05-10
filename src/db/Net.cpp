@@ -48,6 +48,7 @@ Net::Net(int i, Rsyn::Net net, RsynService& rsynService) {
     rsynNet = net;
     net_timer = 0;
 
+
     // pins
     pinAccessBoxes.reserve(net.getNumPins());
     const Rsyn::Session session;
@@ -60,7 +61,7 @@ Net::Net(int i, Rsyn::Net net, RsynService& rsynService) {
         initPinAccessBoxes(RsynPin, rsynService, pinAccessBoxes.back(), libDBU);
     }
     bool debug = false;
-    // if(net.getName() == "net275") debug = false;
+    if(net.getName() == "n_5371") debug = true;
 
     if(debug){
         log() << "initPinAccessBoxes...(Net)" << std::endl;
@@ -231,6 +232,7 @@ void Net::initPinAccessBoxes(Rsyn::Pin rsynPin,
                              RsynService& rsynService,
                              vector<BoxOnLayer>& accessBoxes,
                              const DBU libDBU) {
+    
     // PhysicalPort
     if (rsynPin.isPort()) {
         Rsyn::PhysicalPort phPort = rsynService.physicalDesign.getPhysicalPort(rsynPin.getPort());

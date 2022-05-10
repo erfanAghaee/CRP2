@@ -54,7 +54,7 @@ typedef double FloatingPointDBU;
 
 struct DBUxy {
 	friend ostream &operator<<( ostream &out, const DBUxy &v ) {
-		return out << "(" << v.x/2000.0 << ", " << v.y/2000.0 << ")";
+		return out << "(" << v.x << ", " << v.y << ")";
 	} // end function
 
 	union {

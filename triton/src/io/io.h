@@ -181,6 +181,7 @@ namespace fr {
 
       // write guide
       void writeGuideFile();
+      void logGuideFile();
 
       // misc
       void addFakeNets();
