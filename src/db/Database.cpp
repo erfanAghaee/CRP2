@@ -47,23 +47,44 @@ void Database::initIllegalPlacementBoxs(){
         );                                    
 
   
-    }
+    }//end loop
+
+    log() << "addToIllegalPlacementBox..." << std::endl;
+    // get row and site of ilegal placement boxes
+    for(auto illegal_box : illegal_placement_boxs){
+        addToIllegalPlacementBox(illegal_box);
+    }//end for 
     
 }//initIllegalPlacementBoxs
+
+void Database::addToIllegalPlacementBox(utils::BoxT<DBU>& illegal_box){
+    std::vector<int> illegal_rows;
+    std::vector<int> illegal_sites;
+    getIntersectedRows(illegal_box,illegal_rows);
+    getIntersectedSites(illegal_box,illegal_sites); 
+
+    for(int r : illegal_rows){
+        for(int s : illegal_sites){
+            if(illegal_placement_map.find(r) == illegal_placement_map.end()){
+                std::set<int> tmp;
+                tmp.insert(s);
+                illegal_placement_map[r] = tmp;
+            }else{
+                auto& tmp = illegal_placement_map[r];
+                tmp.insert(s);
+            }
+        }
+    }
+
+}//end addToIllegalPlacementBox
 
 void Database::init() {
     const Rsyn::Session session;
     const Rsyn::PhysicalDesign& physicalDesign =
         static_cast<Rsyn::PhysicalService*>(session.getService("rsyn.physical"))->getPhysicalDesign();
     libDBU = physicalDesign.getDatabaseUnits(Rsyn::LIBRARY_DBU);
-    // init lookup tabels
-    if(db::setting.refinePlacement){
-        lookup_tb.run(db::setting.benchmarkName);
-        initIllegalPlacementBoxs();
-        origin_offset_die = lookup_tb.origin_offset_die;
-    }
-
-    initBlockagesRTree();
+    
+    
       
     // return;
 
@@ -119,7 +140,13 @@ void Database::init() {
     NetList::init(rsynService);
     CellList::init(rsynService);
     initSites();
-    
+    // init lookup tabels
+    if(db::setting.refinePlacement){
+        lookup_tb.run(db::setting.benchmarkName);
+        initIllegalPlacementBoxs();
+        origin_offset_die = lookup_tb.origin_offset_die;
+    }
+    initBlockagesRTree();
     markPinAndObsOccupancy();
 
     initMTSafeMargin();
@@ -482,6 +509,17 @@ void Database::markPinAndObsOccupancy() {
                             }
                             
                             fixedMetalVec.emplace_back(box, OBS_NET_IDX);
+                            utils::BoxT<DBU> boxTmp(box.lx()-layers[1].pitch,
+                                                    box.ly()-layers[1].pitch,
+                                                    box.hx()+layers[1].pitch,
+                                                    box.hy()+layers[1].pitch);
+                            // add vertical blockages only
+                            if(std::abs(box.lx()-box.hx()) <
+                               std::abs(box.hy()-box.ly())){
+                                addToIllegalPlacementBox(boxTmp);
+                            }
+                            
+
                             ++numSNetObs;
                             break;
                         }
@@ -501,6 +539,8 @@ void Database::markPinAndObsOccupancy() {
                             }
                         }
                         fixedMetalVec.emplace_back(box, OBS_NET_IDX);
+                        utils::BoxT<DBU> boxTmp(box.lx(),box.ly(),box.hx(),box.hy());
+                        // addToIllegalPlacementBox(boxTmp);
                         ++numSNetObs;
                     }
                     const int topLayerIdx = via.getTopLayer().getRelativeIndex();
@@ -516,6 +556,8 @@ void Database::markPinAndObsOccupancy() {
                             }
                         }
                         fixedMetalVec.emplace_back(box, OBS_NET_IDX);
+                        utils::BoxT<DBU> boxTmp(box.lx(),box.ly(),box.hx(),box.hy());
+                        // addToIllegalPlacementBox(boxTmp);
                         ++numSNetObs;
                     }
                     if (via.hasViaRule()) {
@@ -544,12 +586,17 @@ void Database::markPinAndObsOccupancy() {
                             }
                         }
                         fixedMetalVec.emplace_back(botBox, OBS_NET_IDX);
+                        utils::BoxT<DBU> boxTmpBot(botBox.lx(),botBox.ly(),botBox.hx(),botBox.hy());
+                        // addToIllegalPlacementBox(boxTmpBot);
+
                         if(debug){
                             if(topBox.layerIdx==3){
                                 log() << "specialNet botBox: " << topBox << std::endl;
                             }
                         }
                         fixedMetalVec.emplace_back(topBox, OBS_NET_IDX);
+                        utils::BoxT<DBU> boxTmpTop(topBox.lx(),topBox.ly(),topBox.hx(),topBox.hy());
+                        // addToIllegalPlacementBox(boxTmpTop);
                         numSNetObs += 2;
                     }
                     if (layerIdx == botLayerIdx)
@@ -885,6 +932,7 @@ std::vector<utils::BoxT<DBU>> Database::queryBlockageRTree(utils::BoxT<DBU>& box
 
     return results;
 }//end queryBlockageRTree
+
 
 void Database::writeDEF(const std::string& filename){
     DEFControlParser defParser;

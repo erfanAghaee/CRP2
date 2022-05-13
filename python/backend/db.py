@@ -151,6 +151,44 @@ def getDB(args,iter_gr,iter_dr):
         print("No astar input!")
 
 
+    try:
+        db["legalizerBoard"] = pd.read_csv(args.dir + "legalizer/" + args.bench + ".legalizer.board.csv", \
+            dtype={"xl":'float64',"yl":'float64',"xh":'float64',"yh":"float64","cost":"float64"})
+    except:
+        print("No legalizerBoard input!")
+
+    try:
+        db["legalizer"] = pd.read_csv(args.dir + "legalizer/" + args.bench + ".legalizer.csv", \
+            dtype={"xl":'float64',"yl":'float64',"xh":'float64',"yh":"float64","cost":"float64"})
+    except:
+        print("No legalizer input!")
+
+    try:
+        db["legalizerWeight"] = pd.read_csv(args.dir + "legalizer/" + args.bench + ".legalizer.weights.csv", \
+            dtype={"weight_idx":"float64",\
+                "xl":'float64',"yl":'float64',"xh":'float64',"yh":"float64","cost":"float64"})
+    except:
+        print("No legalizer weights input!")
+
+    try:
+        db["legalizerOverlaps"] = pd.read_csv(args.dir + "legalizer/" + args.bench + ".legalizer.overlaps.csv", \
+            dtype={"weight_idx1":"float64",\
+                "xl1":'float64',"yl1":'float64',"xh1":'float64',"yh1":"float64",\
+                "weight_idx2":"float64",\
+                "xl2":'float64',"yl2":'float64',"xh2":'float64',"yh2":"float64"})
+    except:
+        print("No legalizer overlaps input!")
+
+
+    try:
+        db["legalizerSolution"] = pd.read_csv(args.dir + "legalizer/" + args.bench + ".legalizer.solution.csv", \
+            dtype={"weight_idx":"float64",\
+                "xl":'float64',"yl":'float64',"xh":'float64',"yh":"float64"})
+    except:
+        print("No legalizer weights input!")
+
+
+
     return db
 
     

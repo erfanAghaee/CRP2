@@ -177,15 +177,22 @@ void Legalizer::run(){
 
 
 bool Legalizer::getLegalizeBox(utils::BoxT<DBU>& new_box, utils::BoxT<DBU>& legalize_box){
+    bool debug = false || debug_global;
     // log() << "cell_box: " << new_box << std::endl;
     auto cell_site = database.cells[cell_idx_].getCellSite();
     auto cell_row = database.cells[cell_idx_].getCellRow();
     auto cell_width = database.cells[cell_idx_].getCellSiteWidth();
     auto site_step = cell_width * db::setting.legalizationWindowSizeSite;
     // auto site_step = db::setting.legalizationWindowSizeSite;
-    // log() << "cell_site: " << cell_site
-    //       << ", cell_row: " << cell_row 
-    //       << ", site_step: " << site_step << std::endl;
+    if(debug){
+        log() << "cell_site: " << cell_site
+          << ", cell_row: " << cell_row 
+          << ", site_step: " << site_step << std::endl;
+        log() << "cell_site dbu: " << database.getDBUSite(cell_site)
+          << ", cell_row dbu: " << database.getDBURow(cell_row)
+          << std::endl;
+    }
+    
 
 
     if(cell_site < 0 || cell_row < 0) return false;
@@ -448,7 +455,7 @@ int Legalizer::getLegalizerBlockageMatrix(std::vector<db::Cell>& cells
     // int eps = 10;
     // boostBox box1(boostPoint(193600+eps,256200+eps),
     //              boostPoint(313600-eps,292200-eps));
-    std::unordered_map<int,std::set<int>> illegal_map;
+    
 
     // utils::BoxT<DBU> illegal_box1(193600,256200,313600,292200);
     // utils::BoxT<DBU> illegal_box2(96200,196200,179600,234600);
@@ -460,26 +467,11 @@ int Legalizer::getLegalizerBlockageMatrix(std::vector<db::Cell>& cells
     // illegal_boxs.push_back(illegal_box2);
     // illegal_boxs.push_back(illegal_box3);
     // illegal_boxs.push_back(illegal_box4);
+ 
 
-    for(auto illegal_box : database.illegal_placement_boxs){
-        std::vector<int> illegal_rows;
-        std::vector<int> illegal_sites;
-        database.getIntersectedRows(illegal_box,illegal_rows);
-        database.getIntersectedSites(illegal_box,illegal_sites); 
+    // remove rows and sites that have overlap with 
+    // fixed metal layers in upper layers.
 
-        for(int r : illegal_rows){
-            for(int s : illegal_sites){
-                if(illegal_map.find(r) == illegal_map.end()){
-                    std::set<int> tmp;
-                    tmp.insert(s);
-                    illegal_map[r] = tmp;
-                }else{
-                    auto& tmp = illegal_map[r];
-                    tmp.insert(s);
-                }
-            }
-        }
-    }//end for 
     
     
 
@@ -492,6 +484,11 @@ int Legalizer::getLegalizerBlockageMatrix(std::vector<db::Cell>& cells
 
 
     // end hard coded
+    bool debug = false || debug_global;
+    if(debug){
+        log() << "legalize_rows: " << legalize_rows.size() 
+              << "legalize_sites: " << legalize_sites.size() << std::endl;
+    }
 
     int min_site = *std::min_element(legalize_sites.begin(),legalize_sites.end());
     int max_site = *std::max_element(legalize_sites.begin(),legalize_sites.end());
@@ -534,14 +531,17 @@ int Legalizer::getLegalizerBlockageMatrix(std::vector<db::Cell>& cells
     }
 
     for(int i = 0; i < blockage_matrix.size(); i++){
-        if(illegal_map.find(i+row_offset) != illegal_map.end()){
+        if(database.illegal_placement_map.find(i+row_offset) != database.illegal_placement_map.end()){
             for(int j = 0; j < blockage_matrix[i].size(); j++){
-                if(illegal_map[i+row_offset].find(j+site_offset) 
-                   != illegal_map[i+row_offset].end()){
+                if(database.illegal_placement_map[i+row_offset].find(j+site_offset) 
+                   != database.illegal_placement_map[i+row_offset].end()){
                     blockage_matrix[i][j] = -1;
                 }
             }        
         }
+
+        // add to avoid placement in special nets
+        
     }
     
     for(auto tmps : blockage_matrix){
@@ -766,13 +766,13 @@ void Legalizer::printMovableCells(std::vector<int>& movable_cells){
 void Legalizer::printLegalizeRows(std::vector<int>& legalize_rows){
     log() << "legalize_rows: " << std::endl;
     for(auto row : legalize_rows){
-        log() << "row: " << row << std::endl;
+        log() << "row: " << row << "-> " << database.getDBURow(row)<< std::endl;
     }
 }
 void Legalizer::printLegalizeSites(std::vector<int>& legalize_sites){
         log() << "legalize_sites: " << std::endl;
         for(auto site : legalize_sites){
-            log() << "site: " << site << std::endl;
+            log() << "site: " << site << "-> " << database.getDBUSite(site)<< std::endl;
         }
 }
 
@@ -789,7 +789,7 @@ void Legalizer::legalizerILPV2(std::vector<int>& movable_cells
     if(db::setting.debug)
         std::cout << "cell: " << database.cells[cell_idx_].getName() << std::endl;
     
-    bool debug = false;
+    bool debug = false || debug_global;
     if(db::setting.debug)
         std::cout << "getLegalizerILPCostCubeV3" << std::endl;
     getLegalizerILPCostCubeV3( weights
@@ -797,6 +797,11 @@ void Legalizer::legalizerILPV2(std::vector<int>& movable_cells
                     , legalize_sites
                     , movable_cells
                     , blockage_matrix);
+
+    if(debug){
+        logLegalizerWeights(weights,legalize_rows,legalize_sites);
+    }
+    
         
     // return;  
 
@@ -815,6 +820,12 @@ void Legalizer::legalizerILPV2(std::vector<int>& movable_cells
                     weights
                     , ovrlps
                     );
+
+    if(debug){
+        // std::vector<cellWrap> weights;
+        // std::vector<std::vector<int>> ovrlps;
+        logLegalizerOvrlps(weights,legalize_rows,legalize_sites,ovrlps);
+    }
 
     if(debug){
         log() << "ovrlps: " << ovrlps.size() << std::endl;
@@ -853,6 +864,14 @@ void Legalizer::legalizerILPV2(std::vector<int>& movable_cells
                 , ovrlps
                 , constraints
                 , sols);
+
+    if(debug){
+        logLegalizerSols( weights
+                        , legalize_rows
+                        , legalize_sites
+                        , sols);
+    }
+    
 
     if(db::setting.debug)
         log() << "sols size out: " << sols.size() << std::endl;
@@ -1142,7 +1161,8 @@ void Legalizer::findAllPermutations(std::vector<cellWrap>& weights
     if(debug){
         log() << "seqs ..." << std::endl;
         for(int r = 0; r < segs.size() ; r++){
-            log() << "r: " << r << std::endl;
+            log() << "r: " << r 
+                  << "->" << database.getDBURow(r) << std::endl;
             auto seqs = segs[r];
             std::string txt = "";
             for(auto pair : seqs){
@@ -1151,7 +1171,12 @@ void Legalizer::findAllPermutations(std::vector<cellWrap>& weights
                     + std::to_string(pair.first) 
                     + ","
                     + std::to_string(pair.second)  
-                    + ") ";
+                    + ") ->"
+                    + "(" 
+                    + std::to_string(database.getDBUSite(pair.first)) 
+                    + ","
+                    + std::to_string(database.getDBUSite(pair.second))  
+                    + ")";
             }
             log() << txt << std::endl;
         }
@@ -1358,7 +1383,7 @@ void Legalizer::findAllPermutations(std::vector<cellWrap>& weights
                         reminder = reminder - rnd_por;
                     }
 
-                    idx = idx + empty_offset + reminder;
+                    idx = idx + empty_offset + 0;//reminder;
                 }else{
                     cellWrap cell_wrap;
                     
@@ -1426,7 +1451,8 @@ void Legalizer::findAllPermutations(std::vector<cellWrap>& weights
     }//end segments loop
     
     if(debug){
-        std::string file_name_csv = db::setting.outputFile + "_legalizer.csv";
+        std::string file_name_csv =db::setting.directory +  db::setting.benchmarkName 
+                                  + ".legalizer.csv";
         // log() << "file_name_csv " << file_name_csv << std::endl;
         std::ofstream fout(file_name_csv);
         fout << ss.str();
@@ -1453,7 +1479,8 @@ void Legalizer::findAllPermutationsV2(std::vector<cellWrap>& weights
     if(debug)
         log() << "findAllPermutations..." << std::endl;
     std::stringstream ss;
-    ss << "inst,r,s,w,h,cost" << std::endl;  
+    // ss << "inst,r,s,w,h,cost" << std::endl;  
+    ss << "inst_name,xl,yl,xh,yh,cost" << std::endl;  
     // find segments
 
     std::vector<std::vector<std::pair<int,int>>> segs;
@@ -1488,7 +1515,8 @@ void Legalizer::findAllPermutationsV2(std::vector<cellWrap>& weights
     if(debug){
         log() << "seqs ..." << std::endl;
         for(int r = 0; r < segs.size() ; r++){
-            log() << "r: " << r << std::endl;
+            log() << "r: " << r 
+                  << "->" << database.getDBURow(legalize_rows[r]) << std::endl;
             auto seqs = segs[r];
             std::string txt = "";
             for(auto pair : seqs){
@@ -1497,7 +1525,12 @@ void Legalizer::findAllPermutationsV2(std::vector<cellWrap>& weights
                     + std::to_string(pair.first) 
                     + ","
                     + std::to_string(pair.second)  
-                    + ") ";
+                    + ") ->"
+                    + "(" 
+                    + std::to_string(database.getDBUSite(legalize_sites[pair.first])) 
+                    + ","
+                    + std::to_string(database.getDBUSite(legalize_sites[pair.second]))  
+                    + ")";
             }
             log() << txt << std::endl;
         }
@@ -1589,9 +1622,9 @@ void Legalizer::findAllPermutationsV2(std::vector<cellWrap>& weights
                 std::string txt = "";
                 for(int jj = 0; jj < orders_2d[ii].size(); jj++){
                     if(debug){
-                        txt = txt + std::to_string(orders_2d[ii][jj]) 
-                            + " " + std::to_string(cell_w[orders_2d[ii][jj]])
-                            + " " ;
+                        txt = txt + " (ord: "+std::to_string(orders_2d[ii][jj]) 
+                            + ", w: " + std::to_string(cell_w[orders_2d[ii][jj]])
+                            + ") " ;
                     }
                     sum += cell_w[orders_2d[ii][jj]];
                 }//end for
@@ -1710,6 +1743,7 @@ void Legalizer::findAllPermutationsV2(std::vector<cellWrap>& weights
                     log() << "idx: " << idx << std::endl;
                 }
                 if(emptySw){
+                // if(false){
                     if(reminder > 0){
                         std::random_device dev;
                         std::mt19937 rng(dev());
@@ -1726,7 +1760,7 @@ void Legalizer::findAllPermutationsV2(std::vector<cellWrap>& weights
                         reminder = reminder - rnd_por;
                     }
 
-                    idx = idx + empty_offset + 0;//reminder;
+                    idx = idx + empty_offset + reminder;
                 }else{
 
                     
@@ -1777,13 +1811,23 @@ void Legalizer::findAllPermutationsV2(std::vector<cellWrap>& weights
                                 << ",h: " << std::to_string(cell_height_tmp)
                                 << ",cost: " << std::to_string(cost_median) << std::endl;
 
-                            ss << cell.getName() 
-                                << "," << std::to_string(cell_wrap.r)
-                                << "," << std::to_string(cell_wrap.s)
-                                << "," << std::to_string(cell_width_tmp)
-                                << "," << std::to_string(cell_height_tmp)
-                                << "," << std::to_string(cost_median) << std::endl;
-                            
+                            // ss << cell.getName() 
+                            //     << "," << std::to_string(cell_wrap.r)
+                            //     << "," << std::to_string(cell_wrap.s)
+                            //     << "," << std::to_string(cell_width_tmp)
+                            //     << "," << std::to_string(cell_height_tmp)
+                            //     << "," << std::to_string(cost_median) << std::endl;
+                            auto xl = database.getDBUSite(legalize_sites[cell_wrap.s]);
+                            auto yl = database.getDBURow(legalize_rows[cell_wrap.r]);
+                            auto xh = xl + cell_width_tmp;
+                            auto yh = yl + cell_height_tmp;
+                            ss  << cell.getName() 
+                                << "," << xl
+                                << "," << yl
+                                << "," << xh
+                                << "," << yh
+                                << "," << std::to_string(cost_median)
+                                << std::endl;
                         }
                     
                     weights.push_back(cell_wrap);
@@ -1808,7 +1852,8 @@ void Legalizer::findAllPermutationsV2(std::vector<cellWrap>& weights
     
     
     if(debug){
-        std::string file_name_csv = db::setting.outputFile + "_legalizer.csv";
+        std::string file_name_csv = db::setting.directory +  db::setting.benchmarkName 
+             + ".legalizer.csv";
         // log() << "file_name_csv " << file_name_csv << std::endl;
         std::ofstream fout(file_name_csv);
         fout << ss.str();
@@ -1858,7 +1903,7 @@ void Legalizer::getLegalizerILPCostCubeV3(std::vector<cellWrap>& weights
 
 
     // weight idx to cell idx
-    bool debug = false || debug_global;
+    bool debug = false || debug_global || debug_global_all;
 
     auto rsynService = database.getRsynService();
 
@@ -1867,32 +1912,12 @@ void Legalizer::getLegalizerILPCostCubeV3(std::vector<cellWrap>& weights
     mat_spr.resize(blockage_matrix.size(),std::vector<int>{});
 
     if(debug){
-        std::stringstream ss_blockage;
-        ss_blockage << "r,s,val,w,h" << std::endl;    
-        for(int r = 0; r < legalize_rows.size() ; r++)
-            for(int s = 0; s < legalize_sites.size() ; s++){
-                int row_idx  = legalize_rows[r];
-                int site_idx = legalize_sites[s];
-                int row_dbu  = database.getDBURow(row_idx);
-                int site_dbu = database.getDBUSite(site_idx);
+        log() << "legalize_rows: " << legalize_rows.size() << std::endl;
+        log() << "legalize_sites: " << legalize_sites.size() << std::endl;
+    }
 
-                if(debug)
-                    log() << "row_um: " <<  row_dbu/database.libDBU
-                        << "site_um: " <<  site_dbu/database.libDBU << std::endl;
-
-                ss_blockage << std::to_string(r)
-                            << "," << std::to_string(s)
-                            << "," << std::to_string(blockage_matrix[r][s])
-                            << "," << std::to_string(database.getSiteStep())
-                            << "," << std::to_string(database.getRowStep()) << std::endl;
-            }
-
-        
-        std::string file_name_csv_b = db::setting.outputFile + "_initLegalizer.csv";
-        log() << "file_name_csv " << file_name_csv_b << std::endl;
-        std::ofstream fout_blockage(file_name_csv_b);
-        fout_blockage << ss_blockage.str();
-        fout_blockage.close();
+    if(debug){
+        logLegalizerBoard(blockage_matrix,legalize_rows,legalize_sites);
     }
     
 
@@ -3272,5 +3297,227 @@ void Legalizer::logCubeWeight( std::vector<int>& movable_cells,std::vector<std::
         fout1.close();
     }
 }//end logCubeWeight
+
+
+void Legalizer::logLegalizerBoard(std::vector<std::vector<int>>& blockage_matrix
+                                , std::vector<int>& legalize_rows
+                                , std::vector<int>& legalize_sites){
+    std::stringstream ss_blockage;
+    // ss_blockage << "r,s,val,w,h" << std::endl;    
+    ss_blockage << "xl,yl,xh,yh,cost" << std::endl;    
+    for(int r = 0; r < legalize_rows.size() ; r++)
+        for(int s = 0; s < legalize_sites.size() ; s++){
+            int row_idx  = legalize_rows[r];
+            int site_idx = legalize_sites[s];
+            int row_dbu  = database.getDBURow(row_idx);
+            int site_dbu = database.getDBUSite(site_idx);
+
+            // if(debug){
+            //     // log() << "r: " << r << ", s: " << s << std::endl;
+            //     // log() << "row_idx: " << row_idx << ", site_idx: " << site_idx << std::endl;
+            //     log() << "row_um: " <<  double(row_dbu)/double(database.libDBU)
+            //         << ", site_um: " <<  double(site_dbu)/double(database.libDBU) << std::endl;
+            // }
+                
+
+            auto xl = database.getDBUSite(legalize_sites[s]);
+            auto yl = database.getDBURow(legalize_rows[r]);
+            auto xh = xl + database.getSiteStep();
+            auto yh = yl + database.getRowStep();
+            
+
+            ss_blockage << xl
+                        << "," << yl
+                        << "," << xh
+                        << "," << yh
+                        << "," << std::to_string(blockage_matrix[r][s])
+                        << std::endl;
+        }
+
+    
+    std::string file_name_csv_b = db::setting.directory +  db::setting.benchmarkName 
+                                + ".legalizer.board.csv";
+    if(debug_global_all){
+        std::string cell_name = database.cells[cell_idx_].getName();
+        file_name_csv_b = db::setting.directory +  db::setting.benchmarkName 
+                                + ".legalizer.board."+cell_name+".csv";
+    }
+    
+    std::ofstream fout_blockage(file_name_csv_b);
+    fout_blockage << ss_blockage.str();
+    fout_blockage.close();
+}//end logLegalizerBoard
+
+void Legalizer::logLegalizerWeights(std::vector<cellWrap>& weights
+                                , std::vector<int>& legalize_rows
+                                , std::vector<int>& legalize_sites){
+    std::stringstream ss;
+    auto rsynService = database.getRsynService();
+       
+    ss << "weight_idx,cell_name,xl,yl,xh,yh,cost" << std::endl;    
+
+    for(int i = 0; i < weights.size(); i++){
+        auto cell_wrap = weights[i];
+        auto cell = database.cells[cell_wrap.idx];
+        Rsyn::Cell cellRsyn = cell.rsynInstance.asCell();
+        Rsyn::PhysicalCell phCell = rsynService.physicalDesign.getPhysicalCell(cellRsyn);
+        Rsyn::PhysicalLibraryCell phLibCell = rsynService.physicalDesign.getPhysicalLibraryCell(cellRsyn);
+        int cell_width_tmp = phLibCell.getWidth();
+        int cell_height_tmp = phLibCell.getHeight();
+
+        auto xl = database.getDBUSite(legalize_sites[cell_wrap.s]);
+        auto yl = database.getDBURow(legalize_rows[cell_wrap.r]);
+        auto xh = xl + cell_width_tmp;
+        auto yh = yl + cell_height_tmp;
+
+        ss << i
+           << "," << cell.getName()
+           << "," << xl
+           << "," << yl
+           << "," << xh
+           << "," << yh
+           << "," << cell_wrap.cost << std::endl;
+
+
+    }//end for loop
+
+
+    
+    std::string file_name_csv_b = db::setting.directory +  db::setting.benchmarkName 
+                                + ".legalizer.weights.csv";
+    if(debug_global_all){
+        std::string cell_name = database.cells[cell_idx_].getName();
+        file_name_csv_b = db::setting.directory +  db::setting.benchmarkName 
+                                + ".legalizer.weights."+cell_name+".csv";
+    }
+
+    std::ofstream fout_blockage(file_name_csv_b);
+    fout_blockage << ss.str();
+    fout_blockage.close();
+}//end logLegalizerBoard
+
+
+void Legalizer::logLegalizerOvrlps(std::vector<cellWrap>& weights
+                                  , std::vector<int>& legalize_rows
+                                  , std::vector<int>& legalize_sites
+                                  ,std::vector<std::vector<int>>& ovrlps){
+    std::stringstream ss;
+    auto rsynService = database.getRsynService();
+       
+    ss << "weight_idx1,cell_name1,xl1,yl1,xh1,yh1,weight_idx2,cell_name2,xl2,yl2,xh2,yh2" << std::endl;    
+
+    auto getWeightString = [&](int i){
+        std::string str="";
+        auto cell_wrap = weights[i];
+        auto cell = database.cells[cell_wrap.idx];
+        Rsyn::Cell cellRsyn = cell.rsynInstance.asCell();
+        Rsyn::PhysicalCell phCell = rsynService.physicalDesign.getPhysicalCell(cellRsyn);
+        Rsyn::PhysicalLibraryCell phLibCell = rsynService.physicalDesign.getPhysicalLibraryCell(cellRsyn);
+        int cell_width_tmp = phLibCell.getWidth();
+        int cell_height_tmp = phLibCell.getHeight();
+
+        auto xl = database.getDBUSite(legalize_sites[cell_wrap.s]);
+        auto yl = database.getDBURow(legalize_rows[cell_wrap.r]);
+        auto xh = xl + cell_width_tmp;
+        auto yh = yl + cell_height_tmp;
+
+        str = std::to_string(i)
+           + "," + cell.getName()
+           + "," + std::to_string(xl)
+           + "," + std::to_string(yl)
+           + "," + std::to_string(xh)
+           + "," + std::to_string(yh);
+        return str;
+    };
+
+    for(auto ovrlp_row : ovrlps){
+        if(ovrlp_row.size() == 2){
+            std::string txt = "";
+            bool first = true;
+            for(auto ovrlp : ovrlp_row){
+                if(first){
+                    txt = getWeightString(ovrlp);
+                    first = false;
+                }else{
+                    txt = txt + "," + getWeightString(ovrlp);
+                }            
+            }//end loop
+            ss << txt << std::endl;
+        }else{
+            log() << "ovrlp size must be 2, wrong logging" << std::endl;
+            std::exit(1);
+        }//end if
+        
+
+    }//end loop 
+
+    
+    std::string file_name_csv_b = db::setting.directory +  db::setting.benchmarkName 
+                                + ".legalizer.overlaps.csv";
+    if(debug_global_all){
+        std::string cell_name = database.cells[cell_idx_].getName();
+        file_name_csv_b = db::setting.directory +  db::setting.benchmarkName 
+                                + ".legalizer.overlaps."+cell_name+".csv";
+    }                            
+    std::ofstream fout_blockage(file_name_csv_b);
+    fout_blockage << ss.str();
+    fout_blockage.close();
+
+}//end logLegalizerOvrlps
+
+
+void Legalizer::logLegalizerSols(std::vector<cellWrap>& weights
+                                , std::vector<int>& legalize_rows
+                                , std::vector<int>& legalize_sites
+                                , std::vector<int>& sols
+                                ){
+    std::stringstream ss;
+    auto rsynService = database.getRsynService();
+       
+    ss << "weight_idx,cell_name,xl,yl,xh,yh" << std::endl;    
+
+    auto getWeightString = [&](int i){
+        std::string str="";
+        auto cell_wrap = weights[i];
+        auto cell = database.cells[cell_wrap.idx];
+        Rsyn::Cell cellRsyn = cell.rsynInstance.asCell();
+        Rsyn::PhysicalCell phCell = rsynService.physicalDesign.getPhysicalCell(cellRsyn);
+        Rsyn::PhysicalLibraryCell phLibCell = rsynService.physicalDesign.getPhysicalLibraryCell(cellRsyn);
+        int cell_width_tmp = phLibCell.getWidth();
+        int cell_height_tmp = phLibCell.getHeight();
+
+        auto xl = database.getDBUSite(legalize_sites[cell_wrap.s]);
+        auto yl = database.getDBURow(legalize_rows[cell_wrap.r]);
+        auto xh = xl + cell_width_tmp;
+        auto yh = yl + cell_height_tmp;
+
+        str = std::to_string(i)
+           + "," + cell.getName()
+           + "," + std::to_string(xl)
+           + "," + std::to_string(yl)
+           + "," + std::to_string(xh)
+           + "," + std::to_string(yh);
+        return str;
+    };
+
+    for(auto sol : sols){
+        ss << getWeightString(sol) << std::endl;
+    }
+
+    
+    std::string file_name_csv_b = db::setting.directory +  db::setting.benchmarkName 
+                                + ".legalizer.solution.csv";
+
+    if(debug_global_all){
+        std::string cell_name = database.cells[cell_idx_].getName();
+        file_name_csv_b = db::setting.directory +  db::setting.benchmarkName 
+                                + ".legalizer.solution."+cell_name+".csv";
+    }   
+
+    std::ofstream fout_blockage(file_name_csv_b);
+    fout_blockage << ss.str();
+    fout_blockage.close();
+
+}//end logLegalizerSols
 
 }//end namespace db

@@ -57,7 +57,7 @@ class Cell:
                         ws,hs,colors,alphas)
 
             if(text):
-                plt_obj.drawText(txts,font=12)
+                plt_obj.drawText(txts,font=45)
         
         elif(self.type == "cellcandidate"):
             colors =[(1,0,0) for i in range(len(xls))]

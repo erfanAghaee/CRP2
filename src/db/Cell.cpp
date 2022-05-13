@@ -161,7 +161,7 @@ void Cell::calcCostPlacementCandidates(){
     
         double cost = feature.degree_connected_cells *cost_eqs[i].getCost();
         // if(!isRedundantCandidate(box_init_position))
-        if(!cost_eqs[i].has_vio)
+        // if(!cost_eqs[i].has_vio)
             valid_placement_candidates.emplace_back(box_init_position,cost);
     }
 
@@ -1271,12 +1271,16 @@ void Cell::addGCellBasedCandidates(){
 void Cell::addILPLegalizedCellCandidates(){
     if(isFixed) return;
     if(!is_critical_cell) return;
-    
+    bool debug = false;
     // if(getName() == "inst4948"){
     //     log() << "legalizer cell: " << getName() << std::endl;
         Legalizer legalizer(idx);
-        // if(getName() == "inst4948")
-        //     legalizer.debug_global = true;
+        if(getName() == "g55131_u0"){
+            legalizer.debug_global = true;
+            debug = true;
+        }
+        legalizer.debug_global_all = true;
+            
         if(database.policy_set.find("legalizer") == database.policy_set.end())
             legalizer.run();
         
@@ -1284,24 +1288,36 @@ void Cell::addILPLegalizedCellCandidates(){
             int cell_idx = std::get<0>(sol_tuple);
             int new_row  = std::get<1>(sol_tuple);
             int new_site = std::get<2>(sol_tuple);
+
+            
             auto cell = database.cells[cell_idx];
+
             auto cell_box = cell.getCellBox();
             auto row_dbu  = database.getDBURow(new_row);
             auto site_dbu = database.getDBUSite(new_site);
+
+            if(debug){
+                log() << "legalizer_sols: "
+                      << cell.getName()
+                      << ", " << site_dbu
+                      << ", " << row_dbu << std::endl;
+            }
             auto old_site = database.getSiteDBU(cell_box.lx());
             auto old_row  = database.getRowDBU(cell_box.ly());
 
             if(cell_idx == idx){    
                 utils::BoxT<DBU> new_box(site_dbu,row_dbu,
                                         site_dbu+cell_box.width(),row_dbu+cell_box.height());
-                // log() << "cell: " << cell.getName() << ", new_box: " << new_box << std::endl;
+                if(debug)
+                    log() << "cell: " << cell.getName() << ", new_box: " << new_box << std::endl;
                 if(!isRedundantCandidate(new_box))
                     placement_candidates.push_back(std::make_pair(new_box,0));
             }else{
                 // continue;
                 utils::BoxT<DBU> new_box(site_dbu,row_dbu,
                                         site_dbu+cell_box.width(),row_dbu+cell_box.height());
-                // log() << "ovrlp_cell: " << cell.getName() << ", new_box: " << new_box << std::endl;
+                if(debug)
+                    log() << "ovrlp_cell: " << cell.getName() << ", new_box: " << new_box << std::endl;
                 ovrlp_cells_.push_back(std::make_pair(cell.idx,new_box));
             }
         }

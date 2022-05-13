@@ -197,6 +197,16 @@ DBU RouteGrid::getOvlpFixedMetalArea(const BoxOnLayer& box, int netIdx) const {
     return area;
 }
 
+bool RouteGrid::hasOvlpFixedMetal(const BoxOnLayer& box) const {
+    utils::BoxT<DBU> queryBox = box;
+
+    boostBox rtreeQueryBox(boostPoint(queryBox.x.low, queryBox.y.low), boostPoint(queryBox.x.high, queryBox.y.high));
+    vector<std::pair<boostBox, int>> queryResults;
+    fixedMetals[box.layerIdx].query(bgi::intersects(rtreeQueryBox), std::back_inserter(queryResults));
+    if(queryResults.size() > 0) return true;
+    return false;
+}
+
 vector<std::pair<utils::BoxT<DBU>, int>> RouteGrid::getOvlpBoxes(const BoxOnLayer& box,
                                                                  int idx,
                                                                  const RTrees& rtrees) const {

@@ -48,6 +48,7 @@ public:
     void writeToCSV();
     void logInstances();
     void logCongestion();
+    void logPlacementWeights(std::vector<CandWeight>& weights);
     // void reportCells(std::string filename);
     
 

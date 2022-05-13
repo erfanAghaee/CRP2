@@ -90,17 +90,21 @@ public:
     void logAstar(int iter);
     void logAstarCoraseGrid(int iter);
     void logLayers();
+    void addToIllegalPlacementBox(utils::BoxT<DBU>& box);
 
     
     
 
     // function for filtering the functions in the felow. 
     void initPolicy();
+    
     // report strings
     std::stringstream refinePlacement_report_tracker;    
     std::stringstream cost_report_tracker;
     std::unordered_map<int,utils::BoxT<DBU>> suspected_cells_dict;
     int total_cells_moved;
+    // row -> set of sites
+    std::unordered_map<int,std::set<int>> illegal_placement_map;
     
     
     

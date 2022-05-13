@@ -254,7 +254,8 @@ def interval(row,wind):
     return pd.Interval(row.xl,row.xh).overlaps(pd.Interval(wind[0], wind[1]))
 
 def menu(args):
-    debugGCELL(args)
+    debugLegalizer(args)
+    # debugGCELL(args)
     # drawBenchmarks(args)
     # debugCUGRISPD2019Test5(args)
     # mainAnimation(args)

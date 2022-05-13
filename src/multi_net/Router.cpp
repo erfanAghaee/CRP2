@@ -250,6 +250,7 @@ void Router::run() {
         ripupRerouteCRP(netsToRoute); 
         netsToRoute.clear();
         for(int i = 0; i < db::setting.numRefinePlacement; i++){
+            printRouteStart("placement",i);
             applyPlacement(netsToRoute,i, profile_time, profile_time_str);
             // route(netsToRoute,PATTERNROUTE);
             // route(netsToRoute,ASTAR);

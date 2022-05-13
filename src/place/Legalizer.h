@@ -49,6 +49,7 @@ public:
         int min_row_    = -1;
         int max_row_    = -1;
         debug_global = false;
+        debug_global_all = false;
     }
     ~Legalizer(){}
     void run();
@@ -56,6 +57,7 @@ public:
     std::vector<std::tuple<int,int,int>> legalizer_sols;
 
     bool debug_global;
+    bool debug_global_all;
 
 private:
     bool getLegalizeBox(utils::BoxT<DBU>& box, utils::BoxT<DBU>& legalize_box);
@@ -238,7 +240,22 @@ private:
 
 
     double getCandidateCost(db::Cell& cell, int row_idx, int site_idx);
-   
+
+
+    void logLegalizerBoard(std::vector<std::vector<int>>& blockage_matrix
+                                , std::vector<int>& legalize_rows
+                                , std::vector<int>& legalize_sites);
+    void logLegalizerWeights(std::vector<cellWrap>& weights
+                            , std::vector<int>& legalize_rows
+                            , std::vector<int>& legalize_sites);
+   void logLegalizerOvrlps(std::vector<cellWrap>& weights
+                        , std::vector<int>& legalize_rows
+                        , std::vector<int>& legalize_sites
+                        ,std::vector<std::vector<int>>& ovrlps);
+    void logLegalizerSols(std::vector<cellWrap>& weights
+                                , std::vector<int>& legalize_rows
+                                , std::vector<int>& legalize_sites
+                                , std::vector<int>& sols);
     //variables 
     int cell_idx_;
     int min_site_;

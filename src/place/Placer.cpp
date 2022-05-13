@@ -78,8 +78,8 @@ void Placer::runMT(std::vector<int>& netsToRoute,int cellWidth, int cellHeight){
         }
     }
 
-    if(log_debug)
-        logCellsCandidates();
+    // if(log_debug)
+    logCellsCandidates();
     // profile_time_str << "calcCellsCostMT_" << std::to_string(iter) << "," << std::to_string(profile_time.getTimer()) << std::endl;
     profile_time_str << "calcCellsCostMT"<< "," << std::to_string(profile_time.getTimer()) << std::endl;
     if(db::setting.debug){
@@ -134,15 +134,15 @@ void Placer::initCellsCandidate(){
         log() << "cells size: " << cells.size() << std::endl;
     }
     runJobsMT(cells.size(), [&](int i) { cells[i].initCandidates(); });
-    if(database.policy_set.find("addMedianCellCandidates") == database.policy_set.end()){
-        if(db::setting.debug){
-            log() << "addMedianCellCandidates..." << std::endl;
-        }
-        runJobsMT(cells.size(), [&](int i) { cells[i].addMedianCellCandidates(); });
-        if(db::setting.debug){
-            log() << "end addMedianCellCandidates..." << std::endl;
-        }
-    }
+    // if(database.policy_set.find("addMedianCellCandidates") == database.policy_set.end()){
+    //     if(db::setting.debug){
+    //         log() << "addMedianCellCandidates..." << std::endl;
+    //     }
+    //     runJobsMT(cells.size(), [&](int i) { cells[i].addMedianCellCandidates(); });
+    //     if(db::setting.debug){
+    //         log() << "end addMedianCellCandidates..." << std::endl;
+    //     }
+    // }
         
     // runJobsMT(cells.size(), [&](int i) { cells[i].addRandomNetBoxCellCandidates(); });
     // // runJobsMT(cells.size(), [&](int i) { cells[i].addMedianCellCandidatesSiteBased(); });
@@ -193,8 +193,15 @@ void Placer::initCellsCandidate(){
     //     }
     // }
     // return;
+    bool debug = false;
     for (auto cell : cells){
-        // log() << "cell: " << cell.getName() << std::endl;
+        if(cell.getName() == "g61949_u3"){
+            log() << "cell: " << cell.getName() << std::endl;
+            debug = true;
+        }else{
+            debug = false;
+        }
+            
         std::set<int> seen_cells;
         auto cell_name = cell.getName();
         auto ovrlp_pair_cells = cell.ovrlp_cells_;
@@ -207,6 +214,14 @@ void Placer::initCellsCandidate(){
                 // auto cell_ovrlp = database.cells[pair.first];
                 auto& cell_ovrlp = cells[pair.first];
                 // cell_ovrlp.initCandidates();
+                if(debug || cell_ovrlp.getName() == "g61949_u3"){
+
+                    log() << "overlap_cell: " << cell_ovrlp.getName() 
+                          << pair.second 
+                          << ", in cell: " << cell.getName() << std::endl;
+
+                }
+                    
                 cell_ovrlp.addOvrlpCandidates(pair.second);
                 // cells.push_back(cell_ovrlp);
 
@@ -836,11 +851,14 @@ void Placer::refinePlacement(std::vector<int>& netsToRoute){
     }
 
     try{
-        log() << "average num pins: " << num_pin/netsToRoute.size() << std::endl;
-        log() << "max_disp_x: " << max_disp_x 
-            << " die width " << std::abs(die_lx-die_hx) 
-            << " ( "  << float(max_disp_x*100)/float(std::abs(die_lx-die_hx))
-            << " %) " << std::endl;
+        if(netsToRoute.size() != 0){
+            log() << "average num pins: " << num_pin/netsToRoute.size() << std::endl;
+            log() << "max_disp_x: " << max_disp_x 
+                << " die width " << std::abs(die_lx-die_hx) 
+                << " ( "  << float(max_disp_x*100)/float(std::abs(die_lx-die_hx))
+                << " %) " << std::endl;
+        }
+        
     }catch (const std::exception& e){
         log() << "divide by zero!" << std::endl;
     }
@@ -1405,26 +1423,28 @@ void Placer::findBestEntryMTV2(){
     for(auto& cell : cells){
         if(cell.placement_candidates.size() > 1){
             num_movable_cells++;
-            int start_idx = weights.size();
-            for(auto candidate_pair : cell.placement_candidates){
-                auto box = candidate_pair.first;
-                auto cost = candidate_pair.second;
-                CandWeight cand_weight;
-                cand_weight.cell_idx = cell.idx;
+        }//end if num_movable_cells
+        int start_idx = weights.size();
+        for(auto candidate_pair : cell.placement_candidates){
+            auto box = candidate_pair.first;
+            auto cost = candidate_pair.second;
+            CandWeight cand_weight;
+            cand_weight.cell_idx = cell.idx;
 
-                cand_weight.box = box;// cell box
-                cand_weight.cost = cost;
-                weights.push_back(cand_weight);
-            }        
-            int stop_idx = weights.size();
-            std::vector<int> single_position_cons;
-            for(int i = start_idx; i < stop_idx;i++){
-                single_position_cons.push_back(i);
-            }
-            constraints.push_back(single_position_cons);
+            cand_weight.box = box;// cell box
+            cand_weight.cost = cost;
+            weights.push_back(cand_weight);
+        }        
+        int stop_idx = weights.size();
+        std::vector<int> single_position_cons;
+        for(int i = start_idx; i < stop_idx;i++){
+            single_position_cons.push_back(i);
         }
+        constraints.push_back(single_position_cons);
+        
     }//end for 
 
+    logPlacementWeights(weights);
 
     getOvrlpConflicts(weights,ovrlps);
 
@@ -2322,6 +2342,39 @@ void Placer::logCellsMoved(){
     file.close();
 
 }//end logCellsMoved
+
+
+void Placer::logPlacementWeights(std::vector<CandWeight>& weights){
+    std::stringstream ss;
+    auto rsynService = database.getRsynService();
+       
+    ss << "weight_idx,cell_name,xl,yl,xh,yh,cost" << std::endl;    
+
+    for(int i = 0; i < weights.size(); i++){
+        auto cell_idx = weights[i].cell_idx;
+        auto box = weights[i].box;
+        auto cost = weights[i].cost;
+    
+
+        ss << i
+           << "," << database.cells[cell_idx].getName()
+           << "," << box.lx()
+           << "," << box.ly()
+           << "," << box.hx()
+           << "," << box.hy()
+           << "," << cost << std::endl;
+
+
+    }//end for loop
+
+
+    
+    std::string file_name_csv_b = db::setting.directory +  db::setting.benchmarkName 
+                                + ".placement.weights.csv";
+    std::ofstream fout_blockage(file_name_csv_b);
+    fout_blockage << ss.str();
+    fout_blockage.close();
+}//end logLegalizerBoard
 
 
 

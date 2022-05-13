@@ -36,6 +36,7 @@ public:
 
     int getFixedMetalVio(const BoxOnLayer& box, int netIdx) const;
     DBU getOvlpFixedMetalArea(const BoxOnLayer& box, int netIdx) const;
+    bool hasOvlpFixedMetal(const BoxOnLayer& box) const;
 
     void markFixedMetalBatch(vector<std::pair<BoxOnLayer, int>>& fixedMetalVec, int beginIdx, int endIdx);
     const RTree& getFixedMetals(int layerIdx) const { return fixedMetals[layerIdx]; }
