@@ -18,11 +18,7 @@ namespace db {
 
 
 void Legalizer::run(){
-    // log() << "start legalizer cell: " << database.cells[cell_idx_].getName() << std::endl;
     bool debug = false || debug_global;
-
-    // if(database.cells[cell_idx_].getName() == "inst8879")
-    //     debug = true;
 
     if(debug)
         log() << "legalize cell: " << database.cells[cell_idx_].getName() << std::endl;
@@ -39,48 +35,39 @@ void Legalizer::run(){
 
     utils::BoxT<DBU> cell_box = database.cells[cell_idx_].getCellBox();
 
+    // 1- init legalize box
     bool isLegalized_boxValid = getLegalizeBox(cell_box,legalize_box);
     if(!isLegalized_boxValid) return;
 
+
+    // 2- init legalize rows and sites
     database.getIntersectedRows(legalize_box,legalize_rows);
     database.getIntersectedSites(legalize_box,legalize_sites); 
-
-
-
     if(!isLegalizedRowsValid(legalize_rows) || 
        !isLegalizedSitesValid(legalize_sites) ) 
         return;
-
+    
+    // 3- update minMaxRowsSites
     updateMinMaxRows(legalize_rows);
     updateMinMaxSites(legalize_sites);
 
-
+    // print legalizeRowsSites
     if(debug){
         log() << "legalize box: " << legalize_box << std::endl;
         printLegalizeRows(legalize_rows);
         printLegalizeSites(legalize_sites);
-        // if(legalize_rows.size() != db::setting.legalizationWindowSizeRow){
-        //     log() << "fail rows " << std::endl;
-        //     std::exit(1);
-        // }
         auto cell_width = database.cells[cell_idx_].getCellSiteWidth();
-        // if(legalize_sites.size() != cell_width*(db::setting.legalizationWindowSizeSite*2+1)){
-        //     log() << "fail sites " << std::endl;
-        //     std::exit(1);
-        // }
-
-        
-
     }
 
-    // log() << "num legalize rows: " << legalize_rows.size() << std::endl;
-    // log() << "num legalize_sites: " << legalize_sites.size() << std::endl;
-
+    
+    // 4- get initCellsInBox
     database.getCellsInBox(legalize_box,total_cells,10);
+
+    // 5- getMovableCellsInsideLegalizeBox
     getMovableCellsInsideLegalizeBox(total_cells,legalize_box,movable_cells_set);
 
 
-
+    // print movable cells and involved cells
     if(debug){
         log() << "involved cells" << std::endl;
         for(auto cell : total_cells){
@@ -94,7 +81,7 @@ void Legalizer::run(){
     }
     
 
-    // log() << "getLegalizerBlockageMatrix" << std::endl;
+    
 
     int total_empty_space = 
         getLegalizerBlockageMatrix(   total_cells
@@ -103,8 +90,8 @@ void Legalizer::run(){
                                     , legalize_sites
                                     , blockage_matrix);
 
-    // log() << "end getLegalizerBlockageMatrix" << std::endl;
-
+    
+    // print movable_cells_str
     if(db::setting.debug){
         auto min_row = *std::min_element(legalize_rows.begin(),legalize_rows.end());
         auto max_row = *std::max_element(legalize_rows.begin(),legalize_rows.end());
@@ -155,24 +142,12 @@ void Legalizer::run(){
     }
     if(total_empty_space < total_cells_width ) return;
 
-    // legalizerBacktracking( movable_cells
-    //                     , legalize_rows
-    //                     , legalize_sites
-    //                     , blockage_matrix);
-    // log() << "legalizerILPV2" << std::endl;    
+  
     if(database.policy_set.find("legalizerILP") == database.policy_set.end())
         legalizerILPV2( movable_cells
                     , legalize_rows
                     , legalize_sites
                     , blockage_matrix);
-
-    // log() << "end legalizerILPV2" << std::endl;    
-        // legalizerILP( movable_cells
-        //             , legalize_rows
-        //             , legalize_sites
-        //             , blockage_matrix);
-
-    // log() << "end legalizer ... " << std::endl;
 }//end run function
 
 
@@ -1112,355 +1087,355 @@ void Legalizer::getLegalizerILPCostCube(std::vector<double>& weights
     }//end for 
 }//end getLegalizerILPCostCube
 
-void Legalizer::findAllPermutations(std::vector<cellWrap>& weights
-                , std::vector<int>& legalize_rows
-                , std::vector<int>& legalize_sites
-                , std::vector<int>& movable_cells
-                , std::vector<std::vector<int>>& mat_spr
-                , std::vector<std::vector<int>>& blockage_matrix
-                // , std::unordered_map<int,int>& weightToCellIdxDict
-                // , std::unordered_map<int,std::tuple<int,int,int>>& weigthToCellRowSite
-                // , std::vector<std::vector<std::vector<int>>>& cube_cost
-                // , std::vector<std::vector<std::vector<int>>>& cube_weightIdx
-                ){
-    auto rsynService = database.getRsynService();
-    bool debug = false || debug_global;
-    if(debug)
-        log() << "findAllPermutations..." << std::endl;
-    std::stringstream ss;
-    ss << "inst,r,s,w,h,cost" << std::endl;  
-    // find segments
+// void Legalizer::findAllPermutations(std::vector<cellWrap>& weights
+//                 , std::vector<int>& legalize_rows
+//                 , std::vector<int>& legalize_sites
+//                 , std::vector<int>& movable_cells
+//                 , std::vector<std::vector<int>>& mat_spr
+//                 , std::vector<std::vector<int>>& blockage_matrix
+//                 // , std::unordered_map<int,int>& weightToCellIdxDict
+//                 // , std::unordered_map<int,std::tuple<int,int,int>>& weigthToCellRowSite
+//                 // , std::vector<std::vector<std::vector<int>>>& cube_cost
+//                 // , std::vector<std::vector<std::vector<int>>>& cube_weightIdx
+//                 ){
+//     auto rsynService = database.getRsynService();
+//     bool debug = false || debug_global;
+//     if(debug)
+//         log() << "findAllPermutations..." << std::endl;
+//     std::stringstream ss;
+//     ss << "inst,r,s,w,h,cost" << std::endl;  
+//     // find segments
 
-    std::vector<std::vector<std::pair<int,int>>> segs;
+//     std::vector<std::vector<std::pair<int,int>>> segs;
 
-    segs.resize(legalize_rows.size());
-
-    
-    for(int r = 0; r < mat_spr.size() ; r++){
-        std::vector<int> seqs;
-        for(int s = 0; s < mat_spr[r].size(); s++){
-            seqs.push_back(mat_spr[r][s]);
-            if(s+1 < mat_spr[r].size()){
-                if(std::abs(mat_spr[r][s]-mat_spr[r][s+1]) != 1){
-                    int min = *std::min_element(seqs.begin(),seqs.end());
-                    int max = *std::max_element(seqs.begin(),seqs.end());
-                    segs[r].push_back(std::make_pair(min,max));
-                    seqs.clear();
-                }//end if 
-            }else{
-                int min = *std::min_element(seqs.begin(),seqs.end());
-                int max = *std::max_element(seqs.begin(),seqs.end());
-                segs[r].push_back(std::make_pair(min,max));
-                seqs.clear();
-
-            }//end if 
-        }//end for 
-    }//end for 
-
-
-    if(debug){
-        log() << "seqs ..." << std::endl;
-        for(int r = 0; r < segs.size() ; r++){
-            log() << "r: " << r 
-                  << "->" << database.getDBURow(r) << std::endl;
-            auto seqs = segs[r];
-            std::string txt = "";
-            for(auto pair : seqs){
-                txt = txt 
-                    + "(" 
-                    + std::to_string(pair.first) 
-                    + ","
-                    + std::to_string(pair.second)  
-                    + ") ->"
-                    + "(" 
-                    + std::to_string(database.getDBUSite(pair.first)) 
-                    + ","
-                    + std::to_string(database.getDBUSite(pair.second))  
-                    + ")";
-            }
-            log() << txt << std::endl;
-        }
-    }//end if 
+//     segs.resize(legalize_rows.size());
 
     
-    std::vector<int> orders;
-    std::vector<std::vector<int>> orders_2d; 
-    std::vector<int> cell_w;
+//     for(int r = 0; r < mat_spr.size() ; r++){
+//         std::vector<int> seqs;
+//         for(int s = 0; s < mat_spr[r].size(); s++){
+//             seqs.push_back(mat_spr[r][s]);
+//             if(s+1 < mat_spr[r].size()){
+//                 if(std::abs(mat_spr[r][s]-mat_spr[r][s+1]) != 1){
+//                     int min = *std::min_element(seqs.begin(),seqs.end());
+//                     int max = *std::max_element(seqs.begin(),seqs.end());
+//                     segs[r].push_back(std::make_pair(min,max));
+//                     seqs.clear();
+//                 }//end if 
+//             }else{
+//                 int min = *std::min_element(seqs.begin(),seqs.end());
+//                 int max = *std::max_element(seqs.begin(),seqs.end());
+//                 segs[r].push_back(std::make_pair(min,max));
+//                 seqs.clear();
+
+//             }//end if 
+//         }//end for 
+//     }//end for 
 
 
-    for(int i = 0; i < movable_cells.size(); i++){
+//     if(debug){
+//         log() << "seqs ..." << std::endl;
+//         for(int r = 0; r < segs.size() ; r++){
+//             log() << "r: " << r 
+//                   << "->" << database.getDBURow(r) << std::endl;
+//             auto seqs = segs[r];
+//             std::string txt = "";
+//             for(auto pair : seqs){
+//                 txt = txt 
+//                     + "(" 
+//                     + std::to_string(pair.first) 
+//                     + ","
+//                     + std::to_string(pair.second)  
+//                     + ") ->"
+//                     + "(" 
+//                     + std::to_string(database.getDBUSite(pair.first)) 
+//                     + ","
+//                     + std::to_string(database.getDBUSite(pair.second))  
+//                     + ")";
+//             }
+//             log() << txt << std::endl;
+//         }
+//     }//end if 
+
+    
+//     std::vector<int> orders;
+//     std::vector<std::vector<int>> orders_2d; 
+//     std::vector<int> cell_w;
+
+
+//     for(int i = 0; i < movable_cells.size(); i++){
         
-        orders.push_back(i);
-        auto cell = database.cells[movable_cells[i]];
-        cell_w.push_back(cell.getCellSiteWidth());
-        if(debug){
-            log() << "cell: " << cell.getName()
-              << ", i: " << i
-              << ", w: " << cell_w[cell_w.size() -1 ] << std::endl;
-        }
+//         orders.push_back(i);
+//         auto cell = database.cells[movable_cells[i]];
+//         cell_w.push_back(cell.getCellSiteWidth());
+//         if(debug){
+//             log() << "cell: " << cell.getName()
+//               << ", i: " << i
+//               << ", w: " << cell_w[cell_w.size() -1 ] << std::endl;
+//         }
         
-    }
+//     }
 
-    for(int i = 0; i < orders.size(); i++){
-        orders_2d.push_back(std::vector<int>{i});
-    }
+//     for(int i = 0; i < orders.size(); i++){
+//         orders_2d.push_back(std::vector<int>{i});
+//     }
 
-    for(int n =2; n <= orders.size(); n++){
-        do{
-            std::string txt2 = "";
-            for(int ii = 0; ii < orders.size(); ii++){
-                txt2 = txt2 + std::to_string(orders[ii]) + " ";
-            }
-            log() << "current order: " << txt2 << std::endl;
+//     for(int n =2; n <= orders.size(); n++){
+//         do{
+//             std::string txt2 = "";
+//             for(int ii = 0; ii < orders.size(); ii++){
+//                 txt2 = txt2 + std::to_string(orders[ii]) + " ";
+//             }
+//             log() << "current order: " << txt2 << std::endl;
             
                 
 
-            //Display the current permutation
-            std::vector<int> order_tmp;
-            for(int i=0;i<n;i++) 
-                order_tmp.push_back(orders[i]);
-            orders_2d.push_back(order_tmp);
-            //     cout << orders[i] << " ";
-            // cout << endl;
-        }while(std::next_permutation(orders.begin(), orders.end()));
-    }//end for 
+//             //Display the current permutation
+//             std::vector<int> order_tmp;
+//             for(int i=0;i<n;i++) 
+//                 order_tmp.push_back(orders[i]);
+//             orders_2d.push_back(order_tmp);
+//             //     cout << orders[i] << " ";
+//             // cout << endl;
+//         }while(std::next_permutation(orders.begin(), orders.end()));
+//     }//end for 
 
-    if(debug){
-        for(auto ords : orders_2d){
-            std::string txt = "";
-            for(auto tmp : ords){
-                txt = txt + std::to_string(tmp) + " ";
-            }
-            log() << txt << std::endl;
-        }
-    }
-
-
-    std::vector<Segment> segments;
+//     if(debug){
+//         for(auto ords : orders_2d){
+//             std::string txt = "";
+//             for(auto tmp : ords){
+//                 txt = txt + std::to_string(tmp) + " ";
+//             }
+//             log() << txt << std::endl;
+//         }
+//     }
 
 
-    for(int r = 0; r < segs.size(); r++){
-        for(int i = 0; i < segs[r].size(); i++){
-            // get orders 
-            int start = segs[r][i].first;
-            int stop = segs[r][i].second;
-            Segment seg_obj;
-            seg_obj.r = r;
-            seg_obj.start = start;
-            seg_obj.stop = stop;
+//     std::vector<Segment> segments;
+
+
+//     for(int r = 0; r < segs.size(); r++){
+//         for(int i = 0; i < segs[r].size(); i++){
+//             // get orders 
+//             int start = segs[r][i].first;
+//             int stop = segs[r][i].second;
+//             Segment seg_obj;
+//             seg_obj.r = r;
+//             seg_obj.start = start;
+//             seg_obj.stop = stop;
             
-            for(int ii = 0; ii < orders_2d.size(); ii++){
-                int sum = 0;
-                std::string txt = "";
-                for(int jj = 0; jj < orders_2d[ii].size(); jj++){
-                    txt = txt + std::to_string(orders_2d[ii][jj]) 
-                        + " " + std::to_string(cell_w[orders_2d[ii][jj]])
-                        + " " ;
-                    sum += cell_w[orders_2d[ii][jj]];
-                }//end for
-                if(debug){
-                    log() << "order: " << txt << std::endl; 
-                    log()  << "r: " << r
-                        << ", start: " << seg_obj.start
-                        << ", stop: " << seg_obj.stop
-                        << ", sum: " << sum << std::endl;
-                }
+//             for(int ii = 0; ii < orders_2d.size(); ii++){
+//                 int sum = 0;
+//                 std::string txt = "";
+//                 for(int jj = 0; jj < orders_2d[ii].size(); jj++){
+//                     txt = txt + std::to_string(orders_2d[ii][jj]) 
+//                         + " " + std::to_string(cell_w[orders_2d[ii][jj]])
+//                         + " " ;
+//                     sum += cell_w[orders_2d[ii][jj]];
+//                 }//end for
+//                 if(debug){
+//                     log() << "order: " << txt << std::endl; 
+//                     log()  << "r: " << r
+//                         << ", start: " << seg_obj.start
+//                         << ", stop: " << seg_obj.stop
+//                         << ", sum: " << sum << std::endl;
+//                 }
                 
-                if(sum <= std::abs(start-stop)+1){
-                    seg_obj.orders.push_back(orders_2d[ii]);
-                }
-            }//end for
+//                 if(sum <= std::abs(start-stop)+1){
+//                     seg_obj.orders.push_back(orders_2d[ii]);
+//                 }
+//             }//end for
 
-            segments.push_back(seg_obj);
-        }//end for 
-    }//end for
+//             segments.push_back(seg_obj);
+//         }//end for 
+//     }//end for
 
     
-    if(debug){
-        for(auto seg_obj : segments){
+//     if(debug){
+//         for(auto seg_obj : segments){
             
-            log() << "r: " << seg_obj.r
-                  << ", start: " << seg_obj.start
-                  << ", stop: " << seg_obj.stop
-                  << ", possible orders: " << std::endl;
+//             log() << "r: " << seg_obj.r
+//                   << ", start: " << seg_obj.start
+//                   << ", stop: " << seg_obj.stop
+//                   << ", possible orders: " << std::endl;
 
 
-            for(auto ords : seg_obj.orders){
-                std::string txt = "";
-                for(auto elem : ords ){
-                    txt = txt + std::to_string(elem) + " ";
-                }
-                log() << txt << std::endl;
-            }
+//             for(auto ords : seg_obj.orders){
+//                 std::string txt = "";
+//                 for(auto elem : ords ){
+//                     txt = txt + std::to_string(elem) + " ";
+//                 }
+//                 log() << txt << std::endl;
+//             }
             
-        }
-    }//end if debug 
+//         }
+//     }//end if debug 
 
-    if(debug){
-        log() << "cell indexing ... " << std::endl;
-    }//end if 
+//     if(debug){
+//         log() << "cell indexing ... " << std::endl;
+//     }//end if 
 
-    for(auto seg : segments){
-        int r = seg.r;
-        auto orders_2d = seg.orders;
-        int seg_w = std::abs(seg.start - seg.stop)+1;
-        if(debug){
-            log() << "seg.r: " << r
-                  << ", seg.w: " << seg_w << std::endl;
-            for(auto ords : orders_2d){
-                std::string txt = "";
-                for(auto elem : ords ){
-                    txt = txt + std::to_string(elem) + " ";
-                }
-                log() << txt << std::endl;
-            }//end for 
-        }//end if 
+//     for(auto seg : segments){
+//         int r = seg.r;
+//         auto orders_2d = seg.orders;
+//         int seg_w = std::abs(seg.start - seg.stop)+1;
+//         if(debug){
+//             log() << "seg.r: " << r
+//                   << ", seg.w: " << seg_w << std::endl;
+//             for(auto ords : orders_2d){
+//                 std::string txt = "";
+//                 for(auto elem : ords ){
+//                     txt = txt + std::to_string(elem) + " ";
+//                 }
+//                 log() << txt << std::endl;
+//             }//end for 
+//         }//end if 
         
 
-        for(auto order : orders_2d){
-            int cells_w_sum = 0;
-            std::string txt = "";
+//         for(auto order : orders_2d){
+//             int cells_w_sum = 0;
+//             std::string txt = "";
 
 
-            for(int idx : order){
-                txt = txt + std::to_string(idx) + " ";
-                cells_w_sum += cell_w[idx];
-            }
+//             for(int idx : order){
+//                 txt = txt + std::to_string(idx) + " ";
+//                 cells_w_sum += cell_w[idx];
+//             }
 
-            if(debug){
-                log() << "order: " << txt << std::endl;
-                log() << "cell_w_sum: " << cells_w_sum << std::endl;
-            }
+//             if(debug){
+//                 log() << "order: " << txt << std::endl;
+//                 log() << "cell_w_sum: " << cells_w_sum << std::endl;
+//             }
                 
 
-            int empty_w = seg_w-cells_w_sum;
+//             int empty_w = seg_w-cells_w_sum;
 
-            if(debug)
-                log() << "empty_w: " << empty_w << std::endl;
+//             if(debug)
+//                 log() << "empty_w: " << empty_w << std::endl;
 
 
-            int num_line_seg = order.size();
+//             int num_line_seg = order.size();
 
-            int num_empty_spot = num_line_seg + 1;
+//             int num_empty_spot = num_line_seg + 1;
 
-            int empty_offset = empty_w / num_empty_spot;
-            int reminder = empty_w % num_empty_spot;
+//             int empty_offset = empty_w / num_empty_spot;
+//             int reminder = empty_w % num_empty_spot;
 
             
-            int n = num_line_seg + num_empty_spot;
-            int idx = seg.start;
+//             int n = num_line_seg + num_empty_spot;
+//             int idx = seg.start;
 
-            bool emptySw = true;
-            int i_order = 0;
+//             bool emptySw = true;
+//             int i_order = 0;
 
-            if(debug){
-                log() << "empty_offset: " << empty_offset
-                      << ", reminder: " << reminder
-                      << ", n: " << n << std::endl;
-            }
+//             if(debug){
+//                 log() << "empty_offset: " << empty_offset
+//                       << ", reminder: " << reminder
+//                       << ", n: " << n << std::endl;
+//             }
 
-            for(int i = 0; i < n; i++){
-                if(idx >= seg.stop)
-                    continue;
+//             for(int i = 0; i < n; i++){
+//                 if(idx >= seg.stop)
+//                     continue;
 
-                if(debug){
-                    log() << "idx: " << idx << std::endl;
-                }
-                if(emptySw){
-                    if(reminder > 0){
-                        std::random_device dev;
-                        std::mt19937 rng(dev());
-                        std::uniform_int_distribution<std::mt19937::result_type> rand_dist(0,reminder); // distribution in range [1, 6]
-                        int rnd_por = rand_dist(rng);
+//                 if(debug){
+//                     log() << "idx: " << idx << std::endl;
+//                 }
+//                 if(emptySw){
+//                     if(reminder > 0){
+//                         std::random_device dev;
+//                         std::mt19937 rng(dev());
+//                         std::uniform_int_distribution<std::mt19937::result_type> rand_dist(0,reminder); // distribution in range [1, 6]
+//                         int rnd_por = rand_dist(rng);
                         
-                        if(debug){
-                            log() << "rnd_por: " << rnd_por
-                                  << ", reminder: " << reminder 
-                                  << ", emptySw: " << emptySw << std::endl;
-                        }
+//                         if(debug){
+//                             log() << "rnd_por: " << rnd_por
+//                                   << ", reminder: " << reminder 
+//                                   << ", emptySw: " << emptySw << std::endl;
+//                         }
                         
                         
-                        reminder = reminder - rnd_por;
-                    }
+//                         reminder = reminder - rnd_por;
+//                     }
 
-                    idx = idx + empty_offset + 0;//reminder;
-                }else{
-                    cellWrap cell_wrap;
+//                     idx = idx + empty_offset + 0;//reminder;
+//                 }else{
+//                     cellWrap cell_wrap;
                     
-                    auto cell = database.cells[movable_cells[order[i_order]]];
-                    cell_wrap.idx = cell.idx;
-                    cell_wrap.r = seg.r;
-                    cell_wrap.s = idx;
+//                     auto cell = database.cells[movable_cells[order[i_order]]];
+//                     cell_wrap.idx = cell.idx;
+//                     cell_wrap.r = seg.r;
+//                     cell_wrap.s = idx;
 
-                    // find cost 
-                    int row_idx  = legalize_rows[cell_wrap.r];
-                    int site_idx = legalize_sites[cell_wrap.s];
+//                     // find cost 
+//                     int row_idx  = legalize_rows[cell_wrap.r];
+//                     int site_idx = legalize_sites[cell_wrap.s];
                                         
-                    // auto median = cell.feature.median_x_y_pin;//getMedianPin();
+//                     // auto median = cell.feature.median_x_y_pin;//getMedianPin();
                     
                     
-                    // double cost_median = diff_x + diff_y;
-                    double cost_median = getCandidateCost(cell,row_idx,site_idx);
-                    if(cost_median > 0)
-                        cell_wrap.cost = cost_median;
-                    else
-                        cell_wrap.cost = 1;
+//                     // double cost_median = diff_x + diff_y;
+//                     double cost_median = getCandidateCost(cell,row_idx,site_idx);
+//                     if(cost_median > 0)
+//                         cell_wrap.cost = cost_median;
+//                     else
+//                         cell_wrap.cost = 1;
 
 
-                    if(debug){
+//                     if(debug){
                             
-                            Rsyn::Cell cellRsyn = cell.rsynInstance.asCell();
-                            Rsyn::PhysicalCell phCell = rsynService.physicalDesign.getPhysicalCell(cellRsyn);
-                            Rsyn::PhysicalLibraryCell phLibCell = rsynService.physicalDesign.getPhysicalLibraryCell(cellRsyn);
-                            int cell_width_tmp = phLibCell.getWidth();
-                            int cell_height_tmp = phLibCell.getHeight();
+//                             Rsyn::Cell cellRsyn = cell.rsynInstance.asCell();
+//                             Rsyn::PhysicalCell phCell = rsynService.physicalDesign.getPhysicalCell(cellRsyn);
+//                             Rsyn::PhysicalLibraryCell phLibCell = rsynService.physicalDesign.getPhysicalLibraryCell(cellRsyn);
+//                             int cell_width_tmp = phLibCell.getWidth();
+//                             int cell_height_tmp = phLibCell.getHeight();
 
-                            log() << cell.getName() 
-                                << ",r: " << std::to_string(cell_wrap.r)
-                                << ",s: " << std::to_string(cell_wrap.s)
-                                << ",w: " << std::to_string(cell_width_tmp)
-                                << ",h: " << std::to_string(cell_height_tmp)
-                                << ",cost: " << std::to_string(cost_median) << std::endl;
+//                             log() << cell.getName() 
+//                                 << ",r: " << std::to_string(cell_wrap.r)
+//                                 << ",s: " << std::to_string(cell_wrap.s)
+//                                 << ",w: " << std::to_string(cell_width_tmp)
+//                                 << ",h: " << std::to_string(cell_height_tmp)
+//                                 << ",cost: " << std::to_string(cost_median) << std::endl;
 
-                            ss << cell.getName() 
-                                << "," << std::to_string(cell_wrap.r)
-                                << "," << std::to_string(cell_wrap.s)
-                                << "," << std::to_string(cell_width_tmp)
-                                << "," << std::to_string(cell_height_tmp)
-                                << "," << std::to_string(cost_median) << std::endl;
+//                             ss << cell.getName() 
+//                                 << "," << std::to_string(cell_wrap.r)
+//                                 << "," << std::to_string(cell_wrap.s)
+//                                 << "," << std::to_string(cell_width_tmp)
+//                                 << "," << std::to_string(cell_height_tmp)
+//                                 << "," << std::to_string(cost_median) << std::endl;
                             
-                        }
+//                         }
 
-                    weights.push_back(cell_wrap);
-                    idx = idx + cell_w[order[i_order]];
-                    i_order++;
-                }
+//                     weights.push_back(cell_wrap);
+//                     idx = idx + cell_w[order[i_order]];
+//                     i_order++;
+//                 }
 
-                emptySw = emptySw xor true;
+//                 emptySw = emptySw xor true;
 
-                if(debug){
-                    log() << std::endl;
-                }
+//                 if(debug){
+//                     log() << std::endl;
+//                 }
                 
-            }//end for 
+//             }//end for 
 
 
 
-        }//end order loop
+//         }//end order loop
 
-    }//end segments loop
+//     }//end segments loop
     
-    if(debug){
-        std::string file_name_csv =db::setting.directory +  db::setting.benchmarkName 
-                                  + ".legalizer.csv";
-        // log() << "file_name_csv " << file_name_csv << std::endl;
-        std::ofstream fout(file_name_csv);
-        fout << ss.str();
-        fout.close();
-    }
+//     if(debug){
+//         std::string file_name_csv =db::setting.directory +  db::setting.benchmarkName 
+//                                   + ".legalizer.csv";
+//         // log() << "file_name_csv " << file_name_csv << std::endl;
+//         std::ofstream fout(file_name_csv);
+//         fout << ss.str();
+//         fout.close();
+//     }
 
 
-}//end findAllpermutation
+// }//end findAllpermutation
 
 
 void Legalizer::findAllPermutationsV2(std::vector<cellWrap>& weights
@@ -1488,26 +1463,7 @@ void Legalizer::findAllPermutationsV2(std::vector<cellWrap>& weights
     segs.resize(legalize_rows.size());
 
     // construct segs
-    for(int r = 0; r < mat_spr.size() ; r++){
-        std::vector<int> seqs;
-        for(int s = 0; s < mat_spr[r].size(); s++){
-            seqs.push_back(mat_spr[r][s]);
-            if(s+1 < mat_spr[r].size()){
-                if(std::abs(mat_spr[r][s]-mat_spr[r][s+1]) != 1){
-                    int min = *std::min_element(seqs.begin(),seqs.end());
-                    int max = *std::max_element(seqs.begin(),seqs.end());
-                    segs[r].push_back(std::make_pair(min,max));
-                    seqs.clear();
-                }//end if 
-            }else{
-                int min = *std::min_element(seqs.begin(),seqs.end());
-                int max = *std::max_element(seqs.begin(),seqs.end());
-                segs[r].push_back(std::make_pair(min,max));
-                seqs.clear();
-
-            }//end if 
-        }//end for 
-    }//end for 
+    constructSegments(mat_spr,segs);
 
     
 
@@ -1543,53 +1499,7 @@ void Legalizer::findAllPermutationsV2(std::vector<cellWrap>& weights
     std::vector<int> orders_2d_sum;
     std::vector<int> cell_w;
 
-    // construct all cell_w 
-    for(int i = 0; i < movable_cells.size(); i++){
-        
-        orders.push_back(i);
-        auto cell = database.cells[movable_cells[i]];
-        cell_w.push_back(cell.getCellSiteWidth());
-        if(debug){
-            log() << "cell: " << cell.getName()
-              << ", i: " << i
-              << ", w: " << cell_w[cell_w.size() -1 ] << std::endl;
-        }
-        
-    }
-
-    
-
-    // for(int i = 0; i < orders_2d.size();i++)}{
-    //     int sum = 0;
-    //     for(int j = 0; j < orders_2d[i].size(); j++){
-    //         sum += orders_2d[i][j];
-    //     }//end for 
-    //     orders_2d_sum.push_back(sum);
-    // }//end for 
-
-    // for(int i = 0; i < orders.size(); i++){
-    //     orders_2d.push_back(std::vector<int>{i});
-    // }
-
-    // for(int n =2; n <= orders.size(); n++){
-    //     do{
-    //         std::string txt2 = "";
-    //         for(int ii = 0; ii < orders.size(); ii++){
-    //             txt2 = txt2 + std::to_string(orders[ii]) + " ";
-    //         }
-    //         log() << "current order: " << txt2 << std::endl;
-            
-                
-
-    //         //Display the current permutation
-    //         std::vector<int> order_tmp;
-    //         for(int i=0;i<n;i++) 
-    //             order_tmp.push_back(orders[i]);
-    //         orders_2d.push_back(order_tmp);
-    //         //     cout << orders[i] << " ";
-    //         // cout << endl;
-    //     }while(std::next_permutation(orders.begin(), orders.end()));
-    // }//end for 
+    assignMovableCellsToOrders( movable_cells, orders, cell_w);
 
     if(debug){
         log() << "database.lookup_tb.perms size: " 
@@ -1606,44 +1516,12 @@ void Legalizer::findAllPermutationsV2(std::vector<cellWrap>& weights
 
     std::vector<Segment> segments;
 
-    // check each order of cells can be fit inside the segment
-    for(int r = 0; r < segs.size(); r++){
-        for(int i = 0; i < segs[r].size(); i++){
-            // get orders 
-            int start = segs[r][i].first;
-            int stop = segs[r][i].second;
-            Segment seg_obj;
-            seg_obj.r = r;
-            seg_obj.start = start;
-            seg_obj.stop = stop;
-            
-            for(int ii = 0; ii < orders_2d.size(); ii++){
-                int sum = 0;
-                std::string txt = "";
-                for(int jj = 0; jj < orders_2d[ii].size(); jj++){
-                    if(debug){
-                        txt = txt + " (ord: "+std::to_string(orders_2d[ii][jj]) 
-                            + ", w: " + std::to_string(cell_w[orders_2d[ii][jj]])
-                            + ") " ;
-                    }
-                    sum += cell_w[orders_2d[ii][jj]];
-                }//end for
-                if(debug){
-                    log() << "order: " << txt << std::endl; 
-                    log()  << "r: " << r
-                        << ", start: " << seg_obj.start
-                        << ", stop: " << seg_obj.stop
-                        << ", sum: " << sum << std::endl;
-                }
-                
-                if(sum <= std::abs(start-stop)+1){
-                    seg_obj.orders.push_back(orders_2d[ii]);
-                }
-            }//end for
+    initSegments( segs
+                , orders_2d
+                , cell_w
+                , segments);
 
-            segments.push_back(seg_obj);
-        }//end for 
-    }//end for
+    
 
     
 
@@ -1672,183 +1550,14 @@ void Legalizer::findAllPermutationsV2(std::vector<cellWrap>& weights
         log() << "cell indexing ... " << std::endl;
     }//end if 
 
-    for(auto seg : segments){
-        int r = seg.r;
-        auto seg_orders_2d = seg.orders;
-        int seg_w = std::abs(seg.start - seg.stop)+1;
-        if(debug){
-            log() << "seg.r: " << r
-                  << ", seg.w: " << seg_w << std::endl;
-            for(auto ords : seg_orders_2d){
-                std::string txt = "";
-                for(auto elem : ords ){
-                    txt = txt + std::to_string(elem) + " ";
-                }
-                log() << txt << std::endl;
-            }//end for 
-        }//end if 
-
-        
-        
-
-        for(auto order : seg_orders_2d){
-            int cells_w_sum = 0;
-            std::string txt = "";
-
-
-            for(int idx : order){
-                txt = txt + std::to_string(idx) + " ";
-                cells_w_sum += cell_w[idx];
-            }
-
-            if(debug){
-                log() << "order: " << txt << std::endl;
-                log() << "cell_w_sum: " << cells_w_sum << std::endl;
-            }
-                
-
-            int empty_w = seg_w-cells_w_sum;
-
-            if(debug)
-                log() << "empty_w: " << empty_w << std::endl;
-
-
-            int num_line_seg = order.size();
-
-            int num_empty_spot = num_line_seg + 1;
-
-            int empty_offset = empty_w / num_empty_spot;
-            int reminder = empty_w % num_empty_spot;
-
-            
-            int n = num_line_seg + num_empty_spot;
-            int idx = seg.start;
-
-            bool emptySw = true;
-            int i_order = 0;
-
-            if(debug){
-                log() << "empty_offset: " << empty_offset
-                      << ", reminder: " << reminder
-                      << ", n: " << n << std::endl;
-            }
-
-            
-
-            for(int i = 0; i < n; i++){
-                if(idx > seg.stop)
-                    continue;
-
-                if(debug){
-                    log() << "idx: " << idx << std::endl;
-                }
-                if(emptySw){
-                // if(false){
-                    if(reminder > 0){
-                        std::random_device dev;
-                        std::mt19937 rng(dev());
-                        std::uniform_int_distribution<std::mt19937::result_type> rand_dist(0,reminder); // distribution in range [1, 6]
-                        int rnd_por = rand_dist(rng);
-                        
-                        if(debug){
-                            log() << "rnd_por: " << rnd_por
-                                  << ", reminder: " << reminder 
-                                  << ", emptySw: " << emptySw << std::endl;
-                        }
-                        
-                        
-                        reminder = reminder - rnd_por;
-                    }
-
-                    idx = idx + empty_offset + reminder;
-                }else{
-
-                    
-                    cellWrap cell_wrap;
-
-                    // log() << "i_order: " << i_order << ", orer: " << order[i_order]
-                    //       << ", movable_cells[order[i_order]]: " << movable_cells[order[i_order]]
-                    //       << std::endl;
-                    // log() << "movable_cells size: " << movable_cells.size() << std::endl;
-
-                    // auto cell = database.cells[movable_cells[order[0]]];
-                    auto cell = database.cells[movable_cells[order[i_order]]];
-                    // continue;
-                    cell_wrap.idx = cell.idx;
-                    cell_wrap.r = seg.r;
-                    cell_wrap.s = idx;
-
-                    // find cost 
-                    int row_idx  = legalize_rows[cell_wrap.r];
-                    int site_idx = legalize_sites[cell_wrap.s];
-                                        
-                    // auto median = cell.feature.median_x_y_pin;//getMedianPin();
-                    
-                    
-                    // double cost_median = diff_x + diff_y;
-                    double cost_median = getCandidateCost(cell,row_idx,site_idx);
-                    if(cost_median > 0)
-                        cell_wrap.cost = cost_median;
-                    else
-                        cell_wrap.cost = 1;
-
-
-                    
-
-                    
-                    if(debug){
-                            
-                            Rsyn::Cell cellRsyn = cell.rsynInstance.asCell();
-                            Rsyn::PhysicalCell phCell = rsynService.physicalDesign.getPhysicalCell(cellRsyn);
-                            Rsyn::PhysicalLibraryCell phLibCell = rsynService.physicalDesign.getPhysicalLibraryCell(cellRsyn);
-                            int cell_width_tmp = phLibCell.getWidth();
-                            int cell_height_tmp = phLibCell.getHeight();
-
-                            log() << cell.getName() 
-                                << ",r: " << std::to_string(cell_wrap.r)
-                                << ",s: " << std::to_string(cell_wrap.s)
-                                << ",w: " << std::to_string(cell_width_tmp)
-                                << ",h: " << std::to_string(cell_height_tmp)
-                                << ",cost: " << std::to_string(cost_median) << std::endl;
-
-                            // ss << cell.getName() 
-                            //     << "," << std::to_string(cell_wrap.r)
-                            //     << "," << std::to_string(cell_wrap.s)
-                            //     << "," << std::to_string(cell_width_tmp)
-                            //     << "," << std::to_string(cell_height_tmp)
-                            //     << "," << std::to_string(cost_median) << std::endl;
-                            auto xl = database.getDBUSite(legalize_sites[cell_wrap.s]);
-                            auto yl = database.getDBURow(legalize_rows[cell_wrap.r]);
-                            auto xh = xl + cell_width_tmp;
-                            auto yh = yl + cell_height_tmp;
-                            ss  << cell.getName() 
-                                << "," << xl
-                                << "," << yl
-                                << "," << xh
-                                << "," << yh
-                                << "," << std::to_string(cost_median)
-                                << std::endl;
-                        }
-                    
-                    weights.push_back(cell_wrap);
-                    idx = idx + cell_w[order[i_order]];
-                    i_order++;
-                }
-
-                emptySw = emptySw xor true;
-
-                if(debug){
-                    log() << std::endl;
-                }
-                
-            }//end for 
-
-
-
-        }//end order loop
-
-    }//end segments loop
-
+   
+    assignCellsToSegments(segments
+                        , movable_cells
+                        , legalize_rows
+                        , legalize_sites
+                        , cell_w
+                        , weights
+                        , ss);
     
     
     if(debug){
@@ -3520,4 +3229,437 @@ void Legalizer::logLegalizerSols(std::vector<cellWrap>& weights
 
 }//end logLegalizerSols
 
+
+void Legalizer::constructSegments(std::vector<std::vector<int>>& mat_spr
+                          , std::vector<std::vector<std::pair<int,int>>>& segs){
+
+    for(int r = 0; r < mat_spr.size() ; r++){
+        std::vector<int> seqs;
+        for(int s = 0; s < mat_spr[r].size(); s++){
+            seqs.push_back(mat_spr[r][s]);
+            if(s+1 < mat_spr[r].size()){
+                if(std::abs(mat_spr[r][s]-mat_spr[r][s+1]) != 1){
+                    int min = *std::min_element(seqs.begin(),seqs.end());
+                    int max = *std::max_element(seqs.begin(),seqs.end());
+                    segs[r].push_back(std::make_pair(min,max));
+                    seqs.clear();
+                }//end if 
+            }else{
+                int min = *std::min_element(seqs.begin(),seqs.end());
+                int max = *std::max_element(seqs.begin(),seqs.end());
+                segs[r].push_back(std::make_pair(min,max));
+                seqs.clear();
+
+            }//end if 
+        }//end for 
+    }//end for 
+
+}// constructSegments
+
+void Legalizer::assignMovableCellsToOrders( std::vector<int>& movable_cells
+                                   , std::vector<int>& orders
+                                   , std::vector<int>& cell_w){
+    for(int i = 0; i < movable_cells.size(); i++){
+        
+        orders.push_back(i);
+        auto cell = database.cells[movable_cells[i]];
+        cell_w.push_back(cell.getCellSiteWidth());
+        // if(debug){
+        //     log() << "cell: " << cell.getName()
+        //       << ", i: " << i
+        //       << ", w: " << cell_w[cell_w.size() -1 ] << std::endl;
+        // }
+        
+    }
+}//assignMovableCellsToOrders
+
+void Legalizer::initSegments(std::vector<std::vector<std::pair<int,int>>>& segs
+                , std::vector<std::vector<int>>& orders_2d
+                , std::vector<int>& cell_w
+                , std::vector<Segment>& segments){
+    for(int r = 0; r < segs.size(); r++){
+        for(int i = 0; i < segs[r].size(); i++){
+            // get orders 
+            int start = segs[r][i].first;
+            int stop = segs[r][i].second;
+            Segment seg_obj;
+            seg_obj.r = r;
+            seg_obj.start = start;
+            seg_obj.stop = stop;
+            
+            for(int ii = 0; ii < orders_2d.size(); ii++){
+                int sum = 0;
+                // std::string txt = "";
+                for(int jj = 0; jj < orders_2d[ii].size(); jj++){
+                    // if(debug){
+                    //     txt = txt + " (ord: "+std::to_string(orders_2d[ii][jj]) 
+                    //         + ", w: " + std::to_string(cell_w[orders_2d[ii][jj]])
+                    //         + ") " ;
+                    // }
+                    sum += cell_w[orders_2d[ii][jj]];
+                }//end for
+                // if(debug){
+                //     log() << "order: " << txt << std::endl; 
+                //     log()  << "r: " << r
+                //         << ", start: " << seg_obj.start
+                //         << ", stop: " << seg_obj.stop
+                //         << ", sum: " << sum << std::endl;
+                // }
+                
+                if(sum <= std::abs(start-stop)+1){
+                    seg_obj.orders.push_back(orders_2d[ii]);
+                }
+            }//end for
+
+            segments.push_back(seg_obj);
+        }//end for 
+    }//end for
+
+}//initSegments
+
+void Legalizer::assignCellsToSegments(std::vector<Segment>& segments
+                        , std::vector<int>& movable_cells
+                        , std::vector<int>& legalize_rows
+                        , std::vector<int>& legalize_sites
+                        , std::vector<int>& cell_w
+                        , std::vector<cellWrap>& weights
+                        , std::stringstream& ss){
+    auto printSegs = [](int r, int seg_w, std::vector<std::vector<int>>& seg_orders_2d){
+        log() << "seg.r: " << r
+                << ", seg.w: " << seg_w << std::endl;
+        for(auto ords : seg_orders_2d){
+            std::string txt = "";
+            for(auto elem : ords ){
+                txt = txt + std::to_string(elem) + " ";
+            }
+            log() << txt << std::endl;
+        }//end for 
+    };
+
+
+    bool debug = true || debug_global;    
+    auto rsynService = database.getRsynService();
+    
+    for(auto seg : segments){
+        int r = seg.r;
+        auto seg_orders_2d = seg.orders;
+        int seg_w = std::abs(seg.start - seg.stop)+1;
+        if(debug){
+            printSegs(r,seg_w,seg_orders_2d);
+        }//end if 
+
+        
+        
+
+        for(auto order : seg_orders_2d){
+            // order idx -> r, s
+            std::unordered_map<int,std::pair<int,int>> weights_dict;
+
+            initWeightIdx(weights_dict,order);
+            initAssignment(weights_dict,cell_w,order,seg);
+
+            int cells_w_sum = 0;
+            std::string txt = "";
+
+            // get the total sum of cells' width
+            for(int idx : order){
+                txt = txt + std::to_string(idx) + " ";
+                cells_w_sum += cell_w[idx];
+            }
+
+            if(debug){
+                log() << "order: " << txt << std::endl;
+                log() << "cell_w_sum: " << cells_w_sum << std::endl;
+            }
+                
+            int empty_space = seg_w-cells_w_sum;
+
+            if(debug)
+                log() << "empty_space: " << empty_space << std::endl;
+
+            insertGapBetweenCells(weights_dict
+                                  , empty_space
+                                  , cell_w
+                                  , order
+                                  , seg);
+
+            initCost( weights_dict
+                    , empty_space
+                    , movable_cells
+                    , cell_w
+                    , order
+                    , legalize_rows
+                    , legalize_sites
+                    , seg
+                    , weights);
+
+        }//end order loop
+
+    }//end segments loop                            
+
+}//assignCellsToSegments
+
+void Legalizer::initWeightIdx(std::unordered_map<int,std::pair<int,int>>& weight_dict, std::vector<int>& order){
+    for(int i : order){
+        weight_dict[i] = std::make_pair(-1,-1);
+    }//end for
+}//end initWeightIdx
+void Legalizer::initAssignment(std::unordered_map<int,std::pair<int,int>>& weight_dict
+                        ,std::vector<int>& cell_w
+                        ,std::vector<int>& order
+                        ,Segment& seg){
+    int idx = seg.start;
+    for(int i : order){
+        weight_dict[i]=std::make_pair(idx,idx+cell_w[i]-1);
+        idx = idx + cell_w[i];
+    }//end loop                        
+}//end initAssignment
+int Legalizer::getRandomInt(int rng_val){
+    std::random_device dev;
+    std::mt19937 rng(dev());
+    std::uniform_int_distribution<std::mt19937::result_type> rand_dist(0,rng_val); // distribution in range [1, 6]
+    return rand_dist(rng);
+}//end getRandomInt
+void Legalizer::insertGapBetweenCells(std::unordered_map<int,std::pair<int,int>>& weight_dict
+                                , int empty_space
+                                , std::vector<int>& cell_w
+                                , std::vector<int>& order
+                                , Segment& seg){
+    if(empty_space <= 0)
+        return;
+    
+    int reminder = empty_space;
+    int idx = seg.start;
+    for(int i : order){
+        auto& weight_tmp = weight_dict[i];
+        int rnd = getRandomInt(reminder);
+        weight_tmp = std::make_pair(idx+rnd,idx+cell_w[i]+rnd-1);
+        idx = weight_tmp.second+1;
+        reminder = reminder - rnd;
+    }//end loop
+}//end insertGapBetweenCells
+void Legalizer::initCost(std::unordered_map<int,std::pair<int,int>>& weight_dict
+                , int empty_space
+                , std::vector<int>& movable_cells
+                , std::vector<int>& cell_w
+                , std::vector<int>& order
+                , std::vector<int>& legalize_rows
+                , std::vector<int>& legalize_sites
+                , Segment& seg
+                , std::vector<cellWrap>& weights){
+    for(int i : order){
+        cellWrap cell_wrap;
+        auto& weight_tmp = weight_dict[i];
+        auto cell = database.cells[movable_cells[i]];
+        cell_wrap.idx = cell.idx;
+        cell_wrap.r = seg.r;
+        cell_wrap.s = weight_tmp.first;
+
+        // find cost 
+        int row_idx  = legalize_rows[cell_wrap.r];
+        int site_idx = legalize_sites[cell_wrap.s];
+                            
+        // auto median = cell.feature.median_x_y_pin;//getMedianPin();
+        
+        
+        // double cost_median = diff_x + diff_y;
+        double cost_median = getCandidateCost(cell,row_idx,site_idx);
+        if(cost_median > 0)
+            cell_wrap.cost = cost_median;
+        else
+            cell_wrap.cost = 1;
+
+            weights.push_back(cell_wrap);
+
+    }//end loop
+}//end initCost
+
 }//end namespace db
+
+
+
+// auto printSegs = [](int r, int seg_w, std::vector<std::vector<int>>& seg_orders_2d){
+//         log() << "seg.r: " << r
+//                 << ", seg.w: " << seg_w << std::endl;
+//         for(auto ords : seg_orders_2d){
+//             std::string txt = "";
+//             for(auto elem : ords ){
+//                 txt = txt + std::to_string(elem) + " ";
+//             }
+//             log() << txt << std::endl;
+//         }//end for 
+//     };
+
+
+//     auto initAssignment = [](){
+
+//     };
+
+//     bool debug = true || debug_global;    
+//     auto rsynService = database.getRsynService();
+    
+//     for(auto seg : segments){
+//         int r = seg.r;
+//         auto seg_orders_2d = seg.orders;
+//         int seg_w = std::abs(seg.start - seg.stop)+1;
+//         if(debug){
+//             printSegs(r,seg_w,seg_orders_2d);
+//         }//end if 
+
+        
+        
+
+//         for(auto order : seg_orders_2d){
+//             // int cell idx -> r, s
+//             std::unordered_map<int,std::pair<int,int>> weights_dict;
+            
+//             int cells_w_sum = 0;
+//             std::string txt = "";
+
+//             // get the total sum of cells' width
+//             for(int idx : order){
+//                 txt = txt + std::to_string(idx) + " ";
+//                 cells_w_sum += cell_w[idx];
+//             }
+
+//             if(debug){
+//                 log() << "order: " << txt << std::endl;
+//                 log() << "cell_w_sum: " << cells_w_sum << std::endl;
+//             }
+                
+//             int empty_w = seg_w-cells_w_sum;
+
+//             if(debug)
+//                 log() << "empty_w: " << empty_w << std::endl;
+
+
+//             int num_line_seg = order.size();
+//             int num_empty_spot = num_line_seg + 1;
+//             int empty_offset = empty_w / num_empty_spot;
+//             int reminder = empty_w % num_empty_spot;
+//             int n = num_line_seg + num_empty_spot;
+//             int idx = seg.start;
+//             bool emptySw = true;
+//             int i_order = 0;
+
+//             if(debug){
+//                 log() << "empty_offset: " << empty_offset
+//                       << ", reminder: " << reminder
+//                       << ", n: " << n << std::endl;
+//             }
+
+            
+
+//             for(int i = 0; i < n; i++){
+//                 if(idx > seg.stop)
+//                     continue;
+
+//                 if(debug){
+//                     log() << "idx: " << idx << std::endl;
+//                 }
+//                 if(emptySw){
+//                 // if(false){
+//                     if(reminder > 0){
+//                         std::random_device dev;
+//                         std::mt19937 rng(dev());
+//                         std::uniform_int_distribution<std::mt19937::result_type> rand_dist(0,reminder); // distribution in range [1, 6]
+//                         int rnd_por = rand_dist(rng);
+                        
+//                         if(debug){
+//                             log() << "rnd_por: " << rnd_por
+//                                   << ", reminder: " << reminder 
+//                                   << ", emptySw: " << emptySw << std::endl;
+//                         }
+                        
+                        
+//                         reminder = reminder - rnd_por;
+//                     }
+
+//                     idx = idx + empty_offset + reminder;
+//                 }else{
+
+                    
+//                     cellWrap cell_wrap;
+
+//                     // log() << "i_order: " << i_order << ", orer: " << order[i_order]
+//                     //       << ", movable_cells[order[i_order]]: " << movable_cells[order[i_order]]
+//                     //       << std::endl;
+//                     // log() << "movable_cells size: " << movable_cells.size() << std::endl;
+
+//                     // auto cell = database.cells[movable_cells[order[0]]];
+//                     auto cell = database.cells[movable_cells[order[i_order]]];
+//                     // continue;
+//                     cell_wrap.idx = cell.idx;
+//                     cell_wrap.r = seg.r;
+//                     cell_wrap.s = idx;
+
+//                     // find cost 
+//                     int row_idx  = legalize_rows[cell_wrap.r];
+//                     int site_idx = legalize_sites[cell_wrap.s];
+                                        
+//                     // auto median = cell.feature.median_x_y_pin;//getMedianPin();
+                    
+                    
+//                     // double cost_median = diff_x + diff_y;
+//                     double cost_median = getCandidateCost(cell,row_idx,site_idx);
+//                     if(cost_median > 0)
+//                         cell_wrap.cost = cost_median;
+//                     else
+//                         cell_wrap.cost = 1;
+
+
+                    
+
+                    
+//                     if(debug){
+                            
+//                             Rsyn::Cell cellRsyn = cell.rsynInstance.asCell();
+//                             Rsyn::PhysicalCell phCell = rsynService.physicalDesign.getPhysicalCell(cellRsyn);
+//                             Rsyn::PhysicalLibraryCell phLibCell = rsynService.physicalDesign.getPhysicalLibraryCell(cellRsyn);
+//                             int cell_width_tmp = phLibCell.getWidth();
+//                             int cell_height_tmp = phLibCell.getHeight();
+
+//                             log() << cell.getName() 
+//                                 << ",r: " << std::to_string(cell_wrap.r)
+//                                 << ",s: " << std::to_string(cell_wrap.s)
+//                                 << ",w: " << std::to_string(cell_width_tmp)
+//                                 << ",h: " << std::to_string(cell_height_tmp)
+//                                 << ",cost: " << std::to_string(cost_median) << std::endl;
+
+//                             // ss << cell.getName() 
+//                             //     << "," << std::to_string(cell_wrap.r)
+//                             //     << "," << std::to_string(cell_wrap.s)
+//                             //     << "," << std::to_string(cell_width_tmp)
+//                             //     << "," << std::to_string(cell_height_tmp)
+//                             //     << "," << std::to_string(cost_median) << std::endl;
+//                             auto xl = database.getDBUSite(legalize_sites[cell_wrap.s]);
+//                             auto yl = database.getDBURow(legalize_rows[cell_wrap.r]);
+//                             auto xh = xl + cell_width_tmp;
+//                             auto yh = yl + cell_height_tmp;
+//                             ss  << cell.getName() 
+//                                 << "," << xl
+//                                 << "," << yl
+//                                 << "," << xh
+//                                 << "," << yh
+//                                 << "," << std::to_string(cost_median)
+//                                 << std::endl;
+//                         }
+                    
+//                     weights.push_back(cell_wrap);
+//                     idx = idx + cell_w[order[i_order]];
+//                     i_order++;
+//                 }
+
+//                 emptySw = emptySw xor true;
+
+//                 if(debug){
+//                     log() << std::endl;
+//                 }
+                
+//             }//end for 
+
+
+
+//         }//end order loop
+
+//     }//end segments loop                    

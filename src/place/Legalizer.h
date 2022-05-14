@@ -228,6 +228,48 @@ private:
                 , std::unordered_map<int,int>& weightToCellIdxDict
                 , std::vector<std::vector<int>>& sols);
 
+    // segments
+    void constructSegments(std::vector<std::vector<int>>& mat_spr
+                          , std::vector<std::vector<std::pair<int,int>>>& segs);
+    void assignMovableCellsToOrders( std::vector<int>& movable_cells
+                                   , std::vector<int>& orders
+                                   , std::vector<int>& cell_w);
+
+    void initSegments(std::vector<std::vector<std::pair<int,int>>>& segs
+                    , std::vector<std::vector<int>>& orders_2d
+                    , std::vector<int>& cell_w
+                    , std::vector<Segment>& segments);
+
+    void assignCellsToSegments(std::vector<Segment>& segments
+                            , std::vector<int>& movable_cells
+                            , std::vector<int>& legalize_rows
+                            , std::vector<int>& legalize_sites
+                            , std::vector<int>& cell_w
+                            , std::vector<cellWrap>& weights
+                            , std::stringstream& ss);
+
+    
+    void initWeightIdx(std::unordered_map<int,std::pair<int,int>>& weight_dict, std::vector<int>& order);
+    void initAssignment(std::unordered_map<int,std::pair<int,int>>& weight_dict
+                            ,std::vector<int>& cell_w
+                            ,std::vector<int>& order
+                            ,Segment& seg);
+    int getRandomInt(int rng_val);
+    void insertGapBetweenCells(std::unordered_map<int,std::pair<int,int>>& weight_dict
+                                  , int empty_space
+                                  , std::vector<int>& cell_w
+                                  , std::vector<int>& order
+                                  , Segment& seg);
+    void initCost(std::unordered_map<int,std::pair<int,int>>& weight_dict
+                    , int empty_space
+                    , std::vector<int>& movable_cells
+                    , std::vector<int>& cell_w
+                    , std::vector<int>& order
+                    , std::vector<int>& legalize_rows
+                    , std::vector<int>& legalize_sites
+                    , Segment& seg
+                    , std::vector<cellWrap>& weights);
+
     // prints 
     void printMovableCells(std::vector<int>& movable_cells);
     void printLegalizeRows(std::vector<int>& legalize_rows);
@@ -256,6 +298,7 @@ private:
                                 , std::vector<int>& legalize_rows
                                 , std::vector<int>& legalize_sites
                                 , std::vector<int>& sols);
+    
     //variables 
     int cell_idx_;
     int min_site_;

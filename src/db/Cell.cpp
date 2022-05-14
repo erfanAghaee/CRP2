@@ -1316,8 +1316,11 @@ void Cell::addILPLegalizedCellCandidates(){
                 // continue;
                 utils::BoxT<DBU> new_box(site_dbu,row_dbu,
                                         site_dbu+cell_box.width(),row_dbu+cell_box.height());
-                if(debug)
+                if(debug){
                     log() << "ovrlp_cell: " << cell.getName() << ", new_box: " << new_box << std::endl;
+                    
+                }
+                    
                 ovrlp_cells_.push_back(std::make_pair(cell.idx,new_box));
             }
         }
