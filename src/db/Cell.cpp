@@ -1275,11 +1275,11 @@ void Cell::addILPLegalizedCellCandidates(){
     // if(getName() == "inst4948"){
     //     log() << "legalizer cell: " << getName() << std::endl;
         Legalizer legalizer(idx);
-        if(getName() == "g55131_u0"){
-            legalizer.debug_global = true;
-            debug = true;
-        }
-        legalizer.debug_global_all = true;
+        // if(getName() == "g55131_u0"){
+        //     legalizer.debug_global = true;
+        //     debug = true;
+        // }
+        legalizer.debug_global_all = false;
             
         if(database.policy_set.find("legalizer") == database.policy_set.end())
             legalizer.run();
@@ -1318,7 +1318,7 @@ void Cell::addILPLegalizedCellCandidates(){
                                         site_dbu+cell_box.width(),row_dbu+cell_box.height());
                 if(debug){
                     log() << "ovrlp_cell: " << cell.getName() << ", new_box: " << new_box << std::endl;
-                    
+
                 }
                     
                 ovrlp_cells_.push_back(std::make_pair(cell.idx,new_box));

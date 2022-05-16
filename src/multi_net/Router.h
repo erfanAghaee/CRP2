@@ -34,6 +34,7 @@ private:
 
     void ripup(const vector<int>& netsToRoute);
     void updateCost(int iter);
+    void updateCostPlacement(int iter);
 
     // void updateCostInit();
     void updateRouteTable();

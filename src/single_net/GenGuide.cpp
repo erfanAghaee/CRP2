@@ -125,7 +125,7 @@ void GuideGenerator::patchPinRegions() {
 
     if(!db::setting.patchPinRegionsMode){
         bool isValidPatch = true;
-        isValidPatch = checkValidPatching(grNet);
+        // isValidPatch = checkValidPatching(grNet);
         if(isValidPatch){
             for (auto &pbxs : grNet.pinAccessBoxes) {
                 for (auto &pbx : pbxs) {

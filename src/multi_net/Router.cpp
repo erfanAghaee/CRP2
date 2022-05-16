@@ -48,7 +48,7 @@ Router::Router() {
 
     if(filter_routers.size() != db::setting.rrrIterLimit){
         log() << "Error: number of iteration of routers (rrrIters) is not equal to rrrRoutes!" << std::endl;
-        std::exit(1);
+        // std::exit(1);
     }
     
 }
@@ -248,10 +248,12 @@ void Router::run() {
         vector<int> netsToRouteByAStar;
         // ripupReroute(netsToRoute);
         ripupRerouteCRP(netsToRoute); 
+        updateCostPlacement(0);
         netsToRoute.clear();
         for(int i = 0; i < db::setting.numRefinePlacement; i++){
             printRouteStart("placement",i);
             applyPlacement(netsToRoute,i, profile_time, profile_time_str);
+            
             // route(netsToRoute,PATTERNROUTE);
             // route(netsToRoute,ASTAR);
 
@@ -262,7 +264,7 @@ void Router::run() {
             // route by patternRoute
             ripup(netsToRoute);
             congMap.init(cellWidth, cellHeight);
-            routeApprx(netsToRouteByPatternRoute, PATTERNROUTE);
+            routeApprx(netsToRoute, PATTERNROUTE);
         
             updateRouteTable(); 
             printStat();
@@ -272,6 +274,7 @@ void Router::run() {
             // if(filter_routers[iter] == "astar" && filter_routers_applys[iter] =="1" ) {
             // route by Astar
             // ripup(netsToRouteByAStar);
+            
             congMap.init(cellWidth, cellHeight);
             routeApprx(netsToRouteByAStar, ASTAR);
             updateRouteTable(); 
@@ -1159,6 +1162,14 @@ void Router::updateCost(int iter) {
     }
 
     grDatabase.statHistCost();
+}//end updateCost
+
+void Router::updateCostPlacement(int iter) {
+    
+    grDatabase.setUnitViaMultiplier(4);        
+    grDatabase.setLogisticSlope(db::setting.initLogisticSlope);
+    database.setUnitVioCost(db::setting.rrrInitVioCostDiscount);
+    
 }//end updateCost
 
 
