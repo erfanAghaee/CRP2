@@ -2511,11 +2511,14 @@ void FlexDR::reportDRC() {
   }
 
 
-  std::string file_name_csv =  benchDir +  benchName+ ".dr.drc."+std::to_string(iter_drc)+".csv";
-  // std::cout << "log name: " << file_name_csv << std::endl;
-  std::ofstream fout(file_name_csv);
-  fout << drcRpt.str();
-  fout.close();
+  if(logAll){
+    std::string file_name_csv =  benchDir +  benchName+ ".dr.drc."+std::to_string(iter_drc)+".csv";
+    // std::cout << "log name: " << file_name_csv << std::endl;
+    std::ofstream fout(file_name_csv);
+    fout << drcRpt.str();
+    fout.close();
+  }
+  
 
 
   iter_drc++;

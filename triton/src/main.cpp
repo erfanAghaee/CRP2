@@ -39,6 +39,7 @@ using namespace fr;
 
 int readParams(const string &fileName) {
   int readParamCnt = 0;
+  std::string logAllStr = "false";
   fstream fin(fileName.c_str());
   string line;
   if (fin.is_open()){
@@ -85,6 +86,12 @@ int readParams(const string &fileName) {
         else if (field == "filter_nets_name") {filter_nets_name = value; ++readParamCnt;}
         else if (field == "benchDir") {benchDir = value; ++readParamCnt;}
         else if (field == "benchName") {benchName = value; ++readParamCnt;}
+        else if (field == "logAll") {logAllStr = value; ++readParamCnt;}
+      }
+      if(logAllStr == "true"){
+        logAll = true;
+      }else{
+        logAll = false;
       }
     }
     fin.close();
@@ -204,6 +211,15 @@ int main(int argc, char** argv) {
         argv++;
         argc--;
         benchName = *argv;
+      } else if (strcmp(*argv, "-logAll") == 0) {
+        argv++;
+        argc--;
+        std::string logAllStr = *argv;
+        if(logAllStr == "true"){
+          logAll = true;
+        }else{
+          logAll = false;
+        }
       } else {
         cout <<"ERROR: Illegal command line option: " <<*argv <<endl;
         return 2;

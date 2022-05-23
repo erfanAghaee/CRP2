@@ -76,8 +76,11 @@ void FlexRoute::dr() {
   if(debug_erfan) std::cout << "start DR erfan" << std::endl;
   FlexDR dr(getDesign());
   dr.main();
-  dr.getReport();
-  dr.getReportNets();
+  if(logAll){
+    dr.getReport();
+    dr.getReportNets();
+  }
+  
   // // dr.getCongestion();
   // dr.outOffGuideReport();
   

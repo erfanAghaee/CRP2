@@ -78,8 +78,8 @@ void Placer::runMT(std::vector<int>& netsToRoute,int cellWidth, int cellHeight){
         }
     }
 
-    // if(log_debug)
-    logCellsCandidates();
+    if(db::setting.logAll)
+        logCellsCandidates();
     // profile_time_str << "calcCellsCostMT_" << std::to_string(iter) << "," << std::to_string(profile_time.getTimer()) << std::endl;
     profile_time_str << "calcCellsCostMT"<< "," << std::to_string(profile_time.getTimer()) << std::endl;
     if(db::setting.debug){
@@ -908,8 +908,10 @@ void Placer::calcCellsCostMT(){
 
     bool log_candidates = false;
 
-    if(log_candidates)
+    if(log_candidates){
         logCellsCandidates();
+    }
+        
 }
 
 
@@ -1444,7 +1446,8 @@ void Placer::findBestEntryMTV2(){
         
     }//end for 
 
-    logPlacementWeights(weights);
+    if(db::setting.logAll)
+        logPlacementWeights(weights);
 
     getOvrlpConflicts(weights,ovrlps);
 

@@ -732,7 +732,10 @@ void io::Parser::postProcessGuide() {
     writeGuideFile();
   }
 
-  logGuidePostprocessing();
+  if(logAll){
+    logGuidePostprocessing();
+  }
+    
 
 }
 
