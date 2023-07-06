@@ -14,6 +14,7 @@ void RouteGrid::init() {
     fixedMetals.resize(layers.size());
 
     DBU m2Pitch = layers[1].pitch;
+    db::setting.debug = true;
     if(db::setting.debug){
         log() << "cost m2Pitch: " << m2Pitch << std::endl;
     }
@@ -32,7 +33,7 @@ void RouteGrid::init() {
     }
 
     unitShortVioCostRaw = db::Setting::weightShortArea;
-    // log() << "unitShortVioCostRaw: " << unitShortVioCostRaw << std::endl;
+    log() << "unitShortVioCostRaw: " << unitShortVioCostRaw << std::endl;
 
     // note: a short of M2 track segments will be charged by
     // (shortLength * unitWireCostRaw) * unitShortVioCost
@@ -78,6 +79,8 @@ void RouteGrid::init() {
             log() << std::endl;
         }
     }
+
+     db::setting.debug = false;
 }
 
 void RouteGrid::clear() {

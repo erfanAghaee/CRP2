@@ -225,14 +225,18 @@ void Router::run() {
     // logAll();
     // return;
     
-    
+    profile_time_str << "Stage" << "," << "time" << std::endl;
+
     
     // it is used to route specific nets
     filterNets();
 
     vector<int> netsToRoute;
     getNetsToRoute(netsToRoute,0);
+
+    
     netFeatureExtraction2D(netsToRoute);
+    profile_time_str << "CN" << "," << std::to_string(profile_time.getTimer()) << std::endl;
     
 
     // return;
@@ -248,6 +252,7 @@ void Router::run() {
         vector<int> netsToRouteByAStar;
         // ripupReroute(netsToRoute);
         ripupRerouteCRP(netsToRoute); 
+        profile_time_str << "GR" << "," << std::to_string(profile_time.getTimer()) << std::endl;
         updateCostPlacement(0);
         netsToRoute.clear();
         for(int i = 0; i < db::setting.numRefinePlacement; i++){
@@ -259,6 +264,7 @@ void Router::run() {
 
             // need to select right router 
             classifyNets(netsToRoute, netsToRouteByPatternRoute, netsToRouteByAStar );
+
         
             // if(filter_routers[iter] == "patternroute" && filter_routers_applys[iter] =="1"){
             // route by patternRoute
@@ -283,6 +289,8 @@ void Router::run() {
 
             netsToRoute.clear();
             logAll();
+
+            profile_time_str << "URD" << "," << std::to_string(profile_time.getTimer()) << std::endl;
         }//end refinePlacement loop
 
     }//end refinePlacement
@@ -312,6 +320,9 @@ void Router::run() {
 
     logAll();
 
+    std::ofstream profileTime_file(db::setting.outputFile + ".profileTime.csv");
+    profileTime_file << profile_time_str.str();
+    profileTime_file.close();
     
  
 
@@ -1012,6 +1023,7 @@ void Router::ripupRerouteCRP(vector<int>& netsToRoute){
         printRouteStart("routing",iter);
         routeStateClear();
         getNetsToRoute(netsToRoute,iter);
+        // log() << "Upma first: nets to route: " << iter << "= " << netsToRoute.size() << std::endl;
         // sortNets(netsToRoute);  // Note: only effective when doing mazeroute sequentially
         updateCost(iter);
 
@@ -1024,8 +1036,8 @@ void Router::ripupRerouteCRP(vector<int>& netsToRoute){
         routeApprx(netsToRouteByPatternRoute, PATTERNROUTE);
         
         updateRouteTable(); 
-        printStat();
-        logAll();        
+        // printStat();
+        // logAll();        
 
         // }
         // if(filter_routers[iter] == "astar" && filter_routers_applys[iter] =="1" ) {
@@ -1034,8 +1046,8 @@ void Router::ripupRerouteCRP(vector<int>& netsToRoute){
         congMap.init(cellWidth, cellHeight);
         routeApprx(netsToRouteByAStar, ASTAR);
         updateRouteTable(); 
-        printStat();
-        logAll();
+        // printStat();
+        // logAll();
         // }
 
        
@@ -1060,6 +1072,8 @@ void Router::ripupRerouteCRP(vector<int>& netsToRoute){
         getNetsToRoute(netsToRoute,iter);
         sortNets(netsToRoute);  // Note: only effective when doing mazeroute sequentially
         updateCost(iter);
+
+        log() << "Upma: nets to route: " << iter << "= " << netsToRoute.size() << std::endl;
 
         // classifyNets(netsToRoute, netsToRouteByPatternRoute, netsToRouteByAStar );
         

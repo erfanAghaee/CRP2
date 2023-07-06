@@ -115,6 +115,7 @@ void runISPD18Flow(const boost::program_options::variables_map& vm) {
     db::setting.legalizerOptimzerTimeLimit = vm.at("legalizerOptimzerTimeLimit").as<double>();
     db::setting.gcellSize = vm.at("gcellSize").as<int>();
     db::setting.debug = vm.at("debug").as<bool>();
+    // db::setting.RL = vm.at("rl").as<bool>();
     
     
     
@@ -271,7 +272,7 @@ void runISPD18Flow(const boost::program_options::variables_map& vm) {
     // Router router1;
     // router1.run();
     
-
+;
     // Router router;
     // router.run();
 

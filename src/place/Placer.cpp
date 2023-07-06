@@ -24,7 +24,7 @@ void Placer::runMT(std::vector<int>& netsToRoute,int cellWidth, int cellHeight){
     // return;
     congMap.init(cellWidth, cellHeight);
     // profile_time_str << "congMap_" << std::to_string(iter) << "," << std::to_string(profile_time.getTimer()) << std::endl;
-    profile_time_str << "congMap" << "," << std::to_string(profile_time.getTimer()) << std::endl;
+    // profile_time_str << "congMap" << "," << std::to_string(profile_time.getTimer()) << std::endl;
     // log() << "setting.name: " << db::setting.name << std::endl;
 
     // log() << "after routing path cost " << std::endl;
@@ -43,7 +43,7 @@ void Placer::runMT(std::vector<int>& netsToRoute,int cellWidth, int cellHeight){
 
 
     // profile_time_str << "initCellsUpdateFeatures_" << std::to_string(iter) << "," << std::to_string(profile_time.getTimer()) << std::endl;
-    profile_time_str << "initCellsUpdateFeatures" << "," << std::to_string(profile_time.getTimer()) << std::endl;
+    profile_time_str << "UCF" << "," << std::to_string(profile_time.getTimer()) << std::endl;
 
     if(db::setting.debug){
         log() << "selectCriticalCells..." << std::endl;
@@ -55,7 +55,7 @@ void Placer::runMT(std::vector<int>& netsToRoute,int cellWidth, int cellHeight){
     if(log_debug)
         logCellsCritical();
     // profile_time_str << "selectCriticalCells_" << std::to_string(iter) << "," << std::to_string(profile_time.getTimer()) << std::endl;
-    profile_time_str << "selectCriticalCells"<< "," << std::to_string(profile_time.getTimer()) << std::endl;
+    profile_time_str << "SCC"<< "," << std::to_string(profile_time.getTimer()) << std::endl;
     
     // return;
     if(db::setting.debug){
@@ -66,7 +66,7 @@ void Placer::runMT(std::vector<int>& netsToRoute,int cellWidth, int cellHeight){
         log() << "end initCellsCandidate..." << std::endl;
     }
     // profile_time_str << "initCellsCandidate_" << std::to_string(iter) << "," << std::to_string(profile_time.getTimer()) << std::endl;
-    profile_time_str << "initCellsCandidate"  << "," << std::to_string(profile_time.getTimer()) << std::endl;
+    profile_time_str << "GCC"  << "," << std::to_string(profile_time.getTimer()) << std::endl;
     
     if(database.policy_set.find("calcCellsCostMT") == database.policy_set.end()){
         if(db::setting.debug){
@@ -81,7 +81,7 @@ void Placer::runMT(std::vector<int>& netsToRoute,int cellWidth, int cellHeight){
     if(db::setting.logAll)
         logCellsCandidates();
     // profile_time_str << "calcCellsCostMT_" << std::to_string(iter) << "," << std::to_string(profile_time.getTimer()) << std::endl;
-    profile_time_str << "calcCellsCostMT"<< "," << std::to_string(profile_time.getTimer()) << std::endl;
+    profile_time_str << "RPM"<< "," << std::to_string(profile_time.getTimer()) << std::endl;
     if(db::setting.debug){
         log() << "findBestEntryMT..." << std::endl;
     }
@@ -90,7 +90,7 @@ void Placer::runMT(std::vector<int>& netsToRoute,int cellWidth, int cellHeight){
         log() << "end findBestEntryMT..." << std::endl;
     }
     // profile_time_str << "findBestEntryMT_" << std::to_string(iter) << "," << std::to_string(profile_time.getTimer()) << std::endl;
-    profile_time_str << "findBestEntryMT"<< "," << std::to_string(profile_time.getTimer()) << std::endl;
+    profile_time_str << "FBC"<< "," << std::to_string(profile_time.getTimer()) << std::endl;
 
     // log() << "logRefinePlacement..." << std::endl;
     // logRefinePlacement();
@@ -105,7 +105,7 @@ void Placer::runMT(std::vector<int>& netsToRoute,int cellWidth, int cellHeight){
         log() << "end refinePlacement..." << std::endl;
     }
     // profile_time_str << "refinePlacement_" << std::to_string(iter) << "," << std::to_string(profile_time.getTimer()) << std::endl;
-    profile_time_str << "refinePlacement"<< "," << std::to_string(profile_time.getTimer()) << std::endl;
+    profile_time_str << "RP"<< "," << std::to_string(profile_time.getTimer()) << std::endl;
 
     if(db::setting.debug){
         log() << "updateRoutingDataBase..." << std::endl;
@@ -115,7 +115,7 @@ void Placer::runMT(std::vector<int>& netsToRoute,int cellWidth, int cellHeight){
         log() << "end updateRoutingDataBase..." << std::endl;
     }
     // profile_time_str << "updateRoutingDataBase_" << std::to_string(iter) << "," << std::to_string(profile_time.getTimer()) << std::endl;
-    profile_time_str << "updateRoutingDataBase"  << "," << std::to_string(profile_time.getTimer()) << std::endl;
+    // profile_time_str << "URD"  << "," << std::to_string(profile_time.getTimer()) << std::endl;
 
 
 
@@ -1356,8 +1356,8 @@ void Placer::ILPSolverV2(
         }
 
         IloCplex cplex(model);
-        if(!debug)
-            cplex.setOut(env.getNullStream());
+        // if(!debug)
+        //     cplex.setOut(env.getNullStream());
 
 
         cplex.setParam(IloCplex::Param::TimeLimit, db::setting.legalizerOptimzerTimeLimit);
@@ -1762,7 +1762,7 @@ void Placer::ILPSolver(std::vector<double>& weights
         }
 
         IloCplex cplex(model);
-        // cplex.setOut(env.getNullStream());
+        cplex.setOut(env.getNullStream());
 
         cplex.setParam(IloCplex::Param::Threads, db::setting.numThreads);
         cplex.setOut(env.getNullStream());

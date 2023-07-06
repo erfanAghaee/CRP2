@@ -11,6 +11,7 @@ class Setting {
 public:
     bool logAll=false;
     // basic
+    // bool RL=False;
     bool escapeRouteBlockage=false;
     std::string directory="./";
     std::string lookuptbs_dir="./..";
